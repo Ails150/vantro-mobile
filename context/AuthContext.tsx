@@ -1,5 +1,6 @@
-﻿import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
+import { registerForPushNotifications, savePushToken } from '@/lib/notifications';
 
 interface AuthUser {
   userId: string;
@@ -70,6 +71,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await SecureStore.setItemAsync('vantro_token', data.token);
       await SecureStore.setItemAsync('vantro_user', JSON.stringify(authUser));
       setUser(authUser);
+
+      // Register push notification token
+      try {
+        const pushToken = await registerForPushNotifications();
+        if (pushToken) await savePushToken(pushToken);
+      } catch {}
+
       return {};
     } catch {
       return { error: 'Connection error. Check your internet.' };
