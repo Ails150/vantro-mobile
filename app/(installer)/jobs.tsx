@@ -115,9 +115,6 @@ export default function JobsScreen() {
         <View style={s.activeBanner}>
           <View style={s.activeDot} />
           <Text style={s.activeBannerText}>On site - {signedInJob.name}</Text>
-          <TouchableOpacity onPress={() => router.push({ pathname: '/(installer)/job-detail', params: { id: signedInJob.id, name: signedInJob.name } })}>
-            <Text style={s.activeBannerLink}>Open -></Text>
-          </TouchableOpacity>
         </View>
       )}
 
@@ -176,7 +173,7 @@ export default function JobsScreen() {
                     <Text style={s.actionBtnText}>QA</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={s.actionBtn} onPress={() => router.push({ pathname: '/(installer)/defects', params: { id: job.id, name: job.name } })}>
-                    <Text style={s.actionBtnText}>âš  Defects</Text>
+                    <Text style={s.actionBtnText}>Defects</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={[s.actionBtn, s.actionBtnRed]} onPress={() => signOut(job)}>
                     <Text style={[s.actionBtnText, s.actionBtnTextRed]}>Sign out</Text>
@@ -201,7 +198,6 @@ const s = StyleSheet.create({
   activeBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, margin: 16, backgroundColor: 'rgba(0,212,160,0.08)', borderWidth: 1, borderColor: 'rgba(0,212,160,0.2)', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10 },
   activeDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: C.teal },
   activeBannerText: { flex: 1, fontSize: 13, color: C.teal },
-  activeBannerLink: { fontSize: 13, color: C.teal, fontWeight: '600' },
   scroll: { padding: 16, paddingBottom: 40 },
   sectionLabel: { fontSize: 13, color: C.muted, fontWeight: '500', marginBottom: 12 },
   empty: { alignItems: 'center', paddingVertical: 48 },
