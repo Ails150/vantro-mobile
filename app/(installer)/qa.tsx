@@ -37,7 +37,19 @@ export default function QAScreen() {
     if (!result.canceled) setPhotos(p => ({ ...p, [itemId]: result.assets[0].uri }));
   }
 
+  function allMandatoryComplete() {
+    const mandatory = items.filter(item => item.is_mandatory);
+    return mandatory.every(item => {
+      const state = subs.find(s => s.checklist_item_id === item.id)?.state;
+      return state && state !== "pending";
+    });
+  }
+
   async function submitForApproval() {
+    if (!allMandatoryComplete()) {
+      Alert.alert("Cannot submit", "All mandatory checklist items must be completed before submitting for approval.");
+      return;
+    }
     setSubmitting(true);
     await authFetch("/api/qa/submit", { method: "POST", body: JSON.stringify({ jobId: id }) });
     setSubmitting(false);
