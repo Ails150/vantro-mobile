@@ -114,9 +114,9 @@ export default function JobsScreen() {
       {signedInJob && (
         <View style={s.activeBanner}>
           <View style={s.activeDot} />
-          <Text style={s.activeBannerText}>On site â€” {signedInJob.name}</Text>
+          <Text style={s.activeBannerText}>On site - {signedInJob.name}</Text>
           <TouchableOpacity onPress={() => router.push({ pathname: '/(installer)/job-detail', params: { id: signedInJob.id, name: signedInJob.name } })}>
-            <Text style={s.activeBannerLink}>Open â†’</Text>
+            <Text style={s.activeBannerLink}>Open -></Text>
           </TouchableOpacity>
         </View>
       )}
@@ -170,10 +170,10 @@ export default function JobsScreen() {
               ) : (
                 <View style={s.signedInActions}>
                   <TouchableOpacity style={s.actionBtn} onPress={() => router.push({ pathname: '/(installer)/diary', params: { id: job.id, name: job.name } })}>
-                    <Text style={s.actionBtnText}>ðŸ“‹ Diary</Text>
+                    <Text style={s.actionBtnText}>Diary</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={s.actionBtn} onPress={() => router.push({ pathname: '/(installer)/qa', params: { id: job.id, name: job.name } })}>
-                    <Text style={s.actionBtnText}>âœ“ QA</Text>
+                    <Text style={s.actionBtnText}>QA</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={s.actionBtn} onPress={() => router.push({ pathname: '/(installer)/defects', params: { id: job.id, name: job.name } })}>
                     <Text style={s.actionBtnText}>âš  Defects</Text>
