@@ -17,7 +17,8 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Vantro needs your location to verify you are on site before signing in.",
         "NSCameraUsageDescription": "Vantro needs camera access to capture QA photos and defect evidence.",
-        "NSPhotoLibraryUsageDescription": "Vantro needs photo library access to attach images to reports."
+        "NSPhotoLibraryUsageDescription": "Vantro needs photo library access to attach images to reports.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {

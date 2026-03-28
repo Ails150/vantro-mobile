@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, Image, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -15,6 +15,8 @@ export default function QAScreen() {
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [photos, setPhotos] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => { load(); }, []);
 
@@ -33,6 +35,14 @@ export default function QAScreen() {
   async function pickPhoto(itemId: string) {
     const result = await ImagePicker.launchCameraAsync({ quality: 0.7 });
     if (!result.canceled) setPhotos(p => ({ ...p, [itemId]: result.assets[0].uri }));
+  }
+
+  async function submitForApproval() {
+    setSubmitting(true);
+    await authFetch("/api/qa/submit", { method: "POST", body: JSON.stringify({ jobId: id }) });
+    setSubmitting(false);
+    setSubmitted(true);
+    load();
   }
 
   async function submit(itemId: string, state: string) {
@@ -130,6 +140,19 @@ export default function QAScreen() {
             </View>
           );
         })}
+      {items.length > 0 && (
+        <View style={{ padding: 16, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.05)" }}>
+          <TouchableOpacity
+            style={{ backgroundColor: submitted ? "rgba(0,212,160,0.1)" : "#00d4a0", borderRadius: 12, paddingVertical: 14, alignItems: "center", borderWidth: submitted ? 1 : 0, borderColor: "rgba(0,212,160,0.3)" }}
+            onPress={submitForApproval}
+            disabled={submitting || submitted}
+          >
+            <Text style={{ color: submitted ? "#00d4a0" : "#0f1923", fontWeight: "700", fontSize: 15 }}>
+              {submitted ? "Submitted for approval" : submitting ? "Submitting..." : "Submit QA for approval"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
       </ScrollView>
     </SafeAreaView>
   );
