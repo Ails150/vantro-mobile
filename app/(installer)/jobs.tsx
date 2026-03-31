@@ -97,6 +97,17 @@ export default function JobsScreen() {
     ]);
   }
 
+  function openMaps(job: any) {
+    const address = encodeURIComponent(job.address || '');
+    const latLng = job.lat && job.lng ? ${job.lat}, : null;
+    const url = latLng
+      ? https://www.google.com/maps/dir/?api=1&destination=
+      : https://www.google.com/maps/search/?api=1&query=;
+    Linking.openURL(url).catch(() => {
+      Linking.openURL(maps:?q=).catch(() => Alert.alert('Maps not available'));
+    });
+  }
+
   const signedInJob = jobs.find(j => j.signed_in);
 
   return (
@@ -153,6 +164,10 @@ export default function JobsScreen() {
                   <Text style={[s.gpsMsgText, gps.ok ? s.gpsMsgTextOk : s.gpsMsgTextErr]}>{gps.msg}</Text>
                 </View>
               )}
+
+              <TouchableOpacity style={s.directionsBtn} onPress={() => openMaps(job)}>
+                <Text style={s.directionsBtnText}>Get directions</Text>
+              </TouchableOpacity>
 
               {!job.signed_in ? (
                 <TouchableOpacity
@@ -225,4 +240,6 @@ const s = StyleSheet.create({
   actionBtnRed: { borderColor: 'rgba(248,113,113,0.3)', backgroundColor: 'rgba(248,113,113,0.06)' },
   actionBtnText: { fontSize: 13, color: C.text, fontWeight: '500' },
   actionBtnTextRed: { color: C.red },
+  directionsBtn: { backgroundColor: 'rgba(96,165,250,0.08)', borderRadius: 10, paddingVertical: 8, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(96,165,250,0.2)', marginBottom: 8 },
+  directionsBtnText: { fontSize: 13, color: '#60a5fa', fontWeight: '500' },
 });
