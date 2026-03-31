@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, SafeAreaView, RefreshControl, Alert,
+  StyleSheet, SafeAreaView, RefreshControl, Alert, Linking,
 } from 'react-native';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
@@ -63,7 +63,7 @@ export default function JobsScreen() {
       if (!res.ok) {
         setGpsMsg({ id: job.id, msg: data.error || 'Cannot sign in', ok: false });
       } else {
-        setGpsMsg({ id: job.id, msg: `Signed in - ${data.distanceMetres}m from site`, ok: true });
+        setGpsMsg({ id: job.id, msg: 'Signed in - ' + data.distanceMetres + 'm from site', ok: true });
         loadJobs();
       }
     } catch {
@@ -73,7 +73,7 @@ export default function JobsScreen() {
   }
 
   async function signOut(job: any) {
-    Alert.alert('Sign out', `Sign out of ${job.name}?`, [
+    Alert.alert('Sign out', 'Sign out of ' + job.name + '?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Sign out', style: 'destructive',
@@ -85,7 +85,7 @@ export default function JobsScreen() {
           if (job.lat && job.lng) {
             const dist = haversine(latitude, longitude, job.lat, job.lng);
             if (dist > 150) {
-              Alert.alert('Too far', `You are ${dist}m from site. Must be within 150m to sign out.`);
+              Alert.alert('Too far', 'You are ' + dist + 'm from site. Must be within 150m to sign out.');
               return;
             }
           }
@@ -99,13 +99,13 @@ export default function JobsScreen() {
 
   function openMaps(job: any) {
     const address = encodeURIComponent(job.address || '');
-    const latLng = job.lat && job.lng ? ${job.lat}, : null;
-    const url = latLng
-      ? https://www.google.com/maps/dir/?api=1&destination=
-      : https://www.google.com/maps/search/?api=1&query=;
-    Linking.openURL(url).catch(() => {
-      Linking.openURL(maps:?q=).catch(() => Alert.alert('Maps not available'));
-    });
+    if (job.lat && job.lng) {
+      const url = 'https://www.google.com/maps/dir/?api=1&destination=' + job.lat + ',' + job.lng;
+      Linking.openURL(url).catch(() => Alert.alert('Could not open Maps'));
+    } else {
+      const url = 'https://www.google.com/maps/search/?api=1&query=' + address;
+      Linking.openURL(url).catch(() => Alert.alert('Could not open Maps'));
+    }
   }
 
   const signedInJob = jobs.find(j => j.signed_in);
