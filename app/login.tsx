@@ -1,27 +1,35 @@
-﻿import React, { useState, useRef } from 'react';
-import {
-  View, Text, TouchableOpacity, StyleSheet,
-  Animated, Vibration, ActivityIndicator, SafeAreaView,
-} from 'react-native';
+﻿import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated, Vibration, ActivityIndicator, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
+import * as SecureStore from 'expo-secure-store';
 
-const COLORS = {
-  bg: '#0f1923',
-  card: '#1a2635',
-  teal: '#00d4a0',
-  muted: '#4d6478',
-  text: '#ffffff',
-  error: '#f87171',
-};
+const COLORS = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', error: '#f87171' };
 
 export default function LoginScreen() {
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<'loading' | 'setup' | 'login'>('loading');
+  const [setupEmail, setSetupEmail] = useState('');
+  const [emailInput, setEmailInput] = useState('');
+  const [showEmailEntry, setShowEmailEntry] = useState(false);
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const { login } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    async function init() {
+      const storedEmail = await SecureStore.getItemAsync('installer_email');
+      const storedPin = await SecureStore.getItemAsync('installer_pin');
+      if (storedEmail && storedPin) {
+        setMode('login');
+      } else {
+        setMode('login');
+      }
+    }
+    init();
+  }, []);
 
   function shake() {
     Vibration.vibrate(200);
@@ -33,101 +41,151 @@ export default function LoginScreen() {
     ]).start();
   }
 
+  async function handleEmailSubmit() {
+    if (!emailInput.trim() || !emailInput.includes('@')) { setError('Enter a valid email address'); return }
+    setLoading(true); setError('');
+    try {
+      const res = await fetch('https://app.getvantro.com/api/installer/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailInput.trim().toLowerCase(), pin: '0000', checkOnly: true })
+      });
+      const data = await res.json();
+      if (data.exists === false) { setError('Email not found. Check with your manager.'); setLoading(false); return }
+      if (data.hasPin) { setError('Account already set up. Enter your PIN below.'); setShowEmailEntry(false); setLoading(false); return }
+      setSetupEmail(emailInput.trim().toLowerCase());
+      setMode('setup');
+      setShowEmailEntry(false);
+    } catch(e) {
+      setError('Could not connect. Check your internet connection.');
+    }
+    setLoading(false);
+  }
+
   async function handleKey(key: string) {
     if (loading) return;
-    if (key === 'del') {
-      setPin(p => p.slice(0, -1));
-      setError('');
-      return;
-    }
+    if (key === 'del') { setPin(p => p.slice(0, -1)); setError(''); return; }
     const newPin = pin + key;
     setPin(newPin);
     setError('');
     if (newPin.length === 4) {
       setLoading(true);
-      const result = await login(newPin);
-      setLoading(false);
-      if (result.error) {
-        shake();
-        setError(result.error);
-        setPin('');
+      if (mode === 'setup') {
+        try {
+          const res = await fetch('https://app.getvantro.com/api/installer/setup-pin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: setupEmail, pin: newPin })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Failed to set PIN');
+          await SecureStore.setItemAsync('installer_email', setupEmail);
+          await SecureStore.setItemAsync('installer_pin', newPin);
+          router.replace('/(installer)/jobs');
+        } catch (e: any) {
+          shake(); setError(e.message); setPin('');
+        }
       } else {
-        router.replace('/');
+        const result = await login(newPin);
+        if (result.error) { shake(); setError(result.error); setPin(''); }
+        else { router.replace('/'); }
       }
+      setLoading(false);
     }
   }
 
-  const keys = [
-    ['1','2','3'],
-    ['4','5','6'],
-    ['7','8','9'],
-    ['','0','del'],
-  ];
+  const keys = [['1','2','3'],['4','5','6'],['7','8','9'],['','0','del']];
+
+  if (mode === 'loading') {
+    return <SafeAreaView style={s.safe}><View style={[s.container]}><ActivityIndicator color={COLORS.teal} size="large"/></View></SafeAreaView>;
+  }
+
+  if (showEmailEntry) {
+    return (
+      <SafeAreaView style={s.safe}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.container}>
+          <View style={s.logo}>
+            <View style={s.logoIcon}>
+              <View style={s.dot1}/><View style={s.dot2}/><View style={s.dot3}/><View style={s.dot4}/>
+            </View>
+            <Text style={s.logoText}>Van<Text style={{ color: COLORS.teal }}>tro</Text></Text>
+          </View>
+          <Text style={s.heading}>First time? Enter your email</Text>
+          <Text style={[s.hint, { marginBottom: 24 }]}>Use the email your manager invited you with</Text>
+          <TextInput
+            value={emailInput}
+            onChangeText={setEmailInput}
+            placeholder="your@email.com"
+            placeholderTextColor={COLORS.muted}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoFocus
+            style={s.emailInput}
+          />
+          {error ? <Text style={s.error}>{error}</Text> : null}
+          <TouchableOpacity style={s.emailBtn} onPress={handleEmailSubmit} disabled={loading}>
+            {loading ? <ActivityIndicator color="#0f1923"/> : <Text style={s.emailBtnText}>Continue →</Text>}
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => { setShowEmailEntry(false); setError(''); }}>
+            <Text style={[s.hint, { marginTop: 16 }]}>← Back to PIN login</Text>
+          </TouchableOpacity>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    );
+  }
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <View style={styles.container}>
-        <View style={styles.logo}>
-          <View style={styles.logoIcon}>
-            <View style={styles.dot1} /><View style={styles.dot2} />
-            <View style={styles.dot3} /><View style={styles.dot4} />
+    <SafeAreaView style={s.safe}>
+      <View style={s.container}>
+        <View style={s.logo}>
+          <View style={s.logoIcon}>
+            <Text style={s.logoV}>V</Text>
           </View>
-          <Text style={styles.logoText}>Van<Text style={{ color: COLORS.teal }}>tro</Text></Text>
-          <Text style={styles.logoSub}>Field Operations</Text>
+          <Text style={s.logoText}>Van<Text style={{ color: COLORS.teal }}>tro</Text></Text>
+          <Text style={s.logoSub}>Field Operations</Text>
         </View>
-
-        <Text style={styles.heading}>Enter your PIN</Text>
-
-        <Animated.View style={[styles.dots, { transform: [{ translateX: shakeAnim }] }]}>
-          {[0,1,2,3].map(i => (
-            <View key={i} style={[styles.dot, pin.length > i && styles.dotFilled]} />
-          ))}
+        <Text style={s.heading}>{mode === 'setup' ? 'Choose your PIN' : 'Enter your PIN'}</Text>
+        {mode === 'setup' && <Text style={s.hint}>Setting up for {setupEmail}</Text>}
+        <Animated.View style={[s.dots, { transform: [{ translateX: shakeAnim }] }]}>
+          {[0,1,2,3].map(i => <View key={i} style={[s.dot, pin.length > i && s.dotFilled]}/>)}
         </Animated.View>
-
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-        {loading ? <ActivityIndicator color={COLORS.teal} style={{ marginBottom: 16 }} /> : null}
-
-        <View style={styles.keypad}>
+        {error ? <Text style={s.error}>{error}</Text> : null}
+        {loading ? <ActivityIndicator color={COLORS.teal} style={{ marginBottom: 16 }}/> : null}
+        <View style={s.keypad}>
           {keys.map((row, ri) => (
-            <View key={ri} style={styles.row}>
+            <View key={ri} style={s.row}>
               {row.map((key, ki) => (
-                <TouchableOpacity
-                  key={ki}
-                  style={[styles.key, key === '' && styles.keyEmpty]}
-                  onPress={() => key && handleKey(key)}
-                  disabled={!key || loading}
-                  activeOpacity={0.6}
-                >
-                  {key === 'del' ? (
-                    <Text style={styles.keyDel}>âŒ«</Text>
-                  ) : (
-                    <Text style={styles.keyText}>{key}</Text>
-                  )}
+                <TouchableOpacity key={ki} style={[s.key, key === '' && s.keyEmpty]} onPress={() => key && handleKey(key)} disabled={!key || loading} activeOpacity={0.6}>
+                  {key === 'del' ? <Text style={s.keyDel}>⌫</Text> : <Text style={s.keyText}>{key}</Text>}
                 </TouchableOpacity>
               ))}
             </View>
           ))}
         </View>
-
-        <Text style={styles.hint}>PIN set by your manager when your account was created</Text>
+        {mode === 'login' && (
+          <TouchableOpacity onPress={() => { setShowEmailEntry(true); setError(''); setPin(''); }}>
+            <Text style={s.hint}>New installer? Tap here to set up</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.bg },
   container: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
-  logo: { alignItems: 'center', marginBottom: 48 },
+  logo: { alignItems: 'center', marginBottom: 40 },
   logoIcon: { width: 48, height: 48, backgroundColor: COLORS.teal, borderRadius: 12, flexDirection: 'row', flexWrap: 'wrap', padding: 10, gap: 4, marginBottom: 10 },
-  dot1: { width: 10, height: 10, backgroundColor: COLORS.bg, borderRadius: 2, opacity: 1 },
-  dot2: { width: 10, height: 10, backgroundColor: COLORS.bg, borderRadius: 2, opacity: 0.7 },
-  dot3: { width: 10, height: 10, backgroundColor: COLORS.bg, borderRadius: 2, opacity: 0.7 },
-  dot4: { width: 10, height: 10, backgroundColor: COLORS.bg, borderRadius: 2, opacity: 0.4 },
+  dot1: { width: 10, height: 10, backgroundColor: '#0f1923', borderRadius: 2, opacity: 1 },
+  dot2: { width: 10, height: 10, backgroundColor: '#0f1923', borderRadius: 2, opacity: 0.7 },
+  dot3: { width: 10, height: 10, backgroundColor: '#0f1923', borderRadius: 2, opacity: 0.7 },
+  dot4: { width: 10, height: 10, backgroundColor: '#0f1923', borderRadius: 2, opacity: 0.4 },
+  logoV: { color: '#07100D', fontWeight: '800', fontSize: 22 },
   logoText: { fontSize: 24, fontWeight: '700', color: COLORS.text },
   logoSub: { fontSize: 12, color: COLORS.muted, marginTop: 2 },
-  heading: { fontSize: 18, color: COLORS.text, fontWeight: '600', marginBottom: 28 },
-  dots: { flexDirection: 'row', gap: 16, marginBottom: 12 },
+  heading: { fontSize: 18, color: COLORS.text, fontWeight: '600', marginBottom: 8 },
+  dots: { flexDirection: 'row', gap: 16, marginBottom: 12, marginTop: 12 },
   dot: { width: 14, height: 14, borderRadius: 7, borderWidth: 2, borderColor: COLORS.muted },
   dotFilled: { backgroundColor: COLORS.teal, borderColor: COLORS.teal },
   error: { color: COLORS.error, fontSize: 13, marginBottom: 12, textAlign: 'center' },
@@ -137,5 +195,9 @@ const styles = StyleSheet.create({
   keyEmpty: { backgroundColor: 'transparent' },
   keyText: { fontSize: 26, fontWeight: '300', color: COLORS.text },
   keyDel: { fontSize: 20, color: COLORS.muted },
-  hint: { fontSize: 12, color: COLORS.muted, textAlign: 'center', marginTop: 32, maxWidth: 240 },
+  hint: { fontSize: 12, color: COLORS.muted, textAlign: 'center', marginTop: 8 },
+  emailInput: { width: '100%', maxWidth: 320, backgroundColor: COLORS.card, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, color: COLORS.text, fontSize: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', marginBottom: 12 },
+  emailBtn: { width: '100%', maxWidth: 320, backgroundColor: COLORS.teal, borderRadius: 12, paddingVertical: 15, alignItems: 'center' },
+  emailBtnText: { color: '#0f1923', fontWeight: '700', fontSize: 15 },
 });
+

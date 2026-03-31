@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, SafeAreaView, RefreshControl, Alert, Linking,
@@ -7,6 +7,8 @@ import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { authFetch } from '@/lib/api';
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
 
 const C = {
   bg: '#0f1923', card: '#1a2635', teal: '#00d4a0',
@@ -243,3 +245,4 @@ const s = StyleSheet.create({
   directionsBtn: { backgroundColor: 'rgba(96,165,250,0.08)', borderRadius: 10, paddingVertical: 8, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(96,165,250,0.2)', marginBottom: 8 },
   directionsBtnText: { fontSize: 13, color: '#60a5fa', fontWeight: '500' },
 });
+
