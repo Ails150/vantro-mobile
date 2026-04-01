@@ -65,9 +65,10 @@ export default function DefectsScreen() {
           <Text style={s.sectionTitle}>Log a defect</Text>
           <TextInput value={description} onChangeText={setDescription} placeholder="Describe the defect..." placeholderTextColor={C.muted} multiline numberOfLines={4} style={s.input} textAlignVertical="top" />
           <View style={s.severityRow}>
-            {['minor','major','critical'].map(sev => (
-              <TouchableOpacity key={sev} onPress={() => setSeverity(sev)} style={[s.severityBtn, severity === sev && s.severityBtnActive]}>
-                <Text style={[s.severityText, { color: severityColor(sev) }, severity === sev && s.severityTextActive]}>{sev.charAt(0).toUpperCase() + sev.slice(1)}</Text>
+            {[{l:'Minor',v:'minor',c:'#4d6478'},{l:'Major',v:'major',c:'#fbbf24'},{l:'Critical',v:'critical',c:'#f87171'}].map(({l,v,c}) => (
+              <TouchableOpacity key={v} onPress={() => setSeverity(v)}
+                style={[s.severityBtn, severity===v && {backgroundColor: c, borderColor: c}]}>
+                <Text style={[s.severityText, {color: severity===v ? (v==='minor'?'#fff':'#0f1923') : c}, severity===v && {fontWeight:'700'}]}>{l}</Text>
               </TouchableOpacity>
             ))}
           </View>

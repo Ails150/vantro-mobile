@@ -164,6 +164,32 @@ export default function QAScreen() {
                       </TouchableOpacity>
                     </View>
                   )}
+                  {!done && (
+                    <View style={{ marginTop: 8, gap: 8 }}>
+                      <TextInput
+                        value={notes[item.id] || ''}
+                        onChangeText={t => setNotes(n => ({ ...n, [item.id]: t }))}
+                        placeholder="Add a note (optional)..."
+                        placeholderTextColor={C.muted}
+                        multiline
+                        style={[s.input, { minHeight: 44 }]}
+                        textAlignVertical="top"
+                      />
+                      {item.requires_photo && !photos[item.id] && (
+                        <TouchableOpacity style={s.photoBtn} onPress={() => pickPhoto(item.id)}>
+                          <Text style={s.photoBtnText}>Add photo</Text>
+                        </TouchableOpacity>
+                      )}
+                      {photos[item.id] && (
+                        <View style={{ gap: 6 }}>
+                          <Image source={{ uri: photos[item.id] }} style={s.photoPreview} />
+                          <TouchableOpacity style={s.photoBtn} onPress={() => pickPhoto(item.id)}>
+                            <Text style={s.photoBtnText}>Retake photo</Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
+                    </View>
+                  )}
                 </View>
               );
             })}
