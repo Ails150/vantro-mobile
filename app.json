@@ -26,6 +26,7 @@
                                                       "backgroundColor":  "#0f1923"
                                                   },
                                  "package":  "com.getvantro.app",
+                                 "versionCode":  2,
                                  "permissions":  [
                                                      "ACCESS_FINE_LOCATION",
                                                      "ACCESS_COARSE_LOCATION",
@@ -84,3 +85,4 @@
                  "scheme":  "vantro"
              }
 }
+
