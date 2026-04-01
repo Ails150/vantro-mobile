@@ -42,7 +42,7 @@ export default function QAScreen() {
 
   function allMandatoryComplete() {
     return items.filter((i: any) => i.is_mandatory).every((i: any) => {
-      const state = subs.find((s: any) => s.checklist_item_id === i.id)?.state;
+      const state = getState(i.id);
       return state && state !== 'pending';
     });
   }
