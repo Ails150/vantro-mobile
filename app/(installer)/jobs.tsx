@@ -1,14 +1,13 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, SafeAreaView, RefreshControl, Alert, Linking,
+  StyleSheet, SafeAreaView, RefreshControl, Alert, Linking, AppState,
 } from 'react-native';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { authFetch } from '@/lib/api';
-import * as Notifications from 'expo-notifications';
-import * as Device from 'expo-device';
+import { isOnline, cacheJobs, getCachedJobs, queueAction, syncQueue } from '@/lib/offline';
 
 const C = {
   bg: '#0f1923', card: '#1a2635', teal: '#00d4a0',
@@ -32,19 +31,47 @@ export default function JobsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [gpsLoading, setGpsLoading] = useState<string | null>(null);
   const [gpsMsg, setGpsMsg] = useState<{ id: string; msg: string; ok: boolean } | null>(null);
+  const [offline, setOffline] = useState(false);
+  const appState = useRef(AppState.currentState);
 
   const loadJobs = useCallback(async () => {
-    try {
-      const res = await authFetch('/api/installer/jobs');
-      if (res.status === 401) { await logout(); router.replace('/login'); return; }
-      const data = await res.json();
-      setJobs(data.jobs || []);
-    } catch {}
+    const online = await isOnline();
+    if (online) {
+      // Sync any queued actions first
+      const synced = await syncQueue(authFetch);
+      try {
+        const res = await authFetch('/api/installer/jobs');
+        if (res.status === 401) { await logout(); router.replace('/login'); return; }
+        const data = await res.json();
+        const jobList = data.jobs || [];
+        setJobs(jobList);
+        await cacheJobs(jobList);
+        setOffline(false);
+      } catch {
+        const cached = await getCachedJobs();
+        setJobs(cached);
+        setOffline(true);
+      }
+    } else {
+      const cached = await getCachedJobs();
+      setJobs(cached);
+      setOffline(true);
+    }
     setLoading(false);
     setRefreshing(false);
   }, []);
 
-  useEffect(() => { loadJobs(); }, []);
+  useEffect(() => {
+    loadJobs();
+    // Sync when app comes to foreground
+    const sub = AppState.addEventListener('change', async (next) => {
+      if (appState.current.match(/inactive|background/) && next === 'active') {
+        await loadJobs();
+      }
+      appState.current = next;
+    });
+    return () => sub.remove();
+  }, []);
 
   async function signIn(job: any) {
     const { status } = await Location.requestForegroundPermissionsAsync();
@@ -57,16 +84,27 @@ export default function JobsScreen() {
     try {
       const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
       const { latitude, longitude, accuracy } = loc.coords;
-      const res = await authFetch('/api/signin', {
-        method: 'POST',
-        body: JSON.stringify({ jobId: job.id, lat: latitude, lng: longitude, accuracy: Math.round(accuracy || 0) }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setGpsMsg({ id: job.id, msg: data.error || 'Cannot sign in', ok: false });
+      const online = await isOnline();
+      if (online) {
+        const res = await authFetch('/api/signin', {
+          method: 'POST',
+          body: JSON.stringify({ jobId: job.id, lat: latitude, lng: longitude, accuracy: Math.round(accuracy || 0) }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setGpsMsg({ id: job.id, msg: data.error || 'Cannot sign in', ok: false });
+        } else {
+          setGpsMsg({ id: job.id, msg: 'Signed in - ' + data.distanceMetres + 'm from site', ok: true });
+          loadJobs();
+        }
       } else {
-        setGpsMsg({ id: job.id, msg: 'Signed in - ' + data.distanceMetres + 'm from site', ok: true });
-        loadJobs();
+        // Queue for later
+        await queueAction({ type: 'signin', payload: { jobId: job.id, lat: latitude, lng: longitude, accuracy: Math.round(accuracy || 0) } });
+        // Optimistically update local cache
+        const updated = jobs.map(j => j.id === job.id ? { ...j, signed_in: true } : j);
+        setJobs(updated);
+        await cacheJobs(updated);
+        setGpsMsg({ id: job.id, msg: 'Offline — sign-in queued, will sync when online', ok: true });
       }
     } catch {
       setGpsMsg({ id: job.id, msg: 'Could not get location. Try again.', ok: false });
@@ -91,7 +129,15 @@ export default function JobsScreen() {
               return;
             }
           }
-          await authFetch('/api/signout', { method: 'POST', body: JSON.stringify({ jobId: job.id }) });
+          const online = await isOnline();
+          if (online) {
+            await authFetch('/api/signout', { method: 'POST', body: JSON.stringify({ jobId: job.id }) });
+          } else {
+            await queueAction({ type: 'signout', payload: { jobId: job.id } });
+            const updated = jobs.map(j => j.id === job.id ? { ...j, signed_in: false } : j);
+            setJobs(updated);
+            await cacheJobs(updated);
+          }
           setGpsMsg(null);
           loadJobs();
         },
@@ -100,13 +146,10 @@ export default function JobsScreen() {
   }
 
   function openMaps(job: any) {
-    const address = encodeURIComponent(job.address || '');
     if (job.lat && job.lng) {
-      const url = 'https://www.google.com/maps/dir/?api=1&destination=' + job.lat + ',' + job.lng;
-      Linking.openURL(url).catch(() => Alert.alert('Could not open Maps'));
+      Linking.openURL('https://www.google.com/maps/dir/?api=1&destination=' + job.lat + ',' + job.lng).catch(() => Alert.alert('Could not open Maps'));
     } else {
-      const url = 'https://www.google.com/maps/search/?api=1&query=' + address;
-      Linking.openURL(url).catch(() => Alert.alert('Could not open Maps'));
+      Linking.openURL('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(job.address || '')).catch(() => Alert.alert('Could not open Maps'));
     }
   }
 
@@ -123,6 +166,12 @@ export default function JobsScreen() {
           <Text style={s.signOutText}>Sign out</Text>
         </TouchableOpacity>
       </View>
+
+      {offline && (
+        <View style={s.offlineBanner}>
+          <Text style={s.offlineBannerText}>⚡ Offline — showing cached data. Actions will sync when online.</Text>
+        </View>
+      )}
 
       {signedInJob && (
         <View style={s.activeBanner}>
@@ -212,6 +261,8 @@ const s = StyleSheet.create({
   headerRole: { fontSize: 12, color: C.muted },
   signOutBtn: { borderWidth: 1, borderColor: C.border, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6 },
   signOutText: { fontSize: 13, color: C.muted },
+  offlineBanner: { flexDirection: 'row', alignItems: 'center', margin: 16, marginBottom: 0, backgroundColor: 'rgba(251,191,36,0.08)', borderWidth: 1, borderColor: 'rgba(251,191,36,0.25)', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10 },
+  offlineBannerText: { flex: 1, fontSize: 12, color: C.amber },
   activeBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, margin: 16, backgroundColor: 'rgba(0,212,160,0.08)', borderWidth: 1, borderColor: 'rgba(0,212,160,0.2)', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10 },
   activeDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: C.teal },
   activeBannerText: { flex: 1, fontSize: 13, color: C.teal },
@@ -245,4 +296,3 @@ const s = StyleSheet.create({
   directionsBtn: { backgroundColor: 'rgba(96,165,250,0.08)', borderRadius: 10, paddingVertical: 8, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(96,165,250,0.2)', marginBottom: 8 },
   directionsBtnText: { fontSize: 13, color: '#60a5fa', fontWeight: '500' },
 });
-

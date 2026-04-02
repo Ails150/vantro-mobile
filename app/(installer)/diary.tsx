@@ -1,8 +1,10 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, Alert } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, Alert, AppState } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { authFetch } from '@/lib/api';
+import { isOnline, queueAction, syncQueue } from '@/lib/offline';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const C = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)', red: '#f87171', amber: '#fbbf24' };
 
@@ -13,34 +15,94 @@ export default function DiaryScreen() {
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
   const [entries, setEntries] = useState<any[]>([]);
+  const [offline, setOffline] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  const appState = useRef(AppState.currentState);
+  const DIARY_CACHE_KEY = 'vantro_diary_' + id;
 
-  useEffect(() => { load(); }, []);
+  const load = useCallback(async () => {
+    const online = await isOnline();
+    if (online) {
+      try {
+        // Sync any queued diary entries first
+        await syncQueue(authFetch);
+        const res = await authFetch('/api/diary?jobId=' + id);
+        if (res.ok) {
+          const data = await res.json();
+          const fetched = data.entries || [];
+          setEntries(fetched);
+          await AsyncStorage.setItem(DIARY_CACHE_KEY, JSON.stringify(fetched));
+          setOffline(false);
+        }
+      } catch {
+        const raw = await AsyncStorage.getItem(DIARY_CACHE_KEY);
+        setEntries(raw ? JSON.parse(raw) : []);
+        setOffline(true);
+      }
+    } else {
+      const raw = await AsyncStorage.getItem(DIARY_CACHE_KEY);
+      setEntries(raw ? JSON.parse(raw) : []);
+      setOffline(true);
+    }
+  }, [id]);
 
-  async function load() {
-    const res = await authFetch('/api/diary?jobId=' + id);
-    if (res.ok) { const data = await res.json(); setEntries(data.entries || []); }
-  }
+  useEffect(() => {
+    load();
+    const sub = AppState.addEventListener('change', async (next) => {
+      if (appState.current.match(/inactive|background/) && next === 'active') {
+        await load();
+      }
+      appState.current = next;
+    });
+    return () => sub.remove();
+  }, []);
 
   async function submit() {
     if (!text.trim()) return;
     setLoading(true);
-    const res = await authFetch('/api/diary', {
-      method: 'POST',
-      body: JSON.stringify({ jobId: id, entryText: text, companyId: user?.companyId, userId: user?.userId }),
-    });
-    setLoading(false);
-    if (res.ok) {
-      const data = await res.json();
-      setText('');
-      load();
-      if (data.entry?.ai_alert_type && data.entry.ai_alert_type !== 'none') {
-        Alert.alert(
-          data.entry.ai_alert_type === 'blocker' ? 'Blocker flagged' : 'Issue flagged',
-          data.entry.ai_summary || 'AI flagged this entry. Your manager has been notified.',
-          [{ text: 'OK' }]
-        );
+    const online = await isOnline();
+
+    if (online) {
+      const res = await authFetch('/api/diary', {
+        method: 'POST',
+        body: JSON.stringify({ jobId: id, entryText: text, companyId: user?.companyId, userId: user?.userId }),
+      });
+      setLoading(false);
+      if (res.ok) {
+        const data = await res.json();
+        setText('');
+        load();
+        if (data.entry?.ai_alert_type && data.entry.ai_alert_type !== 'none') {
+          Alert.alert(
+            data.entry.ai_alert_type === 'blocker' ? 'Blocker flagged' : 'Issue flagged',
+            data.entry.ai_summary || 'AI flagged this entry. Your manager has been notified.',
+            [{ text: 'OK' }]
+          );
+        }
       }
+    } else {
+      // Queue for sync when online
+      await queueAction({
+        type: 'diary',
+        payload: { jobId: id, entryText: text, companyId: user?.companyId, userId: user?.userId },
+      });
+      // Show optimistically in local list
+      const optimistic = {
+        id: 'offline_' + Date.now(),
+        entry_text: text,
+        created_at: new Date().toISOString(),
+        ai_alert_type: null,
+        ai_summary: null,
+        reply: null,
+        replied_at: null,
+        _offline: true,
+      };
+      const updated = [...entries, optimistic];
+      setEntries(updated);
+      await AsyncStorage.setItem(DIARY_CACHE_KEY, JSON.stringify(updated));
+      setText('');
+      setLoading(false);
+      Alert.alert('Saved offline', 'Your entry will be submitted and AI-analysed when you are back online.');
     }
   }
 
@@ -55,10 +117,11 @@ export default function DiaryScreen() {
         <TouchableOpacity onPress={() => router.back()} style={s.back}>
           <Text style={s.backText}>←</Text>
         </TouchableOpacity>
-        <View>
+        <View style={{ flex: 1 }}>
           <Text style={s.title}>Site Diary</Text>
           <Text style={s.subtitle}>{name}</Text>
         </View>
+        {offline && <Text style={s.offlinePill}>⚡ Offline</Text>}
       </View>
 
       <ScrollView ref={scrollRef} contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
@@ -67,8 +130,13 @@ export default function DiaryScreen() {
         )}
         {entries.map((entry: any) => (
           <View key={entry.id} style={s.entryBlock}>
-            <View style={s.entryBubble}>
+            <View style={[s.entryBubble, entry._offline && s.entryBubbleOffline]}>
               <Text style={s.entryText}>{entry.entry_text}</Text>
+              {entry._offline && (
+                <View style={s.offlineTag}>
+                  <Text style={s.offlineTagText}>⏳ Queued — will sync when online</Text>
+                </View>
+              )}
               {entry.ai_alert_type && entry.ai_alert_type !== 'none' && (
                 <View style={[s.alertTag, entry.ai_alert_type === 'blocker' ? s.alertTagRed : s.alertTagAmber]}>
                   <Text style={[s.alertTagText, entry.ai_alert_type === 'blocker' ? {color: C.red} : {color: C.amber}]}>
@@ -106,11 +174,11 @@ export default function DiaryScreen() {
               onPress={submit}
               disabled={!text.trim() || loading}
             >
-              <Text style={s.submitBtnText}>{loading ? 'Submitting...' : 'Submit entry'}</Text>
+              <Text style={s.submitBtnText}>{loading ? 'Submitting...' : offline ? 'Save offline' : 'Submit entry'}</Text>
             </TouchableOpacity>
           </View>
         </View>
-        <Text style={s.aiNote}>AI reads your entry and alerts the manager to any issues or blockers.</Text>
+        <Text style={s.aiNote}>{offline ? 'Entries saved offline will be AI-analysed when you reconnect.' : 'AI reads your entry and alerts the manager to any issues or blockers.'}</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -123,12 +191,16 @@ const s = StyleSheet.create({
   backText: { fontSize: 22, color: C.muted },
   title: { fontSize: 15, fontWeight: '600', color: C.text },
   subtitle: { fontSize: 12, color: C.muted },
+  offlinePill: { fontSize: 11, color: C.amber, backgroundColor: 'rgba(251,191,36,0.1)', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: 'rgba(251,191,36,0.25)' },
   scroll: { padding: 16, paddingBottom: 40 },
   empty: { color: C.muted, textAlign: 'center', marginTop: 32, fontSize: 14 },
   entryBlock: { marginBottom: 16 },
   entryBubble: { backgroundColor: C.card, borderRadius: 14, borderTopRightRadius: 4, padding: 14, borderWidth: 1, borderColor: C.border, alignSelf: 'flex-end', maxWidth: '90%' },
+  entryBubbleOffline: { borderColor: 'rgba(251,191,36,0.3)', backgroundColor: 'rgba(251,191,36,0.04)' },
   entryText: { color: C.text, fontSize: 14, lineHeight: 22 },
   entryTime: { color: C.muted, fontSize: 11, marginTop: 6, textAlign: 'right' },
+  offlineTag: { backgroundColor: 'rgba(251,191,36,0.08)', borderRadius: 6, padding: 6, marginTop: 6 },
+  offlineTagText: { fontSize: 11, color: C.amber },
   alertTag: { borderRadius: 6, padding: 8, marginTop: 8 },
   alertTagRed: { backgroundColor: 'rgba(248,113,113,0.1)' },
   alertTagAmber: { backgroundColor: 'rgba(251,191,36,0.1)' },
