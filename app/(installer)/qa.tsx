@@ -13,7 +13,7 @@ export default function QAScreen() {
   const [activeChecklist, setActiveChecklist] = useState(0);
   const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState<Record<string, string>>({});
-  const [photos, setPhotos] = useState<Record<string, string>>({});
+  const [photos, setPhotos] = useState<Record<string, string[]>>({});
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState<Record<string, boolean>>({});
@@ -35,9 +35,22 @@ export default function QAScreen() {
     return subs.find((s: any) => s.checklist_item_id === itemId)?.state || 'pending';
   }
 
-  async function pickPhoto(itemId: string) {
-    const result = await ImagePicker.launchCameraAsync({ quality: 0.7 });
-    if (!result.canceled) setPhotos(p => ({ ...p, [itemId]: result.assets[0].uri }));
+  async function pickPhoto(itemId: string, useLibrary = false) {
+    const perm = useLibrary
+      ? await ImagePicker.requestMediaLibraryPermissionsAsync()
+      : await ImagePicker.requestCameraPermissionsAsync();
+    if (!perm.granted) { Alert.alert('Permission required'); return; }
+    const result = useLibrary
+      ? await ImagePicker.launchImageLibraryAsync({ quality: 0.7, allowsMultipleSelection: true })
+      : await ImagePicker.launchCameraAsync({ quality: 0.7 });
+    if (!result.canceled) {
+      const uris = result.assets.map((a: any) => a.uri);
+      setPhotos(p => ({ ...p, [itemId]: [...(p[itemId] || []), ...uris] }));
+    }
+  }
+
+  function removePhoto(itemId: string, idx: number) {
+    setPhotos(p => ({ ...p, [itemId]: (p[itemId] || []).filter((_: any, i: number) => i !== idx) }));
   }
 
   function allMandatoryComplete() {
@@ -60,16 +73,18 @@ export default function QAScreen() {
   }
 
   async function submit(itemId: string, state: string) {
-    const photo = photos[itemId];
+    const photoList = photos[itemId] || [];
     let photoUrl = '', photoPath = '';
-    if (photo) {
+    if (photoList.length > 0) {
       setUploading(u => ({ ...u, [itemId]: true }));
-      const form = new FormData();
-      form.append('file', { uri: photo, type: 'image/jpeg', name: 'qa.jpg' } as any);
-      form.append('jobId', id);
-      form.append('itemId', itemId);
-      const upRes = await authFormFetch('/api/upload', form);
-      if (upRes.ok) { const d = await upRes.json(); photoUrl = d.url; photoPath = d.path; }
+      for (let i = 0; i < photoList.length; i++) {
+        const form = new FormData();
+        form.append('file', { uri: photoList[i], type: 'image/jpeg', name: 'qa_' + i + '.jpg' } as any);
+        form.append('jobId', id);
+        form.append('itemId', itemId);
+        const upRes = await authFormFetch('/api/upload', form);
+        if (upRes.ok) { const d = await upRes.json(); if (i === 0) { photoUrl = d.url; photoPath = d.path; } }
+      }
       setUploading(u => ({ ...u, [itemId]: false }));
     }
     await authFetch('/api/qa', {
@@ -155,12 +170,24 @@ export default function QAScreen() {
                   )}
                   {!done && item.item_type === 'photo' && (
                     <View style={{ gap: 8 }}>
-                      {photos[item.id] && <Image source={{ uri: photos[item.id] }} style={s.photoPreview} />}
-                      <TouchableOpacity style={s.photoBtn} onPress={() => pickPhoto(item.id)}>
-                        <Text style={s.photoBtnText}>{photos[item.id] ? 'Retake photo' : 'Take photo'}</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity style={[s.actionBtn, !photos[item.id] && s.actionBtnDisabled]} disabled={!photos[item.id] || uploading[item.id]} onPress={() => submit(item.id, 'submitted')}>
-                        <Text style={s.actionBtnText}>{uploading[item.id] ? 'Uploading...' : 'Submit with photo'}</Text>
+                      {(photos[item.id] || []).map((uri: string, idx: number) => (
+                        <View key={idx} style={{ position: 'relative' }}>
+                          <Image source={{ uri }} style={s.photoPreview} />
+                          <TouchableOpacity onPress={() => removePhoto(item.id, idx)} style={{ position: 'absolute', top: 6, right: 6, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 12, width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}>
+                            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>×</Text>
+                          </TouchableOpacity>
+                        </View>
+                      ))}
+                      <View style={{ flexDirection: 'row', gap: 8 }}>
+                        <TouchableOpacity style={[s.photoBtn, { flex: 1 }]} onPress={() => pickPhoto(item.id, false)}>
+                          <Text style={s.photoBtnText}>📷 Camera</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={[s.photoBtn, { flex: 1 }]} onPress={() => pickPhoto(item.id, true)}>
+                          <Text style={s.photoBtnText}>🖼️ Library</Text>
+                        </TouchableOpacity>
+                      </View>
+                      <TouchableOpacity style={[s.actionBtn, !(photos[item.id]?.length) && s.actionBtnDisabled]} disabled={!(photos[item.id]?.length) || uploading[item.id]} onPress={() => submit(item.id, 'submitted')}>
+                        <Text style={s.actionBtnText}>{uploading[item.id] ? 'Uploading...' : 'Submit with photos'}</Text>
                       </TouchableOpacity>
                     </View>
                   )}
