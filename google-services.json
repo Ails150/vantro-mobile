@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "43664086498",
+    "project_id": "vantro-3be0f",
+    "storage_bucket": "vantro-3be0f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:43664086498:android:12cf427a8cefb8c05b15bb",
+        "android_client_info": {
+          "package_name": "com.getvantro.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyArSljqX_4JhcVIVk-P8xs8YNFCCYyOCYs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

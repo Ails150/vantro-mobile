@@ -1,4 +1,4 @@
-﻿{
+{
     "expo":  {
                  "name":  "Vantro",
                  "slug":  "vantro",
@@ -46,7 +46,8 @@
                                                      "android.permission.ACCESS_FINE_LOCATION",
                                                      "android.permission.CAMERA",
                                                      "android.permission.RECORD_AUDIO"
-                                                 ]
+                                                 ],
+                                 "googleServicesFile":  "./google-services.json"
                              },
                  "plugins":  [
                                  "expo-router",
@@ -85,4 +86,3 @@
                  "scheme":  "vantro"
              }
 }
-
