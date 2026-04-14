@@ -1,3 +1,8 @@
+Write-Host "=== VANTRO QA SUBMIT FIX ===" -ForegroundColor Cyan
+Write-Host "Fix: Submit for approval auto-submits all items with data" -ForegroundColor Yellow
+Write-Host ""
+
+$qa = @'
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, Image, Alert, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -426,3 +431,20 @@ const s = StyleSheet.create({
   submitBtnText: { color: '#0f1923', fontWeight: '700', fontSize: 15 },
   submitBtnTextDone: { color: C.teal },
 });
+'@
+
+[System.IO.File]::WriteAllText("C:\vantro-mobile\app\(installer)\qa.tsx", $qa, [System.Text.UTF8Encoding]::new($false))
+Write-Host "qa.tsx updated" -ForegroundColor Green
+
+cd C:\vantro-mobile
+git add .
+git commit -m "Fix: Submit for approval auto-submits all items with data, uploads photos in one tap"
+
+Write-Host ""
+Write-Host "Committed. Now bump version and build:" -ForegroundColor Yellow
+Write-Host "  eas build:version:set --platform android  (set to 7)" -ForegroundColor White
+Write-Host "  eas build --platform android --profile preview" -ForegroundColor White
+Write-Host ""
+Write-Host "Test with preview APK first. Once confirmed working:" -ForegroundColor Yellow
+Write-Host "  eas build --platform android --profile production" -ForegroundColor White
+Write-Host "  Upload .aab to Google Play Console" -ForegroundColor White
