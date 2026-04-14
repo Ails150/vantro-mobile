@@ -7,6 +7,7 @@ import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { authFetch } from '@/lib/api';
+import { startBackgroundTracking, stopBackgroundTracking } from '@/lib/locationTracker';
 import { isOnline, cacheJobs, getCachedJobs, queueAction, syncQueue } from '@/lib/offline';
 
 const C = {
@@ -95,6 +96,8 @@ export default function JobsScreen() {
           setGpsMsg({ id: job.id, msg: data.error || 'Cannot sign in', ok: false });
         } else {
           setGpsMsg({ id: job.id, msg: 'Signed in - ' + data.distanceMetres + 'm from site', ok: true });
+          // Start GPS breadcrumb tracking
+          startBackgroundTracking().catch(e => console.error('Failed to start tracking:', e));
           loadJobs();
         }
       } else {
@@ -104,7 +107,8 @@ export default function JobsScreen() {
         const updated = jobs.map(j => j.id === job.id ? { ...j, signed_in: true } : j);
         setJobs(updated);
         await cacheJobs(updated);
-        setGpsMsg({ id: job.id, msg: 'Offline — sign-in queued, will sync when online', ok: true });
+        setGpsMsg({ id: job.id, msg: 'Offline - sign-in queued, will sync when online', ok: true });
+        startBackgroundTracking().catch(e => console.error('Failed to start tracking:', e));
       }
     } catch {
       setGpsMsg({ id: job.id, msg: 'Could not get location. Try again.', ok: false });
@@ -131,7 +135,9 @@ export default function JobsScreen() {
           }
           const online = await isOnline();
           if (online) {
-            await authFetch('/api/signout', { method: 'POST', body: JSON.stringify({ jobId: job.id }) });
+            await authFetch('/api/signout', { method: 'POST', body: JSON.stringify({ jobId: job.id, lat: latitude, lng: longitude, accuracy: Math.round(loc.coords.accuracy || 0) }) });
+            // Stop GPS breadcrumb tracking
+            stopBackgroundTracking().catch(e => console.error('Failed to stop tracking:', e));
           } else {
             await queueAction({ type: 'signout', payload: { jobId: job.id } });
             const updated = jobs.map(j => j.id === job.id ? { ...j, signed_in: false } : j);
