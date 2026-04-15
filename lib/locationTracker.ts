@@ -71,3 +71,4 @@ export async function isTrackingActive() {
   return Location.hasStartedLocationUpdatesAsync(LOCATION_TASK).catch(() => false);
 }
 
+

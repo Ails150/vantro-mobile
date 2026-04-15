@@ -98,7 +98,7 @@ export default function JobsScreen() {
         } else {
           setGpsMsg({ id: job.id, msg: 'Signed in - ' + data.distanceMetres + 'm from site', ok: true });
           // Start GPS breadcrumb tracking
-          if (data.signOutTime) { SecureStore.setItemAsync('vantro_sign_out_time', data.signOutTime).catch(() => {}); }
+          if (data.weeklySchedule) { SecureStore.setItemAsync('vantro_weekly_schedule', JSON.stringify(data.weeklySchedule)).catch(() => {}); }
           startBackgroundTracking().catch(e => console.error('Failed to start tracking:', e));
           loadJobs();
         }
@@ -110,7 +110,7 @@ export default function JobsScreen() {
         setJobs(updated);
         await cacheJobs(updated);
         setGpsMsg({ id: job.id, msg: 'Offline - sign-in queued, will sync when online', ok: true });
-        if (data.signOutTime) { SecureStore.setItemAsync('vantro_sign_out_time', data.signOutTime).catch(() => {}); }
+        if (data.weeklySchedule) { SecureStore.setItemAsync('vantro_weekly_schedule', JSON.stringify(data.weeklySchedule)).catch(() => {}); }
           startBackgroundTracking().catch(e => console.error('Failed to start tracking:', e));
       }
     } catch {
@@ -306,3 +306,4 @@ const s = StyleSheet.create({
   directionsBtn: { backgroundColor: 'rgba(96,165,250,0.08)', borderRadius: 10, paddingVertical: 8, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(96,165,250,0.2)', marginBottom: 8 },
   directionsBtnText: { fontSize: 13, color: '#60a5fa', fontWeight: '500' },
 });
+
