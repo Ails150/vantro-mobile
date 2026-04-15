@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, SafeAreaView, RefreshControl, Alert, Linking, AppState,
@@ -7,6 +7,7 @@ import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { authFetch } from '@/lib/api';
+import * as SecureStore from 'expo-secure-store';
 import { startBackgroundTracking, stopBackgroundTracking } from '@/lib/locationTracker';
 import { isOnline, cacheJobs, getCachedJobs, queueAction, syncQueue } from '@/lib/offline';
 
@@ -97,6 +98,7 @@ export default function JobsScreen() {
         } else {
           setGpsMsg({ id: job.id, msg: 'Signed in - ' + data.distanceMetres + 'm from site', ok: true });
           // Start GPS breadcrumb tracking
+          if (data.signOutTime) { SecureStore.setItemAsync('vantro_sign_out_time', data.signOutTime).catch(() => {}); }
           startBackgroundTracking().catch(e => console.error('Failed to start tracking:', e));
           loadJobs();
         }
@@ -108,7 +110,8 @@ export default function JobsScreen() {
         setJobs(updated);
         await cacheJobs(updated);
         setGpsMsg({ id: job.id, msg: 'Offline - sign-in queued, will sync when online', ok: true });
-        startBackgroundTracking().catch(e => console.error('Failed to start tracking:', e));
+        if (data.signOutTime) { SecureStore.setItemAsync('vantro_sign_out_time', data.signOutTime).catch(() => {}); }
+          startBackgroundTracking().catch(e => console.error('Failed to start tracking:', e));
       }
     } catch {
       setGpsMsg({ id: job.id, msg: 'Could not get location. Try again.', ok: false });
@@ -137,6 +140,7 @@ export default function JobsScreen() {
           if (online) {
             await authFetch('/api/signout', { method: 'POST', body: JSON.stringify({ jobId: job.id, lat: latitude, lng: longitude, accuracy: Math.round(loc.coords.accuracy || 0) }) });
             // Stop GPS breadcrumb tracking
+            SecureStore.deleteItemAsync('vantro_sign_out_time').catch(() => {});
             stopBackgroundTracking().catch(e => console.error('Failed to stop tracking:', e));
           } else {
             await queueAction({ type: 'signout', payload: { jobId: job.id } });
@@ -175,7 +179,7 @@ export default function JobsScreen() {
 
       {offline && (
         <View style={s.offlineBanner}>
-          <Text style={s.offlineBannerText}>⚡ Offline — showing cached data. Actions will sync when online.</Text>
+          <Text style={s.offlineBannerText}>âš¡ Offline â€” showing cached data. Actions will sync when online.</Text>
         </View>
       )}
 

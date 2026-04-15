@@ -1,3 +1,4 @@
+﻿import * as SecureStore from 'expo-secure-store';
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import { getToken } from './api';
