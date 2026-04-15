@@ -46,9 +46,9 @@ export async function startBackgroundTracking() {
 
   await Location.startLocationUpdatesAsync(LOCATION_TASK, {
     accuracy: Location.Accuracy.Balanced,
-    timeInterval: 3600000,      // every 60 minutes
+    timeInterval: 1800000,      // every 30 minutes
     distanceInterval: 500,      // or every 500 metres
-    deferredUpdatesInterval: 3600000,
+    deferredUpdatesInterval: 1800000,
     showsBackgroundLocationIndicator: true,
     foregroundService: {
       notificationTitle: 'Vantro',
@@ -70,3 +70,4 @@ export async function stopBackgroundTracking() {
 export async function isTrackingActive() {
   return Location.hasStartedLocationUpdatesAsync(LOCATION_TASK).catch(() => false);
 }
+
