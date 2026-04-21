@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, Alert, AppState } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, Alert, AppState, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { authFetch } from '@/lib/api';
 import { isOnline, queueAction, syncQueue } from '@/lib/offline';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
+import { API_BASE } from '@/constants/api';
 
 const C = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)', red: '#f87171', amber: '#fbbf24' };
 
@@ -16,6 +19,10 @@ export default function DiaryScreen() {
   const [loading, setLoading] = useState(false);
   const [entries, setEntries] = useState<any[]>([]);
   const [offline, setOffline] = useState(false);
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [video, setVideo] = useState<string|null>(null);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const appState = useRef(AppState.currentState);
   const DIARY_CACHE_KEY = 'vantro_diary_' + id;
@@ -24,7 +31,6 @@ export default function DiaryScreen() {
     const online = await isOnline();
     if (online) {
       try {
-        // Sync any queued diary entries first
         await syncQueue(authFetch);
         const res = await authFetch('/api/diary?jobId=' + id);
         if (res.ok) {
@@ -49,171 +55,211 @@ export default function DiaryScreen() {
   useEffect(() => {
     load();
     const sub = AppState.addEventListener('change', async (next) => {
-      if (appState.current.match(/inactive|background/) && next === 'active') {
-        await load();
-      }
+      if (appState.current.match(/inactive|background/) && next === 'active') await load();
       appState.current = next;
     });
     return () => sub.remove();
   }, []);
 
-  async function submit() {
-    if (!text.trim()) return;
-    setLoading(true);
-    const online = await isOnline();
+  async function pickPhoto() {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') { Alert.alert('Permission needed', 'Allow photo access to attach images'); return; }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsMultipleSelection: true, quality: 0.7 });
+    if (!result.canceled) setPhotos(prev => [...prev, ...result.assets.map(a => a.uri)]);
+  }
 
-    if (online) {
-      const res = await authFetch('/api/diary', {
-        method: 'POST',
-        body: JSON.stringify({ jobId: id, entryText: text, companyId: user?.companyId, userId: user?.userId }),
-      });
-      setLoading(false);
+  async function takePhoto() {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') { Alert.alert('Permission needed', 'Allow camera access to take photos'); return; }
+    const result = await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.7 });
+    if (!result.canceled) setPhotos(prev => [...prev, result.assets[0].uri]);
+  }
+
+  async function uploadPhotos(photoUris: string[]): Promise<string[]> {
+    const urls: string[] = [];
+    for (const uri of photoUris) {
+      try {
+        const filename = 'diary_' + Date.now() + '_' + Math.random().toString(36).slice(2) + '.jpg';
+        const formData = new FormData();
+        formData.append('file', { uri, name: filename, type: 'image/jpeg' } as any);
+        formData.append('bucket', 'diary-media');
+        formData.append('path', filename);
+        const res = await authFetch('/api/upload', { method: 'POST', body: formData, headers: {} });
+        if (res.ok) {
+          const data = await res.json();
+          urls.push(data.url);
+        }
+      } catch (e) { console.error('Upload error:', e); }
+    }
+    return urls;
+  }
+
+  async function pickVideo() {
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Videos, quality: 0.7, videoMaxDuration: 120 });
+    if (!result.canceled) setVideo(result.assets[0].uri);
+  }
+
+  async function recordVideo() {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') { Alert.alert('Permission needed', 'Allow camera access to record video'); return; }
+    const result = await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Videos, videoMaxDuration: 120, quality: 0.7 });
+    if (!result.canceled) setVideo(result.assets[0].uri);
+  }
+
+  async function uploadVideo(uri: string): Promise<string|null> {
+    try {
+      const filename = 'diary_video_' + Date.now() + '.mp4';
+      const formData = new FormData();
+      formData.append('file', { uri, name: filename, type: 'video/mp4' } as any);
+      const res = await authFetch('/api/stream', { method: 'POST', body: formData, headers: {} });
       if (res.ok) {
         const data = await res.json();
-        setText('');
-        load();
-        if (data.entry?.ai_alert_type && data.entry.ai_alert_type !== 'none') {
-          Alert.alert(
-            data.entry.ai_alert_type === 'blocker' ? 'Blocker flagged' : 'Issue flagged',
-            data.entry.ai_summary || 'AI flagged this entry. Your manager has been notified.',
-            [{ text: 'OK' }]
-          );
-        }
+        return data.embedUrl || null;
       }
-    } else {
-      // Queue for sync when online
-      await queueAction({
-        type: 'diary',
-        payload: { jobId: id, entryText: text, companyId: user?.companyId, userId: user?.userId },
-      });
-      // Show optimistically in local list
-      const optimistic = {
-        id: 'offline_' + Date.now(),
-        entry_text: text,
-        created_at: new Date().toISOString(),
-        ai_alert_type: null,
-        ai_summary: null,
-        reply: null,
-        replied_at: null,
-        _offline: true,
-      };
-      const updated = [...entries, optimistic];
-      setEntries(updated);
-      await AsyncStorage.setItem(DIARY_CACHE_KEY, JSON.stringify(updated));
-      setText('');
-      setLoading(false);
-      Alert.alert('Saved offline', 'Your entry will be submitted and AI-analysed when you are back online.');
-    }
+    } catch (e) { console.error('Video upload error:', e); }
+    return null;
   }
 
-  function formatTime(ts: string) {
-    const d = new Date(ts);
-    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  async function submit() {
+    if (!text.trim() && photos.length === 0) return;
+    setLoading(true);
+    setUploading(photos.length > 0);
+    try {
+      let photoUrls: string[] = [];
+      if (photos.length > 0) {
+        const online = await isOnline();
+        if (online) photoUrls = await uploadPhotos(photos);
+      }
+      setUploading(false);
+      const online = await isOnline();
+      if (online) {
+        const res = await authFetch('/api/diary', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jobId: id, entryText: text.trim() || (video ? '🎥 Video entry' : '📷 Photo entry'), photoUrls, videoUrl: video ? await uploadVideo(video) : null })
+        });
+        if (res.ok) {
+          setText('');
+          setPhotos([]);
+          await load();
+          scrollRef.current?.scrollToEnd({ animated: true });
+        }
+      } else {
+        await queueAction({ type: 'diary', payload: { jobId: id, entryText: text.trim() || '📷 Photo entry', photoUrls } });
+        setText('');
+        setPhotos([]);
+        Alert.alert('Queued', 'Entry will sync when online');
+      }
+    } catch (e) { Alert.alert('Error', 'Failed to submit'); }
+    setLoading(false);
+    setUploading(false);
   }
+
+  function removePhoto(uri: string) { setPhotos(prev => prev.filter(p => p !== uri)); }
+
+  const alertColor = (t: string) => t === 'blocker' ? C.red : t === 'issue' ? C.amber : C.teal;
 
   return (
     <SafeAreaView style={s.safe}>
       <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()} style={s.back}>
-          <Text style={s.backText}>←</Text>
-        </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Text style={s.title}>Site Diary</Text>
-          <Text style={s.subtitle}>{name}</Text>
-        </View>
-        {offline && <Text style={s.offlinePill}>⚡ Offline</Text>}
+        <TouchableOpacity onPress={() => router.back()} style={s.back}><Text style={s.backTxt}>←</Text></TouchableOpacity>
+        <View style={{ flex: 1 }}><Text style={s.title} numberOfLines={1}>{name}</Text><Text style={s.sub}>Site Diary</Text></View>
       </View>
-
-      <ScrollView ref={scrollRef} contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
-        {entries.length === 0 && (
-          <Text style={s.empty}>No diary entries yet. Log what happened on site today.</Text>
-        )}
-        {entries.map((entry: any) => (
-          <View key={entry.id} style={s.entryBlock}>
-            <View style={[s.entryBubble, entry._offline && s.entryBubbleOffline]}>
-              <Text style={s.entryText}>{entry.entry_text}</Text>
-              {entry._offline && (
-                <View style={s.offlineTag}>
-                  <Text style={s.offlineTagText}>⏳ Queued — will sync when online</Text>
+      {offline && <View style={s.offlineBanner}><Text style={s.offlineTxt}>Offline — showing cached entries</Text></View>}
+      <ScrollView ref={scrollRef} style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 8 }}>
+        {entries.map((e: any) => (
+          <View key={e.id} style={[s.entry, e.ai_alert_type && e.ai_alert_type !== 'none' && { borderLeftWidth: 3, borderLeftColor: alertColor(e.ai_alert_type) }]}>
+            <View style={s.entryRow}>
+              {e.ai_alert_type && e.ai_alert_type !== 'none' && (
+                <View style={[s.badge, { backgroundColor: alertColor(e.ai_alert_type) + '22' }]}>
+                  <Text style={[s.badgeTxt, { color: alertColor(e.ai_alert_type) }]}>{e.ai_alert_type.toUpperCase()}</Text>
                 </View>
               )}
-              {entry.ai_alert_type && entry.ai_alert_type !== 'none' && (
-                <View style={[s.alertTag, entry.ai_alert_type === 'blocker' ? s.alertTagRed : s.alertTagAmber]}>
-                  <Text style={[s.alertTagText, entry.ai_alert_type === 'blocker' ? {color: C.red} : {color: C.amber}]}>
-                    {entry.ai_alert_type === 'blocker' ? 'BLOCKER' : 'ISSUE'} — {entry.ai_summary}
-                  </Text>
-                </View>
-              )}
-              <Text style={s.entryTime}>{formatTime(entry.created_at)}</Text>
+              <Text style={s.entryTime}>{new Date(e.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</Text>
             </View>
-            {entry.reply && (
-              <View style={s.replyBubble}>
-                <Text style={s.replyLabel}>Manager reply</Text>
-                <Text style={s.replyText}>{entry.reply}</Text>
-                <Text style={s.entryTime}>{entry.replied_at ? formatTime(entry.replied_at) : ''}</Text>
+            {e.entry_text && e.entry_text !== '📷 Photo entry' && <Text style={s.entryText}>{e.entry_text}</Text>}
+            {e.ai_summary && e.ai_alert_type !== 'none' && <Text style={[s.aiSummary, { color: alertColor(e.ai_alert_type) }]}>AI: {e.ai_summary}</Text>}
+            {e.photo_urls && e.photo_urls.length > 0 && (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
+                {e.photo_urls.map((url: string, i: number) => (
+                  <Image key={i} source={{ uri: url }} style={s.photoThumb} />
+                ))}
+              </ScrollView>
+            )}
+            {e.reply && (
+              <View style={s.replyBox}>
+                <Text style={s.replyLabel}>Admin reply</Text>
+                <Text style={s.replyText}>{e.reply}</Text>
               </View>
             )}
           </View>
         ))}
-
-        <View style={s.inputCard}>
-          <TextInput
-            value={text}
-            onChangeText={setText}
-            placeholder="What happened on site today? Log progress, issues, blockers..."
-            placeholderTextColor={C.muted}
-            multiline
-            numberOfLines={5}
-            style={s.input}
-            textAlignVertical="top"
-          />
-          <View style={s.cardFooter}>
-            <Text style={s.charCount}>{text.length} characters</Text>
-            <TouchableOpacity
-              style={[s.submitBtn, (!text.trim() || loading) && s.submitBtnDisabled]}
-              onPress={submit}
-              disabled={!text.trim() || loading}
-            >
-              <Text style={s.submitBtnText}>{loading ? 'Submitting...' : offline ? 'Save offline' : 'Submit entry'}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-        <Text style={s.aiNote}>{offline ? 'Entries saved offline will be AI-analysed when you reconnect.' : 'AI reads your entry and alerts the manager to any issues or blockers.'}</Text>
       </ScrollView>
+      {video && (
+        <View style={{ paddingHorizontal: 16, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#1a2635' }}>
+          <Text style={{ color: '#00d4a0', fontSize: 13 }}>🎥 Video ready</Text>
+          <TouchableOpacity onPress={() => setVideo(null)}><Text style={{ color: '#f87171', fontSize: 12 }}>✕ Remove</Text></TouchableOpacity>
+        </View>
+      )}
+      {photos.length > 0 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.photoPreview}>
+          {photos.map((uri, i) => (
+            <View key={i} style={s.photoPreviewItem}>
+              <Image source={{ uri }} style={s.photoPreviewImg} />
+              <TouchableOpacity onPress={() => removePhoto(uri)} style={s.photoRemove}><Text style={{ color: '#fff', fontSize: 12 }}>✕</Text></TouchableOpacity>
+            </View>
+          ))}
+        </ScrollView>
+      )}
+      <View style={s.inputArea}>
+        <View style={s.mediaButtons}>
+          <TouchableOpacity onPress={takePhoto} style={s.mediaBtn}><Text style={s.mediaBtnTxt}>📷 Camera</Text></TouchableOpacity>
+          <TouchableOpacity onPress={pickPhoto} style={s.mediaBtn}><Text style={s.mediaBtnTxt}>🖼 Gallery</Text></TouchableOpacity>
+          <TouchableOpacity onPress={recordVideo} style={s.mediaBtn}><Text style={s.mediaBtnTxt}>🎥 Record</Text></TouchableOpacity>
+          <TouchableOpacity onPress={pickVideo} style={s.mediaBtn}><Text style={s.mediaBtnTxt}>📁 Video</Text></TouchableOpacity>
+        </View>
+        <View style={s.inputRow}>
+          <TextInput style={s.input} placeholder="Add diary entry..." placeholderTextColor={C.muted} value={text} onChangeText={setText} multiline maxLength={1000} />
+          <TouchableOpacity style={[s.send, (loading || (!text.trim() && photos.length === 0)) && s.sendDisabled]} onPress={submit} disabled={loading || (!text.trim() && photos.length === 0)}>
+            <Text style={s.sendTxt}>{uploading ? '⬆' : loading ? '...' : '→'}</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </SafeAreaView>
   );
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: C.bg },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: C.border },
-  back: { padding: 4 },
-  backText: { fontSize: 22, color: C.muted },
-  title: { fontSize: 15, fontWeight: '600', color: C.text },
-  subtitle: { fontSize: 12, color: C.muted },
-  offlinePill: { fontSize: 11, color: C.amber, backgroundColor: 'rgba(251,191,36,0.1)', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: 'rgba(251,191,36,0.25)' },
-  scroll: { padding: 16, paddingBottom: 40 },
-  empty: { color: C.muted, textAlign: 'center', marginTop: 32, fontSize: 14 },
-  entryBlock: { marginBottom: 16 },
-  entryBubble: { backgroundColor: C.card, borderRadius: 14, borderTopRightRadius: 4, padding: 14, borderWidth: 1, borderColor: C.border, alignSelf: 'flex-end', maxWidth: '90%' },
-  entryBubbleOffline: { borderColor: 'rgba(251,191,36,0.3)', backgroundColor: 'rgba(251,191,36,0.04)' },
-  entryText: { color: C.text, fontSize: 14, lineHeight: 22 },
-  entryTime: { color: C.muted, fontSize: 11, marginTop: 6, textAlign: 'right' },
-  offlineTag: { backgroundColor: 'rgba(251,191,36,0.08)', borderRadius: 6, padding: 6, marginTop: 6 },
-  offlineTagText: { fontSize: 11, color: C.amber },
-  alertTag: { borderRadius: 6, padding: 8, marginTop: 8 },
-  alertTagRed: { backgroundColor: 'rgba(248,113,113,0.1)' },
-  alertTagAmber: { backgroundColor: 'rgba(251,191,36,0.1)' },
-  alertTagText: { fontSize: 12 },
-  replyBubble: { backgroundColor: 'rgba(0,212,160,0.08)', borderRadius: 14, borderTopLeftRadius: 4, padding: 14, borderWidth: 1, borderColor: 'rgba(0,212,160,0.2)', alignSelf: 'flex-start', maxWidth: '90%', marginTop: 6 },
-  replyLabel: { fontSize: 11, color: C.teal, fontWeight: '600', marginBottom: 4 },
-  replyText: { color: C.text, fontSize: 14, lineHeight: 22 },
-  inputCard: { backgroundColor: C.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: C.border, marginTop: 8 },
-  input: { color: C.text, fontSize: 15, lineHeight: 24, minHeight: 120 },
-  cardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: C.border },
-  charCount: { fontSize: 12, color: C.muted },
-  submitBtn: { backgroundColor: C.teal, borderRadius: 10, paddingHorizontal: 18, paddingVertical: 10 },
-  submitBtnDisabled: { opacity: 0.4 },
-  submitBtnText: { fontSize: 14, fontWeight: '600', color: '#0f1923' },
-  aiNote: { fontSize: 12, color: C.muted, textAlign: 'center', marginTop: 16, paddingHorizontal: 20 },
+  safe: { flex: 1, backgroundColor: '#0f1923' },
+  header: { flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
+  back: { marginRight: 12, padding: 4 },
+  backTxt: { color: '#00d4a0', fontSize: 22 },
+  title: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  sub: { color: '#4d6478', fontSize: 12, marginTop: 2 },
+  offlineBanner: { backgroundColor: '#fbbf2422', padding: 8, alignItems: 'center' },
+  offlineTxt: { color: '#fbbf24', fontSize: 12 },
+  entry: { backgroundColor: '#1a2635', borderRadius: 12, padding: 12, marginBottom: 10 },
+  entryRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
+  badge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, marginRight: 8 },
+  badgeTxt: { fontSize: 10, fontWeight: '700' },
+  entryTime: { color: '#4d6478', fontSize: 11 },
+  entryText: { color: '#fff', fontSize: 14, lineHeight: 20 },
+  aiSummary: { fontSize: 12, marginTop: 4, fontStyle: 'italic' },
+  photoThumb: { width: 80, height: 80, borderRadius: 8, marginRight: 8 },
+  replyBox: { marginTop: 8, backgroundColor: 'rgba(0,212,160,0.08)', borderRadius: 8, padding: 8 },
+  replyLabel: { color: '#00d4a0', fontSize: 10, fontWeight: '700', marginBottom: 2 },
+  replyText: { color: '#fff', fontSize: 13 },
+  photoPreview: { maxHeight: 100, paddingHorizontal: 16, paddingVertical: 8 },
+  photoPreviewItem: { position: 'relative', marginRight: 8 },
+  photoPreviewImg: { width: 80, height: 80, borderRadius: 8 },
+  photoRemove: { position: 'absolute', top: 2, right: 2, backgroundColor: 'rgba(0,0,0,0.7)', borderRadius: 10, width: 20, height: 20, alignItems: 'center', justifyContent: 'center' },
+  inputArea: { borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 16, paddingBottom: 16, paddingTop: 8 },
+  mediaButtons: { flexDirection: 'row', gap: 8, marginBottom: 8 },
+  mediaBtn: { backgroundColor: '#1a2635', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
+  mediaBtnTxt: { color: '#00d4a0', fontSize: 13 },
+  inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
+  input: { flex: 1, backgroundColor: '#1a2635', borderRadius: 12, padding: 12, color: '#fff', fontSize: 14, maxHeight: 100 },
+  send: { backgroundColor: '#00d4a0', borderRadius: 12, width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  sendDisabled: { opacity: 0.4 },
+  sendTxt: { color: '#0f1923', fontSize: 20, fontWeight: '700' },
 });

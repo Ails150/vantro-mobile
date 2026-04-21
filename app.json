@@ -1,98 +1,99 @@
 {
-    "expo":  {
-                 "name":  "Vantro",
-                 "slug":  "vantro",
-                 "version":  "1.0.0",
-                 "orientation":  "portrait",
-                 "icon":  "./assets/icon.png",
-                 "userInterfaceStyle":  "dark",
-                 "backgroundColor":  "#0f1923",
-                 "splash":  {
-                                "backgroundColor":  "#0f1923"
-                            },
-                 "ios":  {
-                             "supportsTablet":  false,
-                             "bundleIdentifier":  "com.getvantro.app",
-                             "infoPlist":  {
-                                               "NSLocationWhenInUseUsageDescription":  "Vantro needs your location to verify you are on site before signing in.",
-                                               "NSCameraUsageDescription":  "Vantro needs camera access to capture QA photos and defect evidence.",
-                                               "NSPhotoLibraryUsageDescription":  "Vantro needs photo library access to attach images to reports.",
-                                               "ITSAppUsesNonExemptEncryption":  false,
-                                               "NSLocationAlwaysAndWhenInUseUsageDescription":  "Vantro tracks your location while you are signed in to a job site to verify attendance.",
-                                               "NSLocationAlwaysUsageDescription":  "Vantro needs background location access to track attendance while you are on site.",
-                                               "UIBackgroundModes":  [
-                                                                         "location"
-                                                                     ]
-                                           }
-                         },
-                 "android":  {
-                                 "adaptiveIcon":  {
-                                                      "foregroundImage":  "./assets/icon.png",
-                                                      "backgroundColor":  "#0f1923"
-                                                  },
-                                 "package":  "com.getvantro.app",
-                                 "versionCode":  2,
-                                 "permissions":  [
-                                                     "ACCESS_FINE_LOCATION",
-                                                     "ACCESS_COARSE_LOCATION",
-                                                     "CAMERA",
-                                                     "READ_EXTERNAL_STORAGE",
-                                                     "WRITE_EXTERNAL_STORAGE",
-                                                     "android.permission.ACCESS_COARSE_LOCATION",
-                                                     "android.permission.ACCESS_FINE_LOCATION",
-                                                     "android.permission.CAMERA",
-                                                     "android.permission.RECORD_AUDIO",
-                                                     "ACCESS_FINE_LOCATION",
-                                                     "ACCESS_COARSE_LOCATION",
-                                                     "CAMERA",
-                                                     "READ_EXTERNAL_STORAGE",
-                                                     "WRITE_EXTERNAL_STORAGE",
-                                                     "android.permission.ACCESS_COARSE_LOCATION",
-                                                     "android.permission.ACCESS_FINE_LOCATION",
-                                                     "android.permission.CAMERA",
-                                                     "android.permission.RECORD_AUDIO",
-                                                     "ACCESS_BACKGROUND_LOCATION"
-                                                 ],
-                                 "googleServicesFile":  "./google-services.json"
-                             },
-                 "plugins":  [
-                                 "expo-router",
-                                 "expo-notifications",
-                                 "expo-secure-store",
-                                 [
-                                     "expo-location",
-                                     {
-                                         "isAndroidBackgroundLocationEnabled":  true,
-                                         "isAndroidForegroundServiceEnabled":  true,
-                                         "locationAlwaysAndWhenInUsePermission":  "Vantro needs your location to verify you are on site.",
-                                         "locationAlwaysPermission":  "Vantro tracks your location while signed in to verify attendance."
-                                     }
-                                 ],
-                                 [
-                                     "expo-camera",
-                                     {
-                                         "cameraPermission":  "Vantro needs camera access for QA photos."
-                                     }
-                                 ],
-                                 "expo-task-manager"
-                             ],
-                 "experiments":  {
-                                     "typedRoutes":  true
-                                 },
-                 "extra":  {
-                               "router":  {
-                                              "origin":  false
-                                          },
-                               "eas":  {
-                                           "projectId":  "1e578303-87f6-41d8-9abc-7b9f135f2ff0"
-                                       }
-                           },
-                 "runtimeVersion":  {
-                                        "policy":  "appVersion"
-                                    },
-                 "updates":  {
-                                 "url":  "https://u.expo.dev/1e578303-87f6-41d8-9abc-7b9f135f2ff0"
-                             },
-                 "scheme":  "vantro"
-             }
+  "expo": {
+    "name": "Vantro",
+    "slug": "vantro",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0f1923",
+    "splash": {
+      "backgroundColor": "#0f1923"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.getvantro.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Vantro needs your location to verify you are on site before signing in.",
+        "NSCameraUsageDescription": "Vantro needs camera access to capture QA photos and defect evidence.",
+        "NSPhotoLibraryUsageDescription": "Vantro needs photo library access to attach images to reports.",
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Vantro tracks your location while you are signed in to a job site to verify attendance.",
+        "NSLocationAlwaysUsageDescription": "Vantro needs background location access to track attendance while you are on site.",
+        "UIBackgroundModes": [
+          "location"
+        ]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#0f1923"
+      },
+      "package": "com.getvantro.app",
+      "versionCode": 2,
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "ACCESS_BACKGROUND_LOCATION"
+      ],
+      "googleServicesFile": "./google-services.json"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-notifications",
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true,
+          "locationAlwaysAndWhenInUsePermission": "Vantro needs your location to verify you are on site.",
+          "locationAlwaysPermission": "Vantro tracks your location while signed in to verify attendance."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Vantro needs camera access for QA photos."
+        }
+      ],
+      "expo-task-manager",
+      "expo-video"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "1e578303-87f6-41d8-9abc-7b9f135f2ff0"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/1e578303-87f6-41d8-9abc-7b9f135f2ff0"
+    },
+    "scheme": "vantro"
+  }
 }
