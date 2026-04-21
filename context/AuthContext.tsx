@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const tokenPayload = JSON.parse(
           Buffer.from(token, 'base64').toString()
         );
-        if (tokenPayload.exp > Date.now()) {
+        if (tokenPayload.exp * 1000 > Date.now()) {
           setUser(parsed);
         } else {
           await clearAuth();
