@@ -23,7 +23,7 @@ export default function InstallerLayout() {
   );
 
   if (!user) return <Redirect href="/login" />;
-  if (!acknowledged) return <Redirect href="/(installer)/gps-acknowledgment" />;
+  if (!acknowledged) return <Redirect href="/gps-consent" />;
 
   return <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0f1923' } }} />;
 }
