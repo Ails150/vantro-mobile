@@ -6,7 +6,6 @@ import { authFetch } from '@/lib/api';
 import { isOnline, queueAction, syncQueue } from '@/lib/offline';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
-import * as DocumentPicker from 'expo-document-picker';
 import { API_BASE } from '@/constants/api';
 
 const C = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)', red: '#f87171', amber: '#fbbf24' };
