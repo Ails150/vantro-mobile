@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated, Vibratio
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const COLORS = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', error: '#f87171' };
 
@@ -88,7 +89,11 @@ export default function LoginScreen() {
       } else {
         const result = await login(newPin);
         if (result.error) { shake(); setError(result.error); setPin(''); }
-        else { router.replace('/'); }
+        else {
+          const ack = await AsyncStorage.getItem('gps_acknowledged');
+          if (ack === 'true') { router.replace('/(installer)/jobs'); }
+          else { router.replace('/gps-consent'); }
+        }
       }
       setLoading(false);
     }
