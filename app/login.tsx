@@ -196,12 +196,14 @@ export default function LoginScreen() {
           ))}
         </View>
         {mode === 'login' && (
+          <>
           <TouchableOpacity onPress={() => { setShowEmailEntry(true); setError(''); setPin(''); }}>
             <Text style={s.hint}>New installer? Tap here to set up</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={handleForgotPin} style={{ marginTop: 8 }}>
             <Text style={s.hint}>Forgot PIN? Reset via email</Text>
           </TouchableOpacity>
+          </>
         )}
       </View>
     </SafeAreaView>
