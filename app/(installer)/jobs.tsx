@@ -8,7 +8,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { authFetch } from '@/lib/api';
 import * as SecureStore from 'expo-secure-store';
-import { startBackgroundTracking, stopBackgroundTracking } from '@/lib/locationTracker';
+import { startBackgroundTracking, stopBackgroundTracking, logCurrentLocation } from '@/lib/locationTracker';
 import { isOnline, cacheJobs, getCachedJobs, queueAction, syncQueue } from '@/lib/offline';
 
 const C = {
@@ -65,6 +65,13 @@ export default function JobsScreen() {
     }
     setLoading(false);
     setRefreshing(false);
+    // Foreground heartbeat: if signed in, log a breadcrumb so the map has data even if the background task is throttled
+    try {
+      const currentJobs = await getCachedJobs();
+      if (currentJobs?.some((j: any) => j.signed_in)) {
+        logCurrentLocation('foreground').catch(() => {});
+      }
+    } catch {}
   }, []);
 
   useEffect(() => {
@@ -104,6 +111,7 @@ export default function JobsScreen() {
           // Start GPS breadcrumb tracking
           if (data.weeklySchedule) { SecureStore.setItemAsync('vantro_weekly_schedule', JSON.stringify(data.weeklySchedule)).catch(() => {}); }
           startBackgroundTracking(bgGpsEnabled).catch(e => console.error('Failed to start tracking:', e));
+          logCurrentLocation('signin').catch(() => {});
           loadJobs();
         }
       } else {
