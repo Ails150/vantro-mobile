@@ -2,7 +2,7 @@
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import { getToken } from './api';
-import { API_BASE } from '@/constants/api';
+const API_BASE = 'https://app.getvantro.com';
 
 const LOCATION_TASK = 'vantro-background-location';
 
@@ -52,7 +52,7 @@ export async function startBackgroundTracking() {
     showsBackgroundLocationIndicator: true,
     foregroundService: {
       notificationTitle: 'Vantro',
-      notificationBody: 'Tracking your location while on site',
+      notificationBody: 'You are signed in - tap to open Vantro',
       notificationColor: '#00d4a0',
     },
   });

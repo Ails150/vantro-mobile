@@ -37,12 +37,12 @@ export default function GPSAcknowledgmentScreen() {
 
         <View style={s.card}>
           <Text style={s.sectionTitle}>What we track</Text>
-          <Text style={s.body}>When you sign in to a job site, Vantro records your GPS location to verify you are on site. While signed in, your location is logged approximately every 30 minutes for attendance verification.</Text>
+          <Text style={s.body}>When you sign in to a job site, Vantro records your GPS location to verify you are on site. Your location is recorded at sign-in and sign-out to verify you were on site. No continuous background tracking occurs.</Text>
         </View>
 
         <View style={s.card}>
           <Text style={s.sectionTitle}>When we track</Text>
-          <Text style={s.body}>Location tracking starts only when you sign in to a job and stops immediately when you sign out. No tracking occurs outside of work sessions, during breaks off-site, or when the app is closed.</Text>
+          <Text style={s.body}>Location is checked when you sign in and when you sign out. This is used solely to confirm you are within the job site boundary at those moments.</Text>
         </View>
 
         <View style={s.card}>
