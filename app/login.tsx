@@ -42,6 +42,34 @@ export default function LoginScreen() {
     ]).start();
   }
 
+
+  async function handleForgotPin() {
+    const email = await new Promise<string|null>(resolve => {
+      Alert.prompt(
+        'Reset PIN',
+        'Enter your email address to receive a reset link',
+        [
+          { text: 'Cancel', onPress: () => resolve(null), style: 'cancel' },
+          { text: 'Send', onPress: (text) => resolve(text || null) }
+        ],
+        'plain-text',
+        '',
+        'email-address'
+      )
+    })
+    if (!email) return
+    try {
+      await fetch('https://app.getvantro.com/api/installer/reset-pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim().toLowerCase() })
+      })
+      Alert.alert('Check your email', 'If your email is registered, you will receive a PIN reset link shortly.')
+    } catch {
+      Alert.alert('Error', 'Could not connect. Please check your internet connection.')
+    }
+  }
+
   async function handleEmailSubmit() {
     if (!emailInput.trim() || !emailInput.includes('@')) { setError('Enter a valid email address'); return }
     setLoading(true); setError('');
@@ -170,6 +198,9 @@ export default function LoginScreen() {
         {mode === 'login' && (
           <TouchableOpacity onPress={() => { setShowEmailEntry(true); setError(''); setPin(''); }}>
             <Text style={s.hint}>New installer? Tap here to set up</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleForgotPin} style={{ marginTop: 8 }}>
+            <Text style={s.hint}>Forgot PIN? Reset via email</Text>
           </TouchableOpacity>
         )}
       </View>
