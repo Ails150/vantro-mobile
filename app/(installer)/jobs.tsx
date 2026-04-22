@@ -34,6 +34,7 @@ export default function JobsScreen() {
   const [gpsLoading, setGpsLoading] = useState<string | null>(null);
   const [gpsMsg, setGpsMsg] = useState<{ id: string; msg: string; ok: boolean } | null>(null);
   const [offline, setOffline] = useState(false);
+  const [bgGpsEnabled, setBgGpsEnabled] = useState(true);
   const appState = useRef(AppState.currentState);
 
   const loadJobs = useCallback(async () => {
@@ -48,6 +49,9 @@ export default function JobsScreen() {
         const jobList = data.jobs || [];
         setJobs(jobList);
         await cacheJobs(jobList);
+        if (data.company_settings?.background_gps_enabled != null) {
+          setBgGpsEnabled(data.company_settings.background_gps_enabled);
+        }
         setOffline(false);
       } catch {
         const cached = await getCachedJobs();
@@ -99,7 +103,7 @@ export default function JobsScreen() {
           setGpsMsg({ id: job.id, msg: 'Signed in - ' + data.distanceMetres + 'm from site', ok: true });
           // Start GPS breadcrumb tracking
           if (data.weeklySchedule) { SecureStore.setItemAsync('vantro_weekly_schedule', JSON.stringify(data.weeklySchedule)).catch(() => {}); }
-          startBackgroundTracking().catch(e => console.error('Failed to start tracking:', e));
+          startBackgroundTracking(bgGpsEnabled).catch(e => console.error('Failed to start tracking:', e));
           loadJobs();
         }
       } else {
@@ -110,8 +114,7 @@ export default function JobsScreen() {
         setJobs(updated);
         await cacheJobs(updated);
         setGpsMsg({ id: job.id, msg: 'Offline - sign-in queued, will sync when online', ok: true });
-        if (data.weeklySchedule) { SecureStore.setItemAsync('vantro_weekly_schedule', JSON.stringify(data.weeklySchedule)).catch(() => {}); }
-          startBackgroundTracking().catch(e => console.error('Failed to start tracking:', e));
+        startBackgroundTracking(bgGpsEnabled).catch(e => console.error('Failed to start tracking:', e));
       }
     } catch {
       setGpsMsg({ id: job.id, msg: 'Could not get location. Try again.', ok: false });

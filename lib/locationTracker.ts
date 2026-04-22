@@ -34,7 +34,13 @@ TaskManager.defineTask(LOCATION_TASK, async ({ data, error }: any) => {
   }
 });
 
-export async function startBackgroundTracking() {
+export async function startBackgroundTracking(enabled: boolean = true) {
+  if (!enabled) {
+    // Company has disabled background GPS - make sure any existing task is stopped
+    await stopBackgroundTracking();
+    return false;
+  }
+
   const { status: fg } = await Location.requestForegroundPermissionsAsync();
   if (fg !== 'granted') return false;
 
