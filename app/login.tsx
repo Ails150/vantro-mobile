@@ -1,5 +1,5 @@
-﻿import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated, Vibration, ActivityIndicator, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated, Vibration, ActivityIndicator, SafeAreaView, KeyboardAvoidingView, Platform, Modal, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import * as SecureStore from 'expo-secure-store';
@@ -15,6 +15,10 @@ export default function LoginScreen() {
   const [setupEmail, setSetupEmail] = useState('');
   const [emailInput, setEmailInput] = useState('');
   const [showEmailEntry, setShowEmailEntry] = useState(false);
+  const [forgotPinModal, setForgotPinModal] = useState(false);
+  const [forgotPinEmail, setForgotPinEmail] = useState('');
+  const [forgotPinSending, setForgotPinSending] = useState(false);
+  const [forgotPinSent, setForgotPinSent] = useState(false);
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const { login } = useAuth();
   const router = useRouter();
@@ -43,33 +47,22 @@ export default function LoginScreen() {
   }
 
 
-  async function handleForgotPin() {
-    const email = await new Promise<string|null>(resolve => {
-      Alert.prompt(
-        'Reset PIN',
-        'Enter your email address to receive a reset link',
-        [
-          { text: 'Cancel', onPress: () => resolve(null), style: 'cancel' },
-          { text: 'Send', onPress: (text) => resolve(text || null) }
-        ],
-        'plain-text',
-        '',
-        'email-address'
-      )
-    })
-    if (!email) return
+  async function submitForgotPin() {
+    const email = forgotPinEmail.trim().toLowerCase();
+    if (!email) { Alert.alert('Email required', 'Please enter your email address.'); return; }
+    setForgotPinSending(true);
     try {
       await fetch('https://app.getvantro.com/api/installer/reset-pin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim().toLowerCase() })
-      })
-      Alert.alert('Check your email', 'If your email is registered, you will receive a PIN reset link shortly.')
+        body: JSON.stringify({ email })
+      });
+      setForgotPinSent(true);
     } catch {
-      Alert.alert('Error', 'Could not connect. Please check your internet connection.')
+      Alert.alert('Error', 'Could not connect. Please check your internet connection.');
     }
+    setForgotPinSending(false);
   }
-
   async function handleEmailSubmit() {
     if (!emailInput.trim() || !emailInput.includes('@')) { setError('Enter a valid email address'); return }
     setLoading(true); setError('');
@@ -200,12 +193,51 @@ export default function LoginScreen() {
           <TouchableOpacity onPress={() => { setShowEmailEntry(true); setError(''); setPin(''); }}>
             <Text style={s.hint}>New installer? Tap here to set up</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleForgotPin} style={{ marginTop: 8 }}>
+          <TouchableOpacity onPress={() => { setForgotPinEmail(''); setForgotPinSent(false); setForgotPinModal(true); }} style={{ marginTop: 8 }}>
             <Text style={s.hint}>Forgot PIN? Reset via email</Text>
           </TouchableOpacity>
           </>
         )}
       </View>
+      <Modal visible={forgotPinModal} transparent animationType='fade' onRequestClose={() => setForgotPinModal(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: 24 }}>
+          <View style={{ backgroundColor: COLORS.card, borderRadius: 16, padding: 24 }}>
+            {!forgotPinSent ? (
+              <>
+                <Text style={{ color: COLORS.text, fontSize: 18, fontWeight: '700', marginBottom: 8 }}>Reset PIN</Text>
+                <Text style={{ color: COLORS.muted, fontSize: 14, marginBottom: 16 }}>Enter your email to receive a reset link.</Text>
+                <TextInput
+                  value={forgotPinEmail}
+                  onChangeText={setForgotPinEmail}
+                  placeholder='you@example.com'
+                  placeholderTextColor={COLORS.muted}
+                  keyboardType='email-address'
+                  autoCapitalize='none'
+                  autoCorrect={false}
+                  style={{ backgroundColor: COLORS.bg, color: COLORS.text, borderRadius: 12, padding: 14, fontSize: 16, marginBottom: 16 }}
+                />
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <TouchableOpacity onPress={() => setForgotPinModal(false)} style={{ flex: 1, padding: 14, borderRadius: 12, backgroundColor: COLORS.bg, alignItems: 'center' }}>
+                    <Text style={{ color: COLORS.text, fontWeight: '600' }}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={submitForgotPin} disabled={forgotPinSending} style={{ flex: 1, padding: 14, borderRadius: 12, backgroundColor: COLORS.teal, alignItems: 'center', opacity: forgotPinSending ? 0.6 : 1 }}>
+                    <Text style={{ color: '#0f1923', fontWeight: '700' }}>{forgotPinSending ? 'Sending...' : 'Send'}</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            ) : (
+              <>
+                <Text style={{ color: COLORS.teal, fontSize: 40, textAlign: 'center', marginBottom: 12 }}>✓</Text>
+                <Text style={{ color: COLORS.text, fontSize: 18, fontWeight: '700', textAlign: 'center', marginBottom: 8 }}>Check your email</Text>
+                <Text style={{ color: COLORS.muted, fontSize: 14, textAlign: 'center', marginBottom: 20 }}>If your email is registered, a reset link has been sent.</Text>
+                <TouchableOpacity onPress={() => setForgotPinModal(false)} style={{ padding: 14, borderRadius: 12, backgroundColor: COLORS.teal, alignItems: 'center' }}>
+                  <Text style={{ color: '#0f1923', fontWeight: '700' }}>Done</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
