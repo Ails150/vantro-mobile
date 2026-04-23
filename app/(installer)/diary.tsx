@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, Alert, AppState, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
@@ -14,7 +13,7 @@ export default function DiaryScreen() {
   const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
   const { user } = useAuth();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
+  const insets = { bottom: 34 };
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
   const [entries, setEntries] = useState<any[]>([]);
