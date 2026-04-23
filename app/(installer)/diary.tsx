@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, Alert, AppState, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
@@ -13,6 +14,7 @@ export default function DiaryScreen() {
   const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
   const { user } = useAuth();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
   const [entries, setEntries] = useState<any[]>([]);
@@ -216,9 +218,9 @@ export default function DiaryScreen() {
           <TouchableOpacity onPress={recordVideo} style={s.mediaBtn}><Text style={s.mediaBtnTxt}>🎥 Record</Text></TouchableOpacity>
           <TouchableOpacity onPress={pickVideo} style={s.mediaBtn}><Text style={s.mediaBtnTxt}>📁 Video</Text></TouchableOpacity>
         </View>
-        <View style={s.inputRow}>
+        <View style={[s.inputRow, { marginBottom: insets.bottom }]}>
           <TextInput style={s.input} placeholder="Add diary entry..." placeholderTextColor={C.muted} value={text} onChangeText={setText} multiline maxLength={1000} />
-          <TouchableOpacity style={[s.send, (loading || (!text.trim() && photos.length === 0)) && s.sendDisabled]} onPress={submit} disabled={loading || (!text.trim() && photos.length === 0)}>
+          <TouchableOpacity style={[s.send, (loading || (!text.trim() && photos.length === 0 && !video)) && s.sendDisabled]} onPress={submit} disabled={loading || (!text.trim() && photos.length === 0 && !video)}>
             <Text style={s.sendTxt}>{uploading ? '⬆' : loading ? '...' : '→'}</Text>
           </TouchableOpacity>
         </View>
