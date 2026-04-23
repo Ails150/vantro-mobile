@@ -8,7 +8,8 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { authFetch } from '@/lib/api';
 import * as SecureStore from 'expo-secure-store';
-import { startBackgroundTracking, stopBackgroundTracking, logCurrentLocation } from '@/lib/locationTracker';
+import { stopBackgroundTracking, logCurrentLocation, evaluateTrackingState } from '@/lib/locationTracker';
+import { setActiveShift, clearActiveShift, hydrateActiveShift } from '@/lib/activeShift';
 import { isOnline, cacheJobs, getCachedJobs, queueAction, syncQueue } from '@/lib/offline';
 
 const C = {
@@ -65,6 +66,12 @@ export default function JobsScreen() {
     }
     setLoading(false);
     setRefreshing(false);
+    // Hydrate active shift from server (only when online) and evaluate tracking window
+    try {
+      const onlineNow = await isOnline();
+      if (onlineNow) { await hydrateActiveShift(); }
+      evaluateTrackingState().catch(() => {});
+    } catch {}
     // Foreground heartbeat: if signed in, log a breadcrumb so the map has data even if the background task is throttled
     try {
       const currentJobs = await getCachedJobs();
@@ -110,7 +117,8 @@ export default function JobsScreen() {
           setGpsMsg({ id: job.id, msg: 'Signed in - ' + data.distanceMetres + 'm from site', ok: true });
           // Start GPS breadcrumb tracking
           if (data.weeklySchedule) { SecureStore.setItemAsync('vantro_weekly_schedule', JSON.stringify(data.weeklySchedule)).catch(() => {}); }
-          startBackgroundTracking(bgGpsEnabled).catch(e => console.error('Failed to start tracking:', e));
+          if (data.activeShift) { await setActiveShift(data.activeShift); }
+          evaluateTrackingState().catch(e => console.error('Failed to evaluate tracking:', e));
           logCurrentLocation('signin').catch(() => {});
           loadJobs();
         }
@@ -122,7 +130,7 @@ export default function JobsScreen() {
         setJobs(updated);
         await cacheJobs(updated);
         setGpsMsg({ id: job.id, msg: 'Offline - sign-in queued, will sync when online', ok: true });
-        startBackgroundTracking(bgGpsEnabled).catch(e => console.error('Failed to start tracking:', e));
+        // No activeShift available offline - tracking will engage when queue syncs
       }
     } catch {
       setGpsMsg({ id: job.id, msg: 'Could not get location. Try again.', ok: false });
@@ -151,7 +159,7 @@ export default function JobsScreen() {
           if (online) {
             await authFetch('/api/signout', { method: 'POST', body: JSON.stringify({ jobId: job.id, lat: latitude, lng: longitude, accuracy: Math.round(loc.coords.accuracy || 0) }) });
             // Stop GPS breadcrumb tracking
-            SecureStore.deleteItemAsync('vantro_sign_out_time').catch(() => {});
+            await clearActiveShift();
             stopBackgroundTracking().catch(e => console.error('Failed to stop tracking:', e));
           } else {
             await queueAction({ type: 'signout', payload: { jobId: job.id } });
@@ -190,7 +198,7 @@ export default function JobsScreen() {
 
       {offline && (
         <View style={s.offlineBanner}>
-          <Text style={s.offlineBannerText}>âš¡ Offline â€” showing cached data. Actions will sync when online.</Text>
+          <Text style={s.offlineBannerText}>ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã‚Â¡Ãƒâ€šÃ‚Â¡ Offline ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â showing cached data. Actions will sync when online.</Text>
         </View>
       )}
 
