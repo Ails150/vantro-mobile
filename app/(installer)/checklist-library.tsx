@@ -18,28 +18,18 @@ export default function ChecklistLibraryScreen() {
 
   async function loadTemplates() {
     try {
-      const res = await authFetch('/api/checklist?action=list_templates');
+      const res = await authFetch('/api/installer/checklists/library?jobId=' + jobId);
       if (res.ok) {
         const data = await res.json();
-        setTemplates(data.templates || []);
+        setTemplates(data.library || []);
       }
     } catch (e) { console.error(e); }
     setLoading(false);
   }
 
-  async function startChecklist(templateId: string, templateName: string) {
+  function startChecklist(templateId: string, templateName: string) {
     setStarting(templateId);
-    try {
-      const res = await authFetch('/api/checklist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'assign_to_job', jobId, templateId })
-      });
-      if (res.ok) {
-        router.replace({ pathname: '/(installer)/checklist', params: { jobId, jobName, templateId, templateName } });
-      }
-    } catch (e) { console.error(e); }
-    setStarting(null);
+    router.replace({ pathname: '/(installer)/checklist-run' as any, params: { jobId, jobName, templateId, templateName } });
   }
 
   return (
@@ -64,7 +54,7 @@ export default function ChecklistLibraryScreen() {
           <TouchableOpacity key={t.id} style={s.card} onPress={() => startChecklist(t.id, t.name)} disabled={starting === t.id}>
             <View style={s.cardLeft}>
               <Text style={s.cardTitle}>{t.name}</Text>
-              <Text style={s.cardSub}>{t.item_count || 0} items{t.frequency ? ' · ' + t.frequency : ''}</Text>
+              <Text style={s.cardSub}>{(t.items || []).length} items{t.frequency ? ' · ' + t.frequency : ''}</Text>
             </View>
             {starting === t.id
               ? <ActivityIndicator color={C.teal} />

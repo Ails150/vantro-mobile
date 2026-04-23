@@ -14,6 +14,7 @@ export default function QAScreen() {
   const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [photos, setPhotos] = useState<Record<string, string[]>>({});
+  const [videos, setVideos] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState<Record<string, boolean>>({});
@@ -68,6 +69,32 @@ export default function QAScreen() {
     }
   }
 
+  async function recordVideo(itemId: string) {
+    const perm = await ImagePicker.requestCameraPermissionsAsync();
+    if (!perm.granted) { Alert.alert('Permission needed', 'Camera access is required.'); return; }
+    try {
+      const result = await ImagePicker.launchCameraAsync({ quality: 0.7, mediaTypes: ['videos'], videoMaxDuration: 120 });
+      if (!result.canceled && result.assets?.length > 0) {
+        setVideos(v => ({ ...v, [itemId]: result.assets[0].uri }));
+      }
+    } catch (e) { Alert.alert('Error', 'Could not open camera.'); }
+  }
+
+  async function pickVideoFromLibrary(itemId: string) {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) { Alert.alert('Permission needed', 'Library access is required.'); return; }
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['videos'], videoMaxDuration: 120 });
+      if (!result.canceled && result.assets?.length > 0) {
+        setVideos(v => ({ ...v, [itemId]: result.assets[0].uri }));
+      }
+    } catch (e) { Alert.alert('Error', 'Could not open library.'); }
+  }
+
+  function removeVideo(itemId: string) {
+    setVideos(v => { const n = { ...v }; delete n[itemId]; return n; });
+  }
+
   function removePhoto(itemId: string, idx: number) {
     setPhotos(p => ({ ...p, [itemId]: (p[itemId] || []).filter((_: any, i: number) => i !== idx) }));
   }
@@ -111,10 +138,31 @@ export default function QAScreen() {
       }
     }
 
+    let videoUrl = '', videoPath = '';
+    const videoUri = videos[itemId];
+    if (videoUri) {
+      try {
+        const form = new FormData();
+        form.append('file', { uri: videoUri, type: 'video/mp4', name: 'qa_' + Date.now() + '.mp4' } as any);
+        form.append('path', `qa/${id}/${itemId}/${Date.now()}.mp4`);
+        const upRes = await authFormFetch('/api/upload', form);
+        if (upRes.ok) {
+          const d = await upRes.json();
+          videoUrl = d.url; videoPath = d.path;
+        } else {
+          console.error('Video upload failed:', upRes.status);
+          return false;
+        }
+      } catch (e) {
+        console.error('Video upload error:', e);
+        return false;
+      }
+    }
+
     try {
       await authFetch('/api/qa', {
         method: 'POST',
-        body: JSON.stringify({ jobId: id, itemId, templateId: checklist.id, state, notes: notes[itemId] || '', photoUrl, photoPath }),
+        body: JSON.stringify({ jobId: id, itemId, templateId: checklist.id, state, notes: notes[itemId] || '', photoUrl, photoPath, videoUrl, videoPath }),
       });
       return true;
     } catch (e) {
@@ -190,6 +238,7 @@ export default function QAScreen() {
 
   function renderPhotoSection(itemId: string) {
     const itemPhotos = photos[itemId] || [];
+    const itemVideo = videos[itemId];
     return (
       <View style={{ gap: 8 }}>
         {itemPhotos.map((uri: string, idx: number) => (
@@ -200,12 +249,26 @@ export default function QAScreen() {
             </TouchableOpacity>
           </View>
         ))}
+        {itemVideo && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(139,92,246,0.1)', padding: 10, borderRadius: 10 }}>
+            <Text style={{ color: '#a78bfa', fontSize: 13, flex: 1 }}>Video attached</Text>
+            <TouchableOpacity onPress={() => removeVideo(itemId)}><Text style={{ color: '#f87171', fontSize: 12 }}>Remove</Text></TouchableOpacity>
+          </View>
+        )}
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <TouchableOpacity style={[s.photoBtn, { flex: 1 }]} onPress={() => takePhoto(itemId)}>
             <Text style={s.photoBtnText}>Camera</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[s.photoBtn, { flex: 1 }]} onPress={() => pickFromLibrary(itemId)}>
-            <Text style={s.photoBtnText}>Library</Text>
+            <Text style={s.photoBtnText}>Gallery</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <TouchableOpacity style={[s.photoBtn, { flex: 1 }]} onPress={() => recordVideo(itemId)}>
+            <Text style={s.photoBtnText}>Record video</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[s.photoBtn, { flex: 1 }]} onPress={() => pickVideoFromLibrary(itemId)}>
+            <Text style={s.photoBtnText}>Pick video</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -372,6 +435,14 @@ export default function QAScreen() {
               </View>
             )}
           </>
+        )}
+        {!loading && (
+          <TouchableOpacity
+            style={{ borderWidth: 1, borderColor: C.teal, borderStyle: 'dashed', borderRadius: 12, padding: 14, alignItems: 'center', marginTop: 16 }}
+            onPress={() => router.push({ pathname: '/(installer)/checklist-library' as any, params: { jobId: id, jobName: name } })}
+          >
+            <Text style={{ color: C.teal, fontSize: 14, fontWeight: '600' }}>+ Add optional checklist</Text>
+          </TouchableOpacity>
         )}
       </ScrollView>
     </SafeAreaView>
