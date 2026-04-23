@@ -5,3 +5,10 @@ package-lock.json
 # One-off patch scripts
 fix_*.py
 check_*.py
+
+# Expo export output
+dist/
+
+# Scratch files
+patch_jobs.py
+
