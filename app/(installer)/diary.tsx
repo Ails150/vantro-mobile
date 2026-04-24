@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, Alert, AppState, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
-import { authFetch } from '@/lib/api';
+import { authFetch, authFormFetch } from '@/lib/api';
 import { isOnline, queueAction, syncQueue } from '@/lib/offline';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
@@ -31,13 +31,20 @@ export default function DiaryScreen() {
     if (online) {
       try {
         await syncQueue(authFetch);
+        console.log('[LOAD] GET jobId=' + id);
         const res = await authFetch('/api/diary?jobId=' + id);
+        console.log('[LOAD] status=', res?.status, 'ok=', res?.ok);
         if (res.ok) {
           const data = await res.json();
+          console.log('[LOAD] data=', JSON.stringify(data).substring(0, 300));
           const fetched = data.entries || [];
+          console.log('[LOAD] count=', fetched.length);
           setEntries(fetched);
           await AsyncStorage.setItem(DIARY_CACHE_KEY, JSON.stringify(fetched));
           setOffline(false);
+        } else {
+          const body = await res.text().catch(() => 'no body');
+          console.log('[LOAD] FAILED body=', body);
         }
       } catch {
         const raw = await AsyncStorage.getItem(DIARY_CACHE_KEY);
@@ -83,7 +90,7 @@ export default function DiaryScreen() {
         formData.append('file', { uri, name: filename, type: 'image/jpeg' } as any);
         formData.append('bucket', 'diary-media');
         formData.append('path', filename);
-        const res = await authFetch('/api/upload', { method: 'POST', body: formData, headers: {} });
+        const res = await authFormFetch('/api/upload', formData);
         if (res.ok) {
           const data = await res.json();
           urls.push(data.url);
@@ -107,39 +114,94 @@ export default function DiaryScreen() {
 
   async function uploadVideo(uri: string): Promise<string|null> {
     try {
+      console.log('[VIDEO] upload START uri=', uri);
+
+      // Step 1: Get one-time upload URL from our API (tiny request, no body size issue)
+      const urlRes = await authFetch('/api/stream/upload-url', { method: 'POST' });
+      console.log('[VIDEO] upload-url status=', urlRes?.status);
+      if (!urlRes.ok) {
+        const body = await urlRes.text().catch(() => 'no body');
+        console.log('[VIDEO] upload-url FAILED body=', body);
+        return null;
+      }
+      const { uploadURL, embedUrl } = await urlRes.json();
+      console.log('[VIDEO] got uploadURL, uid embedUrl=', embedUrl);
+
+      // Step 2: Upload video directly to Cloudflare (bypasses Vercel 4.5MB limit)
       const filename = 'diary_video_' + Date.now() + '.mp4';
       const formData = new FormData();
       formData.append('file', { uri, name: filename, type: 'video/mp4' } as any);
-      const res = await authFetch('/api/stream', { method: 'POST', body: formData, headers: {} });
-      if (res.ok) {
-        const data = await res.json();
-        return data.embedUrl || null;
+      const cfRes = await fetch(uploadURL, { method: 'POST', body: formData });
+      console.log('[VIDEO] direct upload status=', cfRes?.status, 'ok=', cfRes?.ok);
+
+      if (!cfRes.ok) {
+        const body = await cfRes.text().catch(() => 'no body');
+        console.log('[VIDEO] direct upload FAILED body=', body);
+        return null;
       }
-    } catch (e) { console.error('Video upload error:', e); }
+
+      console.log('[VIDEO] upload SUCCESS embedUrl=', embedUrl);
+      return embedUrl;
+    } catch (e) { console.error('[VIDEO] upload exception:', e); }
     return null;
   }
 
   async function submit() {
-    if (!text.trim() && photos.length === 0) return;
+    console.log('[DIARY] submit START text=', text, 'photos=', photos.length, 'video=', !!video);
+    if (!text.trim() && photos.length === 0 && !video) { console.log('[DIARY] early return - empty'); return; }
     setLoading(true);
     setUploading(photos.length > 0);
     try {
       let photoUrls: string[] = [];
       if (photos.length > 0) {
+        console.log('[DIARY] checking online for photo upload');
         const online = await isOnline();
-        if (online) photoUrls = await uploadPhotos(photos);
+        console.log('[DIARY] online=', online);
+        if (online) {
+          try { photoUrls = await uploadPhotos(photos); console.log('[DIARY] uploaded photos', photoUrls); }
+          catch (err) { console.log('[DIARY] photo upload FAILED', err); }
+        }
       }
+
+      let videoUrl: string | null = null;
+      if (video) {
+        console.log('[DIARY] uploading video');
+        const online2 = await isOnline();
+        if (online2) {
+          try { videoUrl = await uploadVideo(video); console.log('[DIARY] video uploaded result=', videoUrl); }
+          catch (err) { console.log('[DIARY] video upload FAILED', err); }
+        }
+      }
+
       setUploading(false);
+      console.log('[DIARY] checking online for POST');
       const online = await isOnline();
+      console.log('[DIARY] POST online=', online);
       if (online) {
-        const res = await authFetch('/api/diary', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ jobId: id, entryText: text.trim() || (video ? '🎥 Video entry' : '📷 Photo entry'), photoUrls, videoUrl: video ? await uploadVideo(video) : null })
-        });
+        console.log('[DIARY] calling authFetch /api/diary');
+        let res: any;
+        try {
+          res = await authFetch('/api/diary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ jobId: id, entryText: text.trim() || (video ? 'Video entry' : 'Photo entry'), photoUrls, videoUrl })
+          });
+          console.log('[DIARY] authFetch returned status=', res?.status, 'ok=', res?.ok);
+        } catch (fetchErr: any) {
+          console.log('[DIARY] authFetch THREW:', fetchErr?.message || String(fetchErr));
+          Alert.alert('Fetch error', fetchErr?.message || 'network');
+          setLoading(false); setUploading(false);
+          return;
+        }
+        if (!res?.ok) {
+          const body = await res.text().catch(() => 'no body');
+          console.log('[DIARY] response NOT OK body=', body);
+          Alert.alert('Server error', 'status ' + res?.status + ': ' + String(body).substring(0, 100));
+        }
         if (res.ok) {
           setText('');
           setPhotos([]);
+          setVideo(null);
           await load();
           scrollRef.current?.scrollToEnd({ animated: true });
         }
@@ -174,7 +236,7 @@ export default function DiaryScreen() {
                   <Text style={[s.badgeTxt, { color: alertColor(e.ai_alert_type) }]}>{e.ai_alert_type.toUpperCase()}</Text>
                 </View>
               )}
-              <Text style={s.entryTime}>{new Date(e.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</Text>
+              <Text style={s.entryTime}>{(() => { const d = new Date(e.created_at); const t = new Date(); const y = new Date(); y.setDate(y.getDate()-1); const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); if (d.toDateString() === t.toDateString()) return time; if (d.toDateString() === y.toDateString()) return 'Yest ' + time; return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) + ' ' + time; })()}</Text>
             </View>
             {e.entry_text && e.entry_text !== '📷 Photo entry' && <Text style={s.entryText}>{e.entry_text}</Text>}
             {e.ai_summary && e.ai_alert_type !== 'none' && <Text style={[s.aiSummary, { color: alertColor(e.ai_alert_type) }]}>AI: {e.ai_summary}</Text>}

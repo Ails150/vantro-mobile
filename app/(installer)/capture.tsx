@@ -11,7 +11,9 @@ const MIN_SECONDS = 15;
 const MAX_SECONDS = 120;
 
 export default function CaptureScreen() {
-  const { id, name, stage } = useLocalSearchParams<{ id: string; name: string; stage: string }>();
+  const params = useLocalSearchParams<{ id: string; name: string; stage: string }>();
+  const { id, name } = params;
+  const stage = params.stage || "start";
   const router = useRouter();
   const [camPerm, requestCamPerm] = useCameraPermissions();
   const [micPerm, requestMicPerm] = useMicrophonePermissions();
@@ -91,12 +93,22 @@ export default function CaptureScreen() {
         }
       } catch {}
 
-      // Upload to Cloudflare Stream via /api/stream
+      // Upload to Cloudflare Stream using direct upload (bypasses Vercel 4.5MB limit)
+      console.log('[WALKTHROUGH] getting upload URL');
+      const urlRes = await authFetch('/api/stream/upload-url', { method: 'POST' });
+      if (!urlRes.ok) throw new Error('Upload URL request failed');
+      const { uploadURL, uid, embedUrl, playbackUrl, thumbnailUrl } = await urlRes.json();
+      console.log('[WALKTHROUGH] got uid=', uid);
+
       const formData = new FormData();
       formData.append('file', { uri, name: `walkthrough_${stage}_${Date.now()}.mp4`, type: 'video/mp4' } as any);
-      const streamRes = await authFetch('/api/stream', { method: 'POST', body: formData, headers: {} });
-      if (!streamRes.ok) throw new Error('Stream upload failed');
-      const streamData = await streamRes.json();
+      console.log('[WALKTHROUGH] uploading directly to Cloudflare');
+      const cfRes = await fetch(uploadURL, { method: 'POST', body: formData });
+      console.log('[WALKTHROUGH] direct upload status=', cfRes?.status);
+      if (!cfRes.ok) throw new Error('Stream upload failed');
+
+      const streamData = { uid, embedUrl, playbackUrl, thumbnailUrl };
+      console.log('[WALKTHROUGH] SUCCESS');
 
       // Save walkthrough record
       const saveRes = await authFetch('/api/walkthrough/upload', {

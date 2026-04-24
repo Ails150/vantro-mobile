@@ -270,9 +270,11 @@ export default function JobsScreen() {
                   <TouchableOpacity style={s.actionBtn} onPress={() => router.push({ pathname: '/(installer)/defects', params: { id: job.id, name: job.name } })}>
                     <Text style={s.actionBtnText}>Defects</Text>
                   </TouchableOpacity>
+                  {/* Walkthrough hidden for now - resurrect when needed
                   <TouchableOpacity style={[s.actionBtn, { backgroundColor: '#BC6AFF' }]} onPress={() => router.push({ pathname: '/(installer)/capture', params: { id: job.id, name: job.name } })}>
                     <Text style={[s.actionBtnText, { color: '#fff' }]}>Walkthrough</Text>
                   </TouchableOpacity>
+                  */}
                   <TouchableOpacity style={[s.actionBtn, s.actionBtnRed]} onPress={() => signOut(job)}>
                     <Text style={[s.actionBtnText, s.actionBtnTextRed]}>Sign out</Text>
                   </TouchableOpacity>

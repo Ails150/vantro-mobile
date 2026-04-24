@@ -116,14 +116,18 @@ export default function QAScreen() {
     const photoList = photos[itemId] || [];
     let photoUrl = '', photoPath = '';
 
+    console.log('[QA-SUBMIT] itemId=', itemId, 'photos=', photoList.length, 'video=', !!videos[itemId]);
+
     if (photoList.length > 0) {
       for (let i = 0; i < photoList.length; i++) {
         try {
+          console.log('[QA-PHOTO] uploading', i, 'uri=', photoList[i]);
           const form = new FormData();
           form.append('file', { uri: photoList[i], type: 'image/jpeg', name: 'qa_' + Date.now() + '_' + i + '.jpg' } as any);
           form.append('jobId', id as string);
           form.append('itemId', itemId);
           const upRes = await authFormFetch('/api/upload', form);
+          console.log('[QA-PHOTO] status=', upRes?.status);
           if (upRes.ok) {
             const d = await upRes.json();
             if (i === 0) { photoUrl = d.url; photoPath = d.path; }
@@ -142,19 +146,31 @@ export default function QAScreen() {
     const videoUri = videos[itemId];
     if (videoUri) {
       try {
-        const form = new FormData();
-        form.append('file', { uri: videoUri, type: 'video/mp4', name: 'qa_' + Date.now() + '.mp4' } as any);
-        form.append('path', `qa/${id}/${itemId}/${Date.now()}.mp4`);
-        const upRes = await authFormFetch('/api/upload', form);
-        if (upRes.ok) {
-          const d = await upRes.json();
-          videoUrl = d.url; videoPath = d.path;
-        } else {
-          console.error('Video upload failed:', upRes.status);
+        console.log('[QA-VIDEO] upload START');
+        // Step 1: Get direct upload URL from /api/stream/upload-url
+        const urlRes = await authFetch('/api/stream/upload-url', { method: 'POST' });
+        if (!urlRes.ok) {
+          console.error('[QA-VIDEO] upload-url failed:', urlRes.status);
           return false;
         }
+        const { uploadURL, uid, embedUrl } = await urlRes.json();
+        console.log('[QA-VIDEO] got uploadURL, uid=', uid);
+
+        // Step 2: Direct upload to Cloudflare (bypasses Vercel 4.5MB limit)
+        const form = new FormData();
+        form.append('file', { uri: videoUri, type: 'video/mp4', name: 'qa_' + Date.now() + '.mp4' } as any);
+        const cfRes = await fetch(uploadURL, { method: 'POST', body: form });
+        console.log('[QA-VIDEO] direct upload status=', cfRes?.status);
+        if (!cfRes.ok) {
+          console.error('[QA-VIDEO] direct upload failed:', cfRes.status);
+          return false;
+        }
+
+        videoUrl = embedUrl;
+        videoPath = uid;
+        console.log('[QA-VIDEO] SUCCESS embedUrl=', embedUrl);
       } catch (e) {
-        console.error('Video upload error:', e);
+        console.error('[QA-VIDEO] upload exception:', e);
         return false;
       }
     }
