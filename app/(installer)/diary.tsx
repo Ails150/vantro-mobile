@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, Alert, AppState, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, Alert, AppState, Image, Modal } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { authFetch, authFormFetch } from '@/lib/api';
@@ -16,6 +16,8 @@ export default function DiaryScreen() {
   const insets = { bottom: 34 };
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [pendingWorkStatus, setPendingWorkStatus] = useState(null);
   const [entries, setEntries] = useState<any[]>([]);
   const [offline, setOffline] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
@@ -147,6 +149,20 @@ export default function DiaryScreen() {
   }
 
   async function submit() {
+      if (!text.trim() && photos.length === 0 && !video) {
+        Alert.alert('Empty', 'Add a note, photo or video first');
+        return;
+      }
+      setShowStatusModal(true);
+    }
+  
+    async function handleStatusTap(status) {
+      setPendingWorkStatus(status);
+      setShowStatusModal(false);
+      setTimeout(() => { doSubmit(); }, 50);
+    }
+  
+    async function doSubmit() {
     console.log('[DIARY] submit START text=', text, 'photos=', photos.length, 'video=', !!video);
     if (!text.trim() && photos.length === 0 && !video) { console.log('[DIARY] early return - empty'); return; }
     setLoading(true);
@@ -184,7 +200,7 @@ export default function DiaryScreen() {
           res = await authFetch('/api/diary', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ jobId: id, entryText: text.trim() || (video ? 'Video entry' : 'Photo entry'), photoUrls, videoUrl })
+            body: JSON.stringify({ jobId: id, entryText: text.trim() || (video ? 'Video entry' : 'Photo entry'), photoUrls, videoUrl, workStatus: pendingWorkStatus })
           });
           console.log('[DIARY] authFetch returned status=', res?.status, 'ok=', res?.ok);
         } catch (fetchErr: any) {
@@ -226,6 +242,33 @@ export default function DiaryScreen() {
         <TouchableOpacity onPress={() => router.back()} style={s.back}><Text style={s.backTxt}>←</Text></TouchableOpacity>
         <View style={{ flex: 1 }}><Text style={s.title} numberOfLines={1}>{name}</Text><Text style={s.sub}>Site Diary</Text></View>
       </View>
+      <Modal visible={showStatusModal} transparent animationType='fade' onRequestClose={() => setShowStatusModal(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'center', padding: 20 }}>
+          <View style={{ backgroundColor: '#1a2635', borderRadius: 16, padding: 24 }}>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: '#fff', textAlign: 'center', marginBottom: 6 }}>Quick question</Text>
+            <Text style={{ fontSize: 15, color: 'rgba(255,255,255,0.6)', textAlign: 'center', marginBottom: 24 }}>Is work still going?</Text>
+
+            <TouchableOpacity onPress={() => handleStatusTap('carrying_on')} style={{ backgroundColor: 'rgba(0,212,160,0.12)', borderWidth: 1, borderColor: 'rgba(0,212,160,0.35)', borderRadius: 12, padding: 16, marginBottom: 10 }}>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: '#00d4a0' }}>🟢 Yes, carrying on</Text>
+              <Text style={{ fontSize: 13, color: 'rgba(0,212,160,0.7)', marginTop: 2 }}>Just logging this for the record</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => handleStatusTap('paused')} style={{ backgroundColor: 'rgba(251,191,36,0.12)', borderWidth: 1, borderColor: 'rgba(251,191,36,0.35)', borderRadius: 12, padding: 16, marginBottom: 10 }}>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: '#fbbf24' }}>🟡 Paused, sorting it</Text>
+              <Text style={{ fontSize: 13, color: 'rgba(251,191,36,0.7)', marginTop: 2 }}>Under an hour, fix in motion</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => handleStatusTap('stopped')} style={{ backgroundColor: 'rgba(239,68,68,0.12)', borderWidth: 1, borderColor: 'rgba(239,68,68,0.35)', borderRadius: 12, padding: 16, marginBottom: 16 }}>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: '#ef4444' }}>🔴 Stopped — need help</Text>
+              <Text style={{ fontSize: 13, color: 'rgba(239,68,68,0.7)', marginTop: 2 }}>Admin and foreman alerted now</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => setShowStatusModal(false)} style={{ padding: 10, alignItems: 'center' }}>
+              <Text style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)' }}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
       {offline && <View style={s.offlineBanner}><Text style={s.offlineTxt}>Offline — showing cached entries</Text></View>}
       <ScrollView ref={scrollRef} style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 8 }}>
         {entries.map((e: any) => (
