@@ -78,10 +78,10 @@ export async function startBackgroundTracking() {
   }
 
   await Location.startLocationUpdatesAsync(LOCATION_TASK, {
-    accuracy: Location.Accuracy.Balanced,
-    timeInterval: 1800000,       // 30 min
-    distanceInterval: 500,
-    deferredUpdatesInterval: 1800000,
+    accuracy: Location.Accuracy.High,
+    timeInterval: 900000,        // 15 min
+    distanceInterval: 0,         // time-only, no movement triggers (prevents duplicate pings)
+    deferredUpdatesInterval: 900000,
     showsBackgroundLocationIndicator: true,
     foregroundService: {
       notificationTitle: 'Vantro',
