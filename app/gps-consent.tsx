@@ -13,14 +13,14 @@ export default function GPSAcknowledgmentScreen() {
 
   async function handleAccept() {
     setSubmitting(true);
-    try {
-      await authFetch('/api/installer/acknowledge', { method: 'POST', body: JSON.stringify({}) });
-      await AsyncStorage.setItem('gps_acknowledged', 'true');
-      router.replace('/(installer)/jobs');
-    } catch (e) {
-      console.error('Acknowledgment failed:', e);
-    }
-    setSubmitting(false);
+    // Save locally and navigate FIRST - API call is fire-and-forget
+    // so the user is never stuck on this screen even if network fails
+    try { await AsyncStorage.setItem('gps_acknowledged', 'true'); } catch (e) { console.warn('AsyncStorage failed:', e); }
+    // Fire the server acknowledgment in background - don't block navigation
+    authFetch('/api/installer/acknowledge', { method: 'POST', body: JSON.stringify({}) })
+      .catch((e) => console.warn('Server acknowledgment failed (non-blocking):', e));
+    // Navigate immediately
+    router.replace('/(installer)/jobs');
   }
 
   return (
