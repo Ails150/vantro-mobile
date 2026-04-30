@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 import { authFetch } from '@/lib/api';
 import * as SecureStore from 'expo-secure-store';
@@ -191,9 +192,15 @@ export default function JobsScreen() {
           <Text style={s.headerName}>{user?.name}</Text>
           <Text style={s.headerRole}>Installer</Text>
         </View>
-        <TouchableOpacity onPress={() => { logout(); router.replace('/login'); }} style={s.signOutBtn}>
-          <Text style={s.signOutText}>Sign out</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {/* schedule_link_marker */}
+          <TouchableOpacity onPress={() => router.push('/schedule' as any)} style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: C.border, alignItems: 'center', justifyContent: 'center' }}>
+            <Ionicons name="calendar-outline" size={18} color={C.text} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => { logout(); router.replace('/login'); }} style={s.signOutBtn}>
+            <Text style={s.signOutText}>Sign out</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {offline && (
