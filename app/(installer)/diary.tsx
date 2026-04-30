@@ -183,9 +183,23 @@ export default function DiaryScreen() {
       if (video) {
         console.log('[DIARY] uploading video');
         const online2 = await isOnline();
-        if (online2) {
-          try { videoUrl = await uploadVideo(video); console.log('[DIARY] video uploaded result=', videoUrl); }
-          catch (err) { console.log('[DIARY] video upload FAILED', err); }
+        if (!online2) {
+          Alert.alert('Need internet', 'Video uploads require an internet connection. Please connect and try again. Your text and photos are saved here.');
+          setLoading(false); setUploading(false);
+          return;
+        }
+        try { videoUrl = await uploadVideo(video); console.log('[DIARY] video uploaded result=', videoUrl); }
+        catch (err) { console.log('[DIARY] video upload FAILED', err); }
+
+        // CRITICAL: do not submit diary entry if video upload failed.
+        // Otherwise we end up with a "Video entry" row with video_url = NULL.
+        if (!videoUrl) {
+          Alert.alert(
+            'Video upload failed',
+            'The video did not upload to the server. Please check your connection and try again. Your text and photos are still here.'
+          );
+          setLoading(false); setUploading(false);
+          return;
         }
       }
 
@@ -222,7 +236,7 @@ export default function DiaryScreen() {
           scrollRef.current?.scrollToEnd({ animated: true });
         }
       } else {
-        await queueAction({ type: 'diary', payload: { jobId: id, entryText: text.trim() || '📷 Photo entry', photoUrls } });
+        await queueAction({ type: 'diary', payload: { jobId: id, entryText: text.trim() || 'Photo entry', photoUrls, videoUrl } });
         setText('');
         setPhotos([]);
         Alert.alert('Queued', 'Entry will sync when online');
