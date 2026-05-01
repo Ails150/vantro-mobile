@@ -159,10 +159,10 @@ export default function DiaryScreen() {
     async function handleStatusTap(status) {
       setPendingWorkStatus(status);
       setShowStatusModal(false);
-      setTimeout(() => { doSubmit(); }, 50);
+      doSubmit(status);
     }
   
-    async function doSubmit() {
+    async function doSubmit(workStatusArg: any) {
     console.log('[DIARY] submit START text=', text, 'photos=', photos.length, 'video=', !!video);
     if (!text.trim() && photos.length === 0 && !video) { console.log('[DIARY] early return - empty'); return; }
     setLoading(true);
@@ -214,7 +214,7 @@ export default function DiaryScreen() {
           res = await authFetch('/api/diary', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ jobId: id, entryText: text.trim() || (video ? 'Video entry' : 'Photo entry'), photoUrls, videoUrl, workStatus: pendingWorkStatus })
+            body: JSON.stringify({ jobId: id, entryText: text.trim() || (video ? 'Video entry' : 'Photo entry'), photoUrls, videoUrl, workStatus: workStatusArg })
           });
           console.log('[DIARY] authFetch returned status=', res?.status, 'ok=', res?.ok);
         } catch (fetchErr: any) {
