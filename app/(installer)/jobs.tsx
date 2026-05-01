@@ -193,6 +193,10 @@ export default function JobsScreen() {
           <Text style={s.headerRole}>Installer</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {/* my_hours_link_marker */}
+          <TouchableOpacity onPress={() => router.push('/my-hours' as any)} style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: C.border, alignItems: 'center', justifyContent: 'center' }} accessibilityLabel="My Hours - GPS verified work record">
+            <Ionicons name="time-outline" size={18} color={C.teal} />
+          </TouchableOpacity>
           {/* schedule_link_marker */}
           <TouchableOpacity onPress={() => router.push('/schedule' as any)} style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: C.border, alignItems: 'center', justifyContent: 'center' }}>
             <Ionicons name="calendar-outline" size={18} color={C.text} />
