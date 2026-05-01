@@ -209,7 +209,7 @@ export default function JobsScreen() {
 
       {offline && (
         <View style={s.offlineBanner}>
-          <Text style={s.offlineBannerText}>ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã‚Â¡Ãƒâ€šÃ‚Â¡ Offline ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â showing cached data. Actions will sync when online.</Text>
+          <Text style={s.offlineBannerText}>- Offline - showing cached data. Actions will sync when online.</Text>
         </View>
       )}
 
