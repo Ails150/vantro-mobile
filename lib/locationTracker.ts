@@ -23,12 +23,12 @@ async function postLocation(lat: number, lng: number, accuracy: number, source: 
     });
     if (!res.ok) {
       const text = await res.text().catch(() => '');
-      console.error('[location] post failed', source, res.status, text);
+      console.log('[location] post failed (will retry)', source, res.status);
     } else {
       console.log('[location] post success', source);
     }
   } catch (e) {
-    console.error('[location] network error', source, e);
+    console.log('[location] offline, breadcrumb not sent (will retry on next interval)', source);
   }
 }
 
@@ -117,7 +117,7 @@ export async function logCurrentLocation(source: string = 'foreground') {
     const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
     await postLocation(loc.coords.latitude, loc.coords.longitude, loc.coords.accuracy || 0, source);
   } catch (e) {
-    console.error('[location] manual log failed', e);
+    console.log('[location] manual log failed (offline?)', e);
   }
 }
 
