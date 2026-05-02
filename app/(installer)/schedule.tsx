@@ -39,6 +39,17 @@ const TYPE_ICONS: Record<string, string> = {
   unavailable: '🚫',
 };
 
+interface MyJob {
+  assignment_id: string;
+  visit_id: string;
+  date: string;
+  job_id: string;
+  job_name: string;
+  job_address: string | null;
+  role: string | null;
+  status: string | null;
+}
+
 interface CalendarContext {
   user_id: string;
   user_name: string;
@@ -57,6 +68,7 @@ interface CalendarContext {
     created_at: string;
   }>;
   public_holidays: Array<{ date: string; name: string }>;
+  my_jobs?: MyJob[];
 }
 
 export default function ScheduleScreen() {
@@ -120,6 +132,40 @@ export default function ScheduleScreen() {
     (h) => h.date >= new Date().toISOString().slice(0, 10)
   );
 
+  // My jobs computations
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const myJobs = context.my_jobs || [];
+  const todayJobs = myJobs.filter((j) => j.date === todayStr);
+
+  function startOfWeek(d: Date) {
+    const day = d.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    const r = new Date(d);
+    r.setDate(d.getDate() + diff);
+    r.setHours(0, 0, 0, 0);
+    return r;
+  }
+  const monThisWeek = startOfWeek(new Date());
+  const weekDays: { date: string; label: string; isToday: boolean }[] = [];
+  const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monThisWeek);
+    d.setDate(monThisWeek.getDate() + i);
+    const ds = d.toISOString().slice(0, 10);
+    weekDays.push({ date: ds, label: dayLabels[i], isToday: ds === todayStr });
+  }
+  const nextWeekDays: { date: string; label: string }[] = [];
+  for (let i = 7; i < 14; i++) {
+    const d = new Date(monThisWeek);
+    d.setDate(monThisWeek.getDate() + i);
+    const ds = d.toISOString().slice(0, 10);
+    nextWeekDays.push({ date: ds, label: dayLabels[(i - 7) % 7] });
+  }
+
+  function jobsOnDate(date: string) {
+    return myJobs.filter((j) => j.date === date);
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -149,6 +195,81 @@ export default function ScheduleScreen() {
           <Ionicons name="add-circle" size={22} color={C.bg} />
           <Text style={styles.requestButtonText}>Request time off</Text>
         </TouchableOpacity>
+
+        {/* TODAY */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Today</Text>
+          {todayJobs.length === 0 ? (
+            <Text style={styles.muted}>No jobs scheduled today.</Text>
+          ) : (
+            todayJobs.map((j) => (
+              <View key={j.assignment_id} style={styles.jobRowToday}>
+                <Text style={styles.jobName}>{j.job_name}</Text>
+                {j.job_address ? (
+                  <Text style={styles.jobAddress}>{j.job_address}</Text>
+                ) : null}
+              </View>
+            ))
+          )}
+        </View>
+
+        {/* THIS WEEK */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>This week</Text>
+          {weekDays.map((wd) => {
+            const jobs = jobsOnDate(wd.date);
+            return (
+              <View key={wd.date} style={[styles.weekRow, wd.isToday && styles.weekRowToday]}>
+                <View style={styles.weekDayCol}>
+                  <Text style={[styles.weekDayLabel, wd.isToday && styles.weekDayLabelToday]}>
+                    {wd.label}
+                  </Text>
+                  <Text style={styles.weekDayDate}>
+                    {wd.date.slice(8, 10)}
+                  </Text>
+                </View>
+                <View style={styles.weekJobsCol}>
+                  {jobs.length === 0 ? (
+                    <Text style={styles.weekOff}>Off</Text>
+                  ) : (
+                    jobs.map((j) => (
+                      <Text key={j.assignment_id} style={styles.weekJobName} numberOfLines={1}>
+                        {j.job_name}
+                      </Text>
+                    ))
+                  )}
+                </View>
+              </View>
+            );
+          })}
+        </View>
+
+        {/* NEXT WEEK */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Next week</Text>
+          {nextWeekDays.map((wd) => {
+            const jobs = jobsOnDate(wd.date);
+            return (
+              <View key={wd.date} style={styles.weekRow}>
+                <View style={styles.weekDayCol}>
+                  <Text style={styles.weekDayLabel}>{wd.label}</Text>
+                  <Text style={styles.weekDayDate}>{wd.date.slice(8, 10)}</Text>
+                </View>
+                <View style={styles.weekJobsCol}>
+                  {jobs.length === 0 ? (
+                    <Text style={styles.weekOff}>Off</Text>
+                  ) : (
+                    jobs.map((j) => (
+                      <Text key={j.assignment_id} style={styles.weekJobName} numberOfLines={1}>
+                        {j.job_name}
+                      </Text>
+                    ))
+                  )}
+                </View>
+              </View>
+            );
+          })}
+        </View>
 
         {pendingCount > 0 && (
           <View style={styles.pendingBanner}>
@@ -355,4 +476,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6,
   },
   statusText: { fontSize: 10, fontWeight: '600', letterSpacing: 0.5 },
+  jobRowToday: { paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#243443' },
+  jobName: { color: '#ffffff', fontSize: 15, fontWeight: '600' },
+  jobAddress: { color: '#8aa0b3', fontSize: 13, marginTop: 2 },
+  weekRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#1f2d3c' },
+  weekRowToday: { backgroundColor: 'rgba(0, 212, 160, 0.06)', borderRadius: 6, paddingHorizontal: 6 },
+  weekDayCol: { width: 56, flexDirection: 'row', alignItems: 'baseline' },
+  weekDayLabel: { color: '#8aa0b3', fontSize: 13, fontWeight: '600', width: 32 },
+  weekDayLabelToday: { color: '#00d4a0' },
+  weekDayDate: { color: '#dbe5ee', fontSize: 13 },
+  weekJobsCol: { flex: 1, paddingLeft: 8 },
+  weekJobName: { color: '#ffffff', fontSize: 14, paddingVertical: 1 },
+  weekOff: { color: '#4d6478', fontSize: 13, fontStyle: 'italic' },
 });
