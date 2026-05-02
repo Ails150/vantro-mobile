@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authFetch } from '@/lib/api';
+
+const CHECKLIST_LIB_CACHE_KEY = 'vantro_checklist_library_cache';
 
 const C = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)', red: '#f87171', amber: '#fbbf24' };
 
@@ -11,19 +14,38 @@ export default function ChecklistLibraryScreen() {
   const [templates, setTemplates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState<string|null>(null);
+  const [offline, setOffline] = useState(false);
 
   useEffect(() => {
     loadTemplates();
   }, []);
 
   async function loadTemplates() {
+    const cacheKey = CHECKLIST_LIB_CACHE_KEY + '_' + jobId;
+    // Hydrate from cache first
+    try {
+      const cached = await AsyncStorage.getItem(cacheKey);
+      if (cached) {
+        setTemplates(JSON.parse(cached));
+        setLoading(false);
+      }
+    } catch {}
+    // Then fetch fresh
     try {
       const res = await authFetch('/api/installer/checklists/library?jobId=' + jobId);
       if (res.ok) {
         const data = await res.json();
-        setTemplates(data.library || []);
+        const fetched = data.library || [];
+        setTemplates(fetched);
+        setOffline(false);
+        await AsyncStorage.setItem(cacheKey, JSON.stringify(fetched));
+      } else {
+        setOffline(true);
       }
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.log('[CHECKLIST-LIB] load failed, using cache', e);
+      setOffline(true);
+    }
     setLoading(false);
   }
 
@@ -41,6 +63,7 @@ export default function ChecklistLibraryScreen() {
           <Text style={s.sub} numberOfLines={1}>{jobName}</Text>
         </View>
       </View>
+      {offline && <View style={s.offlineBanner}><Text style={s.offlineTxt}>{'Offline \u2014 showing cached checklists'}</Text></View>}
       <ScrollView contentContainerStyle={{ padding: 16 }}>
         <Text style={s.sectionLabel}>Select a checklist to complete</Text>
         {loading && <ActivityIndicator color={C.teal} style={{ marginTop: 40 }} />}
@@ -83,4 +106,6 @@ const s = StyleSheet.create({
   empty: { alignItems: 'center', marginTop: 60 },
   emptyTxt: { color: '#fff', fontSize: 16, fontWeight: '600' },
   emptySubTxt: { color: '#4d6478', fontSize: 13, marginTop: 8, textAlign: 'center' },
+  offlineBanner: { backgroundColor: 'rgba(251, 191, 36, 0.12)', borderColor: '#fbbf24', borderWidth: 1, marginHorizontal: 16, marginTop: 12, borderRadius: 8, padding: 10 },
+  offlineTxt: { color: '#fbbf24', fontSize: 12, fontWeight: '500' },
 });

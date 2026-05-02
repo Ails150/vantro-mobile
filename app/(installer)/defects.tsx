@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, Image, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authFetch, authFormFetch } from '@/lib/api';
 
 const C = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)', red: '#f87171', amber: '#fbbf24' };
+
+const DEFECT_CACHE_KEY = 'vantro_defects_cache';
+const DEFECT_QUEUE_KEY = 'vantro_defects_queue';
 
 export default function DefectsScreen() {
   const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
@@ -15,13 +19,54 @@ export default function DefectsScreen() {
   const [photo, setPhoto] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [offline, setOffline] = useState(false);
 
   useEffect(() => { load(); }, []);
 
   async function load() {
-    const res = await authFetch(`/api/defects?jobId=${id}`);
-    const data = await res.json();
-    setDefects(data.defects || []);
+    const cacheKey = DEFECT_CACHE_KEY + '_' + id;
+    try {
+      const res = await authFetch(`/api/defects?jobId=${id}`);
+      const data = await res.json();
+      const fetched = data.defects || [];
+      setDefects(fetched);
+      setOffline(false);
+      await AsyncStorage.setItem(cacheKey, JSON.stringify(fetched));
+      // We're online -> flush any queued defect submissions
+      await flushQueue();
+    } catch (e) {
+      console.log('[DEFECTS] load failed, using cache', e);
+      setOffline(true);
+      const raw = await AsyncStorage.getItem(cacheKey);
+      if (raw) setDefects(JSON.parse(raw));
+    }
+  }
+
+  async function flushQueue() {
+    try {
+      const raw = await AsyncStorage.getItem(DEFECT_QUEUE_KEY);
+      if (!raw) return;
+      const queue: any[] = JSON.parse(raw);
+      if (!queue.length) return;
+      const remaining: any[] = [];
+      for (const item of queue) {
+        try {
+          const res = await authFetch('/api/defects', {
+            method: 'POST',
+            body: JSON.stringify(item),
+          });
+          if (!res.ok) remaining.push(item);
+        } catch {
+          remaining.push(item);
+        }
+      }
+      if (remaining.length === 0) {
+        await AsyncStorage.removeItem(DEFECT_QUEUE_KEY);
+        console.log('[DEFECTS] queue flushed');
+      } else {
+        await AsyncStorage.setItem(DEFECT_QUEUE_KEY, JSON.stringify(remaining));
+      }
+    } catch (e) { console.log('[DEFECTS] flush error', e); }
   }
 
   async function pickPhoto() {
@@ -33,23 +78,40 @@ export default function DefectsScreen() {
     if (!description.trim()) return;
     setLoading(true);
     let photoUrl = '', photoPath = '';
-    if (photo) {
-      const form = new FormData();
-      form.append('file', { uri: photo, type: 'image/jpeg', name: 'defect.jpg' } as any);
-      form.append('jobId', id);
-      form.append('itemId', 'defect');
-      const upRes = await authFormFetch('/api/upload', form);
-      if (upRes.ok) { const d = await upRes.json(); photoUrl = d.url; photoPath = d.path; }
+    try {
+      if (photo) {
+        const form = new FormData();
+        form.append('file', { uri: photo, type: 'image/jpeg', name: 'defect.jpg' } as any);
+        form.append('jobId', id);
+        form.append('itemId', 'defect');
+        const upRes = await authFormFetch('/api/upload', form);
+        if (upRes.ok) { const d = await upRes.json(); photoUrl = d.url; photoPath = d.path; }
+      }
+      const payload = { action: 'create', jobId: id, description, severity, photoUrl, photoPath };
+      const res = await authFetch('/api/defects', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error('http ' + res.status);
+      setDescription(''); setPhoto(''); setSeverity('minor');
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 2000);
+      load();
+    } catch (err) {
+      // Queue offline
+      console.log('[DEFECTS] submit failed, queueing', err);
+      try {
+        const raw = await AsyncStorage.getItem(DEFECT_QUEUE_KEY);
+        const queue: any[] = raw ? JSON.parse(raw) : [];
+        queue.push({ action: 'create', jobId: id, description, severity, photoUrl, photoPath });
+        await AsyncStorage.setItem(DEFECT_QUEUE_KEY, JSON.stringify(queue));
+        setDescription(''); setPhoto(''); setSeverity('minor');
+        Alert.alert('Queued', 'Defect will sync when online');
+      } catch (e) {
+        Alert.alert('Error', 'Failed to queue defect');
+      }
     }
-    await authFetch('/api/defects', {
-      method: 'POST',
-      body: JSON.stringify({ action: 'create', jobId: id, description, severity, photoUrl, photoPath }),
-    });
-    setDescription(''); setPhoto(''); setSeverity('minor');
-    setSuccess(true);
-    setTimeout(() => setSuccess(false), 2000);
     setLoading(false);
-    load();
   }
 
   const severityColor = (s: string) => s === 'critical' ? C.red : s === 'major' ? C.amber : C.muted;
@@ -57,9 +119,10 @@ export default function DefectsScreen() {
   return (
     <SafeAreaView style={s.safe}>
       <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()}><Text style={s.back}>â†</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => router.back()}><Text style={s.back}>←</Text></TouchableOpacity>
         <View><Text style={s.title}>Defects</Text><Text style={s.subtitle}>{name}</Text></View>
       </View>
+      {offline && <View style={s.offlineBanner}><Text style={s.offlineTxt}>{'Offline \u2014 cached defects, new will queue'}</Text></View>}
       <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
         <View style={s.card}>
           <Text style={s.sectionTitle}>Log a defect</Text>
@@ -74,10 +137,10 @@ export default function DefectsScreen() {
           </View>
           {photo ? <Image source={{ uri: photo }} style={s.photoPreview} /> : null}
           <TouchableOpacity style={s.photoBtn} onPress={pickPhoto}>
-            <Text style={s.photoBtnText}>{photo ? 'Retake photo' : 'ðŸ“· Add photo'}</Text>
+            <Text style={s.photoBtnText}>{photo ? 'Retake photo' : '📷 Add photo'}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[s.submitBtn, (!description.trim() || loading) && s.submitBtnDisabled]} onPress={submit} disabled={!description.trim() || loading}>
-            <Text style={s.submitBtnText}>{loading ? 'Submitting...' : success ? 'Logged! âœ“' : 'Log defect'}</Text>
+            <Text style={s.submitBtnText}>{loading ? 'Submitting...' : success ? 'Logged! ✓' : 'Log defect'}</Text>
           </TouchableOpacity>
         </View>
 
@@ -129,4 +192,6 @@ const s = StyleSheet.create({
   defectDesc: { fontSize: 14, color: C.text },
   defectPhoto: { width: '100%', height: 130, borderRadius: 8, resizeMode: 'cover', marginTop: 8 },
   resNote: { fontSize: 12, color: C.muted, marginTop: 6 },
+  offlineBanner: { backgroundColor: 'rgba(251, 191, 36, 0.12)', borderColor: '#fbbf24', borderWidth: 1, marginHorizontal: 16, marginTop: 12, borderRadius: 8, padding: 10 },
+  offlineTxt: { color: '#fbbf24', fontSize: 12, fontWeight: '500' },
 });
