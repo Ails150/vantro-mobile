@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, SafeAr
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { authFetch, authFormFetch } from '@/lib/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const C = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)', red: '#f87171' };
 
@@ -17,8 +18,48 @@ export default function ChecklistRunScreen() {
   const [videos, setVideos] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
   const [submittedItems, setSubmittedItems] = useState<Record<string, string>>({}); // itemId -> state
+  const [resumedFromCache, setResumedFromCache] = useState(false);
+  const CACHE_KEY = 'vantro_checklist_progress_' + jobId + '_' + templateId;
 
   useEffect(() => { load(); }, []);
+
+  // Restore in-progress state from AsyncStorage on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const raw = await AsyncStorage.getItem(CACHE_KEY);
+        if (raw) {
+          const cached = JSON.parse(raw);
+          if (cached.notes) setNotes(cached.notes);
+          if (cached.photos) setPhotos(cached.photos);
+          if (cached.videos) setVideos(cached.videos);
+          if (cached.submittedItems) setSubmittedItems(cached.submittedItems);
+          setResumedFromCache(true);
+        }
+      } catch {}
+    })();
+  }, []);
+
+  // Persist progress on every change so the installer never loses work
+  useEffect(() => {
+    if (loading) return;
+    AsyncStorage.setItem(
+      CACHE_KEY,
+      JSON.stringify({ notes, photos, videos, submittedItems })
+    ).catch(() => {});
+  }, [notes, photos, videos, submittedItems, loading]);
+
+  // Clear the cache once every required item has been submitted
+  useEffect(() => {
+    if (loading || items.length === 0) return;
+    const allDone = items.every((it: any) => {
+      if (!it.is_mandatory) return true;
+      return !!submittedItems[it.id];
+    });
+    if (allDone) {
+      AsyncStorage.removeItem(CACHE_KEY).catch(() => {});
+    }
+  }, [submittedItems, items, loading]);
 
   async function load() {
     try {
