@@ -17,9 +17,11 @@ export default function DiaryScreen() {
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
-  const [pendingWorkStatus, setPendingWorkStatus] = useState(null);
+  const [pendingWorkStatus, setPendingWorkStatus] = useState<string|null>(null);
   const [entries, setEntries] = useState<any[]>([]);
   const [offline, setOffline] = useState(false);
+  const [windowDays, setWindowDays] = useState<number|null>(1); // 1=today, 7=week, 30=month, null=all
+  const [hasMore, setHasMore] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [video, setVideo] = useState<string|null>(null);
@@ -30,18 +32,27 @@ export default function DiaryScreen() {
 
   const load = useCallback(async () => {
     const online = await isOnline();
+    // Build since timestamp from windowDays (null = no filter, fetch all)
+    let sinceParam = '';
+    if (windowDays !== null) {
+      const sinceDate = new Date();
+      sinceDate.setHours(0, 0, 0, 0);
+      sinceDate.setDate(sinceDate.getDate() - (windowDays - 1));
+      sinceParam = '&since=' + encodeURIComponent(sinceDate.toISOString());
+    }
     if (online) {
       try {
         await syncQueue(authFetch);
-        console.log('[LOAD] GET jobId=' + id);
-        const res = await authFetch('/api/diary?jobId=' + id);
+        const url = '/api/diary?jobId=' + id + '&limit=200' + sinceParam;
+        console.log('[LOAD] GET', url);
+        const res = await authFetch(url);
         console.log('[LOAD] status=', res?.status, 'ok=', res?.ok);
         if (res.ok) {
           const data = await res.json();
-          console.log('[LOAD] data=', JSON.stringify(data).substring(0, 300));
           const fetched = data.entries || [];
-          console.log('[LOAD] count=', fetched.length);
+          console.log('[LOAD] count=', fetched.length, 'hasMore=', data.hasMore);
           setEntries(fetched);
+          setHasMore(!!data.hasMore);
           await AsyncStorage.setItem(DIARY_CACHE_KEY, JSON.stringify(fetched));
           setOffline(false);
         } else {
@@ -58,7 +69,7 @@ export default function DiaryScreen() {
       setEntries(raw ? JSON.parse(raw) : []);
       setOffline(true);
     }
-  }, [id]);
+  }, [id, windowDays]);
 
   useEffect(() => {
     load();
@@ -67,7 +78,7 @@ export default function DiaryScreen() {
       appState.current = next;
     });
     return () => sub.remove();
-  }, []);
+  }, [windowDays]);
 
   async function pickPhoto() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -156,7 +167,7 @@ export default function DiaryScreen() {
       setShowStatusModal(true);
     }
   
-    async function handleStatusTap(status) {
+    async function handleStatusTap(status: string | null) {
       setPendingWorkStatus(status);
       setShowStatusModal(false);
       doSubmit(status);
@@ -355,6 +366,9 @@ const s = StyleSheet.create({
   title: { color: '#fff', fontSize: 16, fontWeight: '700' },
   sub: { color: '#4d6478', fontSize: 12, marginTop: 2 },
   offlineBanner: { backgroundColor: '#fbbf2422', padding: 8, alignItems: 'center' },
+  windowBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: 'rgba(255,255,255,0.02)', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
+  windowLabel: { color: '#4d6478', fontSize: 12, fontWeight: '500' },
+  windowBtn: { color: '#00d4a0', fontSize: 12, fontWeight: '600' },
   offlineTxt: { color: '#fbbf24', fontSize: 12 },
   entry: { backgroundColor: '#1a2635', borderRadius: 12, padding: 12, marginBottom: 10 },
   entryRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
