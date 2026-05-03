@@ -18,3 +18,12 @@ patch_jobs.py
 
 expo-env.d.ts
 # @end expo-cli
+# Patch helper scripts (one-off Python patches, ps1 scripts, dump files)
+# These are transient files used during development sessions and should
+# not be committed. Keep them locally for reference.
+_*.py
+_backups/
+patch*.py
+patchM*.py
+patchH*.py
+patch_*.py
