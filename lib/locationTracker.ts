@@ -85,7 +85,7 @@ export async function startBackgroundTracking() {
     showsBackgroundLocationIndicator: true,
     foregroundService: {
       notificationTitle: 'Vantro',
-      notificationBody: 'Tracking active - final hours of shift',
+      notificationBody: 'Shift in progress',
       notificationColor: '#00d4a0',
     },
   });
