@@ -120,7 +120,7 @@ export default function JobsScreen() {
           if (data.weeklySchedule) { SecureStore.setItemAsync('vantro_weekly_schedule', JSON.stringify(data.weeklySchedule)).catch(() => {}); }
           if (data.activeShift) { await setActiveShift(data.activeShift); }
           evaluateTrackingState().catch(e => console.error('Failed to evaluate tracking:', e));
-          logCurrentLocation('signin').catch(() => {});
+          logCurrentLocation('signin', true).catch(() => {});
           loadJobs();
         }
       } else {

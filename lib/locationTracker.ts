@@ -106,9 +106,24 @@ export async function isTrackingActive() {
   return Location.hasStartedLocationUpdatesAsync(LOCATION_TASK).catch(() => false);
 }
 
-// Manual foreground breadcrumb - fires regardless of window (useful for sign-in verification)
-export async function logCurrentLocation(source: string = 'foreground') {
+// In-memory throttle: skip foreground heartbeats fired within the last
+// THROTTLE_MS unless explicitly forced. Sign-in, sign-out, and explicit
+// server-driven pings should pass force=true so they always log.
+let lastForegroundLogAt = 0;
+const THROTTLE_MS = 5 * 60 * 1000;
+
+// Manual foreground breadcrumb - fires regardless of tracking window.
+// Throttled to one log per 5 minutes by default; pass force=true for
+// situations where a fresh log is required (sign-in, sign-out, ping).
+export async function logCurrentLocation(source: string = 'foreground', force: boolean = false) {
   try {
+    if (!force) {
+      const since = Date.now() - lastForegroundLogAt;
+      if (since < THROTTLE_MS) {
+        console.log('[location] manual log throttled', source, 'since=' + Math.round(since / 1000) + 's');
+        return;
+      }
+    }
     const { status } = await Location.getForegroundPermissionsAsync();
     if (status !== 'granted') {
       console.log('[location] no foreground permission for manual log');
@@ -116,6 +131,7 @@ export async function logCurrentLocation(source: string = 'foreground') {
     }
     const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
     await postLocation(loc.coords.latitude, loc.coords.longitude, loc.coords.accuracy || 0, source);
+    lastForegroundLogAt = Date.now();
   } catch (e) {
     console.log('[location] manual log failed (offline?)', e);
   }
