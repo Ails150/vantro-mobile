@@ -20,7 +20,7 @@ export default function DiaryScreen() {
   const [pendingWorkStatus, setPendingWorkStatus] = useState<string|null>(null);
   const [entries, setEntries] = useState<any[]>([]);
   const [offline, setOffline] = useState(false);
-  const [windowDays, setWindowDays] = useState<number|null>(1); // 1=today, 7=week, 30=month, null=all
+  const [windowDays, setWindowDays] = useState<number|null>(7); // 1=today, 7=week, 30=month, null=all
   const [hasMore, setHasMore] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
