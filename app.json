@@ -76,7 +76,15 @@
         }
       ],
       "expo-task-manager",
-      "expo-video"
+      "expo-video",
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "project": "vantro-mobile",
+          "organization": "scale-8"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
