@@ -1,4 +1,4 @@
-{
+﻿{
   "expo": {
     "name": "Vantro",
     "slug": "vantro",
@@ -54,7 +54,12 @@
         "android.permission.RECORD_AUDIO",
         "ACCESS_BACKGROUND_LOCATION"
       ],
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyArSljqX_4JhcVIVk-P8xs8YNFCCYyOCYs"
+        }
+      }
     },
     "plugins": [
       "expo-router",
