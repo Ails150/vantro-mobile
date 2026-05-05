@@ -1,4 +1,4 @@
-import * as SecureStore from 'expo-secure-store';
+﻿import * as SecureStore from 'expo-secure-store';
 import { authFetch } from './api';
 
 const STORAGE_KEY = 'vantro_active_shift';
@@ -112,14 +112,15 @@ export async function getTrackingWindow(): Promise<TrackingWindow> {
     return { shouldTrack: false, signOutDate, windowStartDate: null, reason: 'signout_passed', shift };
   }
 
-  const windowStartDate = new Date(signOutDate.getTime() - WINDOW_HOURS_BEFORE * 3600000);
+  // Track for the entire shift: from sign-in to expected sign-out
+  const windowStartDate = signedInAt;
   const shouldTrack = now >= windowStartDate && now <= signOutDate;
 
   const reason = shouldTrack
-    ? 'in_window'
+    ? 'in_shift'
     : now < windowStartDate
-      ? 'before_window'
-      : 'after_window';
+      ? 'before_shift'
+      : 'after_shift';
 
   return { shouldTrack, signOutDate, windowStartDate, reason, shift };
 }
