@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, SafeAreaView, RefreshControl, ActivityIndicator,
@@ -30,13 +30,13 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_ICONS: Record<string, string> = {
-  annual_leave: 'ðŸ–ï¸',
-  sick: 'ðŸ¤’',
-  personal: 'ðŸ‘ª',
-  bereavement: 'ðŸ•Šï¸',
-  training: 'ðŸŽ“',
+  annual_leave: '🏖️',
+  sick: '🤒',
+  personal: '👪',
+  bereavement: '🕊️',
+  training: '🎓',
   unpaid: 'â¸ï¸',
-  unavailable: 'ðŸš«',
+  unavailable: '🚫',
 };
 
 interface MyJob {
@@ -349,7 +349,7 @@ export default function ScheduleScreen() {
             <View style={[styles.balanceFill, { width: `${usedPercent}%` }]} />
           </View>
           <Text style={styles.balanceFootnote}>
-            {balance.used} of {balance.entitlement} used Â· year ends {formatDate(context.leave_year.end)}
+            {balance.used} of {balance.entitlement} used · year ends {formatDate(context.leave_year.end)}
           </Text>
         </View>
 
@@ -375,11 +375,11 @@ export default function ScheduleScreen() {
           ) : (
             sortedEntries.map((entry) => (
               <View key={entry.id} style={styles.entry}>
-                <Text style={styles.entryEmoji}>{TYPE_ICONS[entry.type] || 'ðŸ“…'}</Text>
+                <Text style={styles.entryEmoji}>{TYPE_ICONS[entry.type] || '📅'}</Text>
                 <View style={styles.entryBody}>
                   <Text style={styles.entryType}>
                     {TYPE_LABELS[entry.type] || entry.type}
-                    {entry.is_half_day ? ' Â· half day' : ''}
+                    {entry.is_half_day ? ' · half day' : ''}
                   </Text>
                   <Text style={styles.entryDates}>
                     {formatDateRange(entry.start_date, entry.end_date)}
@@ -418,12 +418,12 @@ function formatDateRange(start: string, end: string): string {
   const sameYear = s.getUTCFullYear() === e.getUTCFullYear();
   const sameMonth = sameYear && s.getUTCMonth() === e.getUTCMonth();
   if (sameMonth) {
-    return `${s.getUTCDate()} â€“ ${e.getUTCDate()} ${e.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`;
+    return `${s.getUTCDate()} – ${e.getUTCDate()} ${e.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`;
   }
   if (sameYear) {
-    return `${s.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} â€“ ${e.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+    return `${s.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} – ${e.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`;
   }
-  return `${formatDate(start)} â€“ ${formatDate(end)}`;
+  return `${formatDate(start)} – ${formatDate(end)}`;
 }
 
 function statusPillStyle(status: string) {
