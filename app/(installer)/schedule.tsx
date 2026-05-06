@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, SafeAreaView, RefreshControl, ActivityIndicator,
@@ -30,13 +30,13 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_ICONS: Record<string, string> = {
-  annual_leave: '🏖️',
-  sick: '🤒',
-  personal: '👪',
-  bereavement: '🕊️',
-  training: '🎓',
-  unpaid: '⏸️',
-  unavailable: '🚫',
+  annual_leave: 'ðŸ–ï¸',
+  sick: 'ðŸ¤’',
+  personal: 'ðŸ‘ª',
+  bereavement: 'ðŸ•Šï¸',
+  training: 'ðŸŽ“',
+  unpaid: 'â¸ï¸',
+  unavailable: 'ðŸš«',
 };
 
 interface MyJob {
@@ -145,20 +145,22 @@ export default function ScheduleScreen() {
     r.setHours(0, 0, 0, 0);
     return r;
   }
+  const fmtLocalDate = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const monThisWeek = startOfWeek(new Date());
   const weekDays: { date: string; label: string; isToday: boolean }[] = [];
   const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const dayKeys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
   for (let i = 0; i < 7; i++) {
     const d = new Date(monThisWeek);
     d.setDate(monThisWeek.getDate() + i);
-    const ds = d.toISOString().slice(0, 10);
+    const ds = fmtLocalDate(d);
     weekDays.push({ date: ds, label: dayLabels[i], isToday: ds === todayStr });
   }
   const nextWeekDays: { date: string; label: string }[] = [];
   for (let i = 7; i < 14; i++) {
     const d = new Date(monThisWeek);
     d.setDate(monThisWeek.getDate() + i);
-    const ds = d.toISOString().slice(0, 10);
+    const ds = fmtLocalDate(d);
     nextWeekDays.push({ date: ds, label: dayLabels[(i - 7) % 7] });
   }
 
@@ -216,8 +218,15 @@ export default function ScheduleScreen() {
         {/* THIS WEEK */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>This week</Text>
-          {weekDays.map((wd) => {
+          {weekDays.map((wd, i) => {
             const jobs = jobsOnDate(wd.date);
+            const ph = context.public_holidays.find((h) => h.date === wd.date);
+            const leave = context.my_entries.find(
+              (e) => e.status === 'approved' && wd.date >= e.start_date && wd.date <= e.end_date
+            );
+            const dayKey = dayKeys[i];
+            const day = context.weekly_schedule?.[dayKey];
+            const isWorking = !!(day?.enabled ?? day?.working);
             return (
               <View key={wd.date} style={[styles.weekRow, wd.isToday && styles.weekRowToday]}>
                 <View style={styles.weekDayCol}>
@@ -229,14 +238,24 @@ export default function ScheduleScreen() {
                   </Text>
                 </View>
                 <View style={styles.weekJobsCol}>
-                  {jobs.length === 0 ? (
-                    <Text style={styles.weekOff}>Off</Text>
-                  ) : (
+                  {jobs.length > 0 ? (
                     jobs.map((j) => (
                       <Text key={j.assignment_id} style={styles.weekJobName} numberOfLines={1}>
                         {j.job_name}
                       </Text>
                     ))
+                  ) : leave ? (
+                    <Text style={styles.weekLeave} numberOfLines={1}>
+                      {TYPE_ICONS[leave.type] || ''} {TYPE_LABELS[leave.type] || leave.type}
+                    </Text>
+                  ) : ph ? (
+                    <Text style={styles.weekHoliday} numberOfLines={1}>
+                      🎉 {ph.name}
+                    </Text>
+                  ) : isWorking ? (
+                    <Text style={styles.weekHours}>{day.start}–{day.end}</Text>
+                  ) : (
+                    <Text style={styles.weekOff}>Off</Text>
                   )}
                 </View>
               </View>
@@ -247,8 +266,15 @@ export default function ScheduleScreen() {
         {/* NEXT WEEK */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Next week</Text>
-          {nextWeekDays.map((wd) => {
+          {nextWeekDays.map((wd, i) => {
             const jobs = jobsOnDate(wd.date);
+            const ph = context.public_holidays.find((h) => h.date === wd.date);
+            const leave = context.my_entries.find(
+              (e) => e.status === 'approved' && wd.date >= e.start_date && wd.date <= e.end_date
+            );
+            const dayKey = dayKeys[i];
+            const day = context.weekly_schedule?.[dayKey];
+            const isWorking = !!(day?.enabled ?? day?.working);
             return (
               <View key={wd.date} style={styles.weekRow}>
                 <View style={styles.weekDayCol}>
@@ -256,14 +282,24 @@ export default function ScheduleScreen() {
                   <Text style={styles.weekDayDate}>{wd.date.slice(8, 10)}</Text>
                 </View>
                 <View style={styles.weekJobsCol}>
-                  {jobs.length === 0 ? (
-                    <Text style={styles.weekOff}>Off</Text>
-                  ) : (
+                  {jobs.length > 0 ? (
                     jobs.map((j) => (
                       <Text key={j.assignment_id} style={styles.weekJobName} numberOfLines={1}>
                         {j.job_name}
                       </Text>
                     ))
+                  ) : leave ? (
+                    <Text style={styles.weekLeave} numberOfLines={1}>
+                      {TYPE_ICONS[leave.type] || ''} {TYPE_LABELS[leave.type] || leave.type}
+                    </Text>
+                  ) : ph ? (
+                    <Text style={styles.weekHoliday} numberOfLines={1}>
+                      🎉 {ph.name}
+                    </Text>
+                  ) : isWorking ? (
+                    <Text style={styles.weekHours}>{day.start}–{day.end}</Text>
+                  ) : (
+                    <Text style={styles.weekOff}>Off</Text>
                   )}
                 </View>
               </View>
@@ -313,7 +349,7 @@ export default function ScheduleScreen() {
             <View style={[styles.balanceFill, { width: `${usedPercent}%` }]} />
           </View>
           <Text style={styles.balanceFootnote}>
-            {balance.used} of {balance.entitlement} used · year ends {formatDate(context.leave_year.end)}
+            {balance.used} of {balance.entitlement} used Â· year ends {formatDate(context.leave_year.end)}
           </Text>
         </View>
 
@@ -339,11 +375,11 @@ export default function ScheduleScreen() {
           ) : (
             sortedEntries.map((entry) => (
               <View key={entry.id} style={styles.entry}>
-                <Text style={styles.entryEmoji}>{TYPE_ICONS[entry.type] || '📅'}</Text>
+                <Text style={styles.entryEmoji}>{TYPE_ICONS[entry.type] || 'ðŸ“…'}</Text>
                 <View style={styles.entryBody}>
                   <Text style={styles.entryType}>
                     {TYPE_LABELS[entry.type] || entry.type}
-                    {entry.is_half_day ? ' · half day' : ''}
+                    {entry.is_half_day ? ' Â· half day' : ''}
                   </Text>
                   <Text style={styles.entryDates}>
                     {formatDateRange(entry.start_date, entry.end_date)}
@@ -382,12 +418,12 @@ function formatDateRange(start: string, end: string): string {
   const sameYear = s.getUTCFullYear() === e.getUTCFullYear();
   const sameMonth = sameYear && s.getUTCMonth() === e.getUTCMonth();
   if (sameMonth) {
-    return `${s.getUTCDate()} – ${e.getUTCDate()} ${e.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`;
+    return `${s.getUTCDate()} â€“ ${e.getUTCDate()} ${e.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`;
   }
   if (sameYear) {
-    return `${s.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} – ${e.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+    return `${s.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} â€“ ${e.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`;
   }
-  return `${formatDate(start)} – ${formatDate(end)}`;
+  return `${formatDate(start)} â€“ ${formatDate(end)}`;
 }
 
 function statusPillStyle(status: string) {
@@ -488,4 +524,7 @@ const styles = StyleSheet.create({
   weekJobsCol: { flex: 1, paddingLeft: 8 },
   weekJobName: { color: '#ffffff', fontSize: 14, paddingVertical: 1 },
   weekOff: { color: '#4d6478', fontSize: 13, fontStyle: 'italic' },
+  weekHours: { color: '#dbe5ee', fontSize: 13 },
+  weekLeave: { color: '#fbbf24', fontSize: 13 },
+  weekHoliday: { color: '#00d4a0', fontSize: 13 },
 });
