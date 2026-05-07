@@ -143,6 +143,12 @@ export default function ScheduleScreen() {
   const myJobs = context.my_jobs || [];
   const todayJobs = myJobs.filter((j) => j.date === todayStr);
 
+  // Today's working hours from weekly_schedule (if no job assigned but contracted hours exist)
+  const todayDayKey = ['sun','mon','tue','wed','thu','fri','sat'][new Date().getDay()];
+  const todaySchedule = context.weekly_schedule?.[todayDayKey];
+  const todayHasContractedHours =
+    !!(todaySchedule && (todaySchedule.enabled !== false) && todaySchedule.start && todaySchedule.end);
+
   function startOfWeek(d: Date) {
     const day = d.getDay();
     const diff = day === 0 ? -6 : 1 - day;
@@ -208,7 +214,16 @@ export default function ScheduleScreen() {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Today</Text>
           {todayJobs.length === 0 ? (
-            <Text style={styles.muted}>No jobs scheduled today.</Text>
+            todayHasContractedHours ? (
+              <View>
+                <Text style={[styles.jobName, { color: C.teal }]}>
+                  Working {todaySchedule!.start}–{todaySchedule!.end}
+                </Text>
+                <Text style={styles.muted}>No specific job assigned today.</Text>
+              </View>
+            ) : (
+              <Text style={styles.muted}>No jobs scheduled today.</Text>
+            )
           ) : (
             todayJobs.map((j) => (
               <View key={j.assignment_id} style={styles.jobRowToday}>
