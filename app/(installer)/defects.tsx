@@ -17,6 +17,7 @@ export default function DefectsScreen() {
   const [description, setDescription] = useState('');
   const [severity, setSeverity] = useState('minor');
   const [photo, setPhoto] = useState('');
+  const [video, setVideo] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [offline, setOffline] = useState(false);
@@ -32,7 +33,6 @@ export default function DefectsScreen() {
       setDefects(fetched);
       setOffline(false);
       await AsyncStorage.setItem(cacheKey, JSON.stringify(fetched));
-      // We're online -> flush any queued defect submissions
       await flushQueue();
     } catch (e) {
       console.log('[DEFECTS] load failed, using cache', e);
@@ -69,43 +69,89 @@ export default function DefectsScreen() {
     } catch (e) { console.log('[DEFECTS] flush error', e); }
   }
 
+  async function takePhoto() {
+    const perm = await ImagePicker.requestCameraPermissionsAsync();
+    if (!perm.granted) { Alert.alert('Camera permission required'); return; }
+    const result = await ImagePicker.launchCameraAsync({ quality: 0.7, mediaTypes: ImagePicker.MediaTypeOptions.Images });
+    if (!result.canceled) { setPhoto(result.assets[0].uri); setVideo(''); }
+  }
+
   async function pickPhoto() {
-    const result = await ImagePicker.launchCameraAsync({ quality: 0.7 });
-    if (!result.canceled) setPhoto(result.assets[0].uri);
+    const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ImagePicker.MediaTypeOptions.Images });
+    if (!result.canceled) { setPhoto(result.assets[0].uri); setVideo(''); }
+  }
+
+  async function takeVideo() {
+    const perm = await ImagePicker.requestCameraPermissionsAsync();
+    if (!perm.granted) { Alert.alert('Camera permission required'); return; }
+    const result = await ImagePicker.launchCameraAsync({ quality: 0.7, mediaTypes: ImagePicker.MediaTypeOptions.Videos, videoMaxDuration: 60 });
+    if (!result.canceled) { setVideo(result.assets[0].uri); setPhoto(''); }
+  }
+
+  async function pickVideo() {
+    const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ImagePicker.MediaTypeOptions.Videos });
+    if (!result.canceled) { setVideo(result.assets[0].uri); setPhoto(''); }
   }
 
   async function submit() {
     if (!description.trim()) return;
     setLoading(true);
-    let photoUrl = '', photoPath = '';
+    let photoUrl = '', photoPath = '', videoUrl = '', videoPath = '';
     try {
       if (photo) {
         const form = new FormData();
         form.append('file', { uri: photo, type: 'image/jpeg', name: 'defect.jpg' } as any);
         form.append('jobId', id);
         form.append('itemId', 'defect');
+        console.log('[DEFECTS] uploading photo to /api/upload');
         const upRes = await authFormFetch('/api/upload', form);
-        if (upRes.ok) { const d = await upRes.json(); photoUrl = d.url; photoPath = d.path; }
+        console.log('[DEFECTS] photo upload status:', upRes.status);
+        if (upRes.ok) {
+          const d = await upRes.json();
+          photoUrl = d.url; photoPath = d.path;
+          console.log('[DEFECTS] photo uploaded:', d.url);
+        } else {
+          const errText = await upRes.text();
+          console.log('[DEFECTS] PHOTO UPLOAD FAILED:', upRes.status, errText);
+          throw new Error('Photo upload failed: ' + upRes.status + ' ' + errText);
+        }
       }
-      const payload = { action: 'create', jobId: id, description, severity, photoUrl, photoPath };
+      if (video) {
+        const form = new FormData();
+        form.append('file', { uri: video, type: 'video/mp4', name: 'defect.mp4' } as any);
+        form.append('jobId', id);
+        form.append('itemId', 'defect-video');
+        console.log('[DEFECTS] uploading video to /api/upload');
+        const upRes = await authFormFetch('/api/upload', form);
+        console.log('[DEFECTS] upload response status:', upRes.status);
+        if (upRes.ok) {
+          const d = await upRes.json();
+          videoUrl = d.url; videoPath = d.path;
+          console.log('[DEFECTS] video uploaded:', d.url);
+        } else {
+          const errText = await upRes.text();
+          console.log('[DEFECTS] VIDEO UPLOAD FAILED:', upRes.status, errText);
+          throw new Error('Video upload failed: ' + upRes.status + ' ' + errText);
+        }
+      }
+      const payload = { action: 'create', jobId: id, description, severity, photoUrl, photoPath, videoUrl, videoPath };
       const res = await authFetch('/api/defects', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error('http ' + res.status);
-      setDescription(''); setPhoto(''); setSeverity('minor');
+      setDescription(''); setPhoto(''); setVideo(''); setSeverity('minor');
       setSuccess(true);
       setTimeout(() => setSuccess(false), 2000);
       load();
     } catch (err) {
-      // Queue offline
       console.log('[DEFECTS] submit failed, queueing', err);
       try {
         const raw = await AsyncStorage.getItem(DEFECT_QUEUE_KEY);
         const queue: any[] = raw ? JSON.parse(raw) : [];
-        queue.push({ action: 'create', jobId: id, description, severity, photoUrl, photoPath });
+        queue.push({ action: 'create', jobId: id, description, severity, photoUrl, photoPath, videoUrl, videoPath });
         await AsyncStorage.setItem(DEFECT_QUEUE_KEY, JSON.stringify(queue));
-        setDescription(''); setPhoto(''); setSeverity('minor');
+        setDescription(''); setPhoto(''); setVideo(''); setSeverity('minor');
         Alert.alert('Queued', 'Defect will sync when online');
       } catch (e) {
         Alert.alert('Error', 'Failed to queue defect');
@@ -119,7 +165,7 @@ export default function DefectsScreen() {
   return (
     <SafeAreaView style={s.safe}>
       <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()}><Text style={s.back}>←</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => router.back()}><Text style={s.back}>{'\u2190'}</Text></TouchableOpacity>
         <View><Text style={s.title}>Defects</Text><Text style={s.subtitle}>{name}</Text></View>
       </View>
       {offline && <View style={s.offlineBanner}><Text style={s.offlineTxt}>{'Offline \u2014 cached defects, new will queue'}</Text></View>}
@@ -136,11 +182,25 @@ export default function DefectsScreen() {
             ))}
           </View>
           {photo ? <Image source={{ uri: photo }} style={s.photoPreview} /> : null}
-          <TouchableOpacity style={s.photoBtn} onPress={pickPhoto}>
-            <Text style={s.photoBtnText}>{photo ? 'Retake photo' : '📷 Add photo'}</Text>
-          </TouchableOpacity>
+          {video ? <View style={[s.photoPreview, {backgroundColor: '#0f1923', justifyContent: 'center', alignItems: 'center'}]}><Text style={{color: C.teal, fontSize: 14}}>Video selected</Text><Text style={{color: C.muted, fontSize: 11, marginTop: 4}}>Tap below to change</Text></View> : null}
+          <View style={{flexDirection: 'row', gap: 8}}>
+            <TouchableOpacity style={[s.photoBtn, {flex: 1}]} onPress={takePhoto}>
+              <Text style={s.photoBtnText}>Take photo</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[s.photoBtn, {flex: 1}]} onPress={pickPhoto}>
+              <Text style={s.photoBtnText}>Add photo</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={{flexDirection: 'row', gap: 8}}>
+            <TouchableOpacity style={[s.photoBtn, {flex: 1}]} onPress={takeVideo}>
+              <Text style={s.photoBtnText}>Take video</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[s.photoBtn, {flex: 1}]} onPress={pickVideo}>
+              <Text style={s.photoBtnText}>Add video</Text>
+            </TouchableOpacity>
+          </View>
           <TouchableOpacity style={[s.submitBtn, (!description.trim() || loading) && s.submitBtnDisabled]} onPress={submit} disabled={!description.trim() || loading}>
-            <Text style={s.submitBtnText}>{loading ? 'Submitting...' : success ? 'Logged! ✓' : 'Log defect'}</Text>
+            <Text style={s.submitBtnText}>{loading ? 'Submitting...' : success ? 'Logged! \u2713' : 'Log defect'}</Text>
           </TouchableOpacity>
         </View>
 
@@ -155,6 +215,7 @@ export default function DefectsScreen() {
                 </View>
                 <Text style={s.defectDesc}>{d.description}</Text>
                 {d.photo_url ? <Image source={{ uri: d.photo_url }} style={s.defectPhoto} /> : null}
+                {d.video_url ? <View style={[s.defectPhoto, {backgroundColor: '#0f1923', justifyContent: 'center', alignItems: 'center'}]}><Text style={{color: C.teal}}>Video attached</Text></View> : null}
                 {d.resolution_note ? <Text style={s.resNote}>Resolution: {d.resolution_note}</Text> : null}
               </View>
             ))}
@@ -168,10 +229,10 @@ export default function DefectsScreen() {
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
   header: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: C.border },
-  back: { fontSize: 22, color: C.muted },
-  title: { fontSize: 15, fontWeight: '600', color: C.text },
-  subtitle: { fontSize: 12, color: C.muted },
-  scroll: { padding: 16, paddingBottom: 40 },
+  back: { color: C.text, fontSize: 22 },
+  title: { fontSize: 20, fontWeight: '700', color: C.text },
+  subtitle: { fontSize: 13, color: C.muted, marginTop: 2 },
+  scroll: { padding: 16, paddingBottom: 100 },
   card: { backgroundColor: C.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: C.border, gap: 12 },
   sectionTitle: { fontSize: 15, fontWeight: '600', color: C.text },
   input: { backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: 12, color: C.text, fontSize: 14, minHeight: 100, borderWidth: 1, borderColor: C.border },
