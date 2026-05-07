@@ -1,7 +1,20 @@
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getToken } from './api';
 import { getTrackingWindow } from './activeShift';
+
+// Report current GPS permission level — cached locally + sent to backend
+async function reportPermissionLevel(level: 'always' | 'whenInUse' | 'denied') {
+  try { await AsyncStorage.setItem('gps_permission_level', level); } catch {}
+  const token = await getToken();
+  if (!token) return;
+  fetch(`${API_BASE}/api/installer/gps-permission`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify({ level }),
+  }).catch((e) => console.warn('[location] permission report failed (non-blocking):', e));
+}
 
 const API_BASE = 'https://app.getvantro.com';
 const LOCATION_TASK = 'vantro-background-location';
@@ -62,14 +75,17 @@ export async function startBackgroundTracking() {
   const { status: fg } = await Location.requestForegroundPermissionsAsync();
   if (fg !== 'granted') {
     console.log('[location] foreground permission denied');
+    await reportPermissionLevel('denied');
     return false;
   }
 
   const { status: bg } = await Location.requestBackgroundPermissionsAsync();
   if (bg !== 'granted') {
-    console.log('[location] background permission denied');
+    console.log('[location] background permission denied (whenInUse only)');
+    await reportPermissionLevel('whenInUse');
     return false;
   }
+  await reportPermissionLevel('always');
 
   const isTracking = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK).catch(() => false);
   if (isTracking) {

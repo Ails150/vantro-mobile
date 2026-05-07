@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 import { authFetch } from '@/lib/api';
 import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { stopBackgroundTracking, logCurrentLocation, evaluateTrackingState } from '@/lib/locationTracker';
 import { setActiveShift, clearActiveShift, hydrateActiveShift } from '@/lib/activeShift';
 import { isOnline, cacheJobs, getCachedJobs, queueAction, syncQueue } from '@/lib/offline';
@@ -37,6 +38,25 @@ export default function JobsScreen() {
   const [gpsMsg, setGpsMsg] = useState<{ id: string; msg: string; ok: boolean } | null>(null);
   const [offline, setOffline] = useState(false);
   const [bgGpsEnabled, setBgGpsEnabled] = useState(true);
+  const [gpsLevel, setGpsLevel] = useState<'always' | 'whenInUse' | 'denied' | null>(null);
+
+  // Check stored GPS permission level on mount + every focus
+  useEffect(() => {
+    let mounted = true;
+    async function checkLevel() {
+      try {
+        const stored = await AsyncStorage.getItem('gps_permission_level');
+        if (mounted && (stored === 'always' || stored === 'whenInUse' || stored === 'denied')) {
+          setGpsLevel(stored);
+        }
+      } catch {}
+    }
+    checkLevel();
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next === 'active') checkLevel();
+    });
+    return () => { mounted = false; sub.remove(); };
+  }, []);
   const appState = useRef(AppState.currentState);
 
   const loadJobs = useCallback(async () => {
@@ -207,6 +227,20 @@ export default function JobsScreen() {
         </View>
       </View>
 
+      {gpsLevel && gpsLevel !== 'always' && (
+        <TouchableOpacity
+          onPress={() => Linking.openSettings()}
+          style={{ backgroundColor: '#fbbf24', padding: 12, marginHorizontal: 16, marginTop: 8, borderRadius: 8 }}
+          accessibilityLabel="gps-limited-banner"
+        >
+          <Text style={{ color: '#0f1923', fontWeight: '700', fontSize: 13 }}>
+            Limited GPS — breadcrumb trail not recording
+          </Text>
+          <Text style={{ color: '#0f1923', fontSize: 12, marginTop: 2, opacity: 0.8 }}>
+            Tap to open Settings → Location → Always Allow
+          </Text>
+        </TouchableOpacity>
+      )}
       {offline && (
         <View style={s.offlineBanner}>
           <Text style={s.offlineBannerText}>- Offline - showing cached data. Actions will sync when online.</Text>
