@@ -8,10 +8,23 @@
       "android": {
         "buildType": "apk"
       },
-      "node": "20.19.4"
+      "node": "20.19.4",
+      "distribution": "internal",
+      "ios": {
+        "simulator": false
+      },
+      "env": {
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
+      }
     },
     "production": {
-      "node": "20.19.4"
+      "node": "20.19.4",
+      "channel": "production",
+      "env": {
+        "SENTRY_AUTH_TOKEN": "$SENTRY_AUTH_TOKEN",
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
+      },
+      "autoIncrement": true
     }
   },
   "submit": {

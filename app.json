@@ -1,4 +1,4 @@
-﻿{
+{
   "expo": {
     "name": "Vantro",
     "slug": "vantro",
@@ -88,6 +88,14 @@
           "url": "https://sentry.io/",
           "project": "vantro-mobile",
           "organization": "scale-8"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "15.1"
+          }
         }
       ]
     ],
