@@ -102,10 +102,6 @@ export default function CaptureScreen() {
       console.log("[VOICE] direct upload status=", cfRes?.status);
       if (!cfRes.ok) throw new Error("Stream upload failed");
 
-      console.log("[VOICE] triggering AI processing");
-      setUploading(false);
-      setProcessing(true);
-
       const saveRes = await authFetch("/api/walkthroughs/upload-clip", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -130,8 +126,9 @@ export default function CaptureScreen() {
       }
 
       console.log("[VOICE] SUCCESS");
+      setUploading(false);
       setDone(true);
-      setTimeout(() => router.back(), 2000);
+      setTimeout(() => router.back(), 1500);
     } catch (e: any) {
       console.error("Upload error:", e);
       Alert.alert("Upload failed", e.message || "Please try again.");
@@ -163,8 +160,8 @@ export default function CaptureScreen() {
       <SafeAreaView style={s.safe}>
         <View style={s.doneBox}>
           <Text style={s.doneIcon}>✓</Text>
-          <Text style={s.doneTitle}>Walkthrough saved</Text>
-          <Text style={s.sub}>AI is analysing now. Check the admin tab in a moment.</Text>
+          <Text style={s.doneTitle}>Walk & Talk saved ✓</Text>
+          <Text style={s.sub}>AI is processing in the background. You can carry on.</Text>
         </View>
       </SafeAreaView>
     );
