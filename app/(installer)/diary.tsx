@@ -346,6 +346,7 @@ export default function DiaryScreen() {
           <TouchableOpacity onPress={pickPhoto} style={s.mediaBtn}><Text style={s.mediaBtnTxt}>🖼 Gallery</Text></TouchableOpacity>
           <TouchableOpacity onPress={recordVideo} style={s.mediaBtn}><Text style={s.mediaBtnTxt}>🎥 Record</Text></TouchableOpacity>
           <TouchableOpacity onPress={pickVideo} style={s.mediaBtn}><Text style={s.mediaBtnTxt}>📁 Video</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push({ pathname: '/(installer)/capture', params: { id, name: name || 'Site' } })} style={[s.mediaBtn, { backgroundColor: '#BC6AFF22', borderColor: '#BC6AFF' }]}><Text style={[s.mediaBtnTxt, { color: '#BC6AFF', fontWeight: '700' }]}>🎙 Walk & Talk</Text></TouchableOpacity>
         </View>
         <View style={[s.inputRow, { marginBottom: insets.bottom }]}>
           <TextInput style={s.input} placeholder="Add diary entry..." placeholderTextColor={C.muted} value={text} onChangeText={setText} multiline maxLength={1000} />
