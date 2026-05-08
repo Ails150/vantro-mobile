@@ -23,6 +23,7 @@ export default function CaptureScreen() {
   const [done, setDone] = useState(false);
   const cameraRef = useRef<CameraView>(null);
   const timerRef = useRef<any>(null);
+  const finalSecondsRef = useRef<number>(0);
 
   useEffect(() => {
     (async () => {
@@ -63,6 +64,7 @@ export default function CaptureScreen() {
   async function stopRecord() {
     if (timerRef.current) clearInterval(timerRef.current);
     if (cameraRef.current && recording) {
+      finalSecondsRef.current = seconds;
       setRecording(false);
       if (seconds < MIN_SECONDS) {
         Alert.alert("Too short", `Walkthrough must be at least ${MIN_SECONDS} seconds. Please start again.`);
@@ -111,7 +113,7 @@ export default function CaptureScreen() {
           jobId: id,
           streamUid: uid,
           playbackUrl,
-          durationSeconds: seconds,
+          durationSeconds: finalSecondsRef.current || seconds,
           lat,
           lng,
         })
