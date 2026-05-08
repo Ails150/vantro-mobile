@@ -6,6 +6,8 @@ import { authFetch, authFormFetch } from '@/lib/api';
 import { isOnline, queueAction, syncQueue } from '@/lib/offline';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
+import { listQueue, type WalkthroughQueueItem } from '@/lib/walktalk-queue';
+import { tickUploader, manualRetry } from '@/lib/walktalk-uploader';
 
 const C = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)', red: '#f87171', amber: '#fbbf24' };
 
@@ -26,6 +28,7 @@ export default function DiaryScreen() {
   const [uploading, setUploading] = useState(false);
   const [video, setVideo] = useState<string|null>(null);
   const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [walktalkQueue, setWalktalkQueue] = useState<WalkthroughQueueItem[]>([]);
   const scrollRef = useRef<ScrollView>(null);
   const appState = useRef(AppState.currentState);
   const DIARY_CACHE_KEY = 'vantro_diary_' + id;
@@ -70,6 +73,19 @@ export default function DiaryScreen() {
       setOffline(true);
     }
   }, [id, windowDays]);
+
+  // Refresh walk & talk queue every 3s
+  useEffect(() => {
+    let alive = true;
+    const tick = async () => {
+      if (!alive) return;
+      const items = await listQueue();
+      setWalktalkQueue(items.filter(q => q.jobId === id));
+    };
+    tick();
+    const interval = setInterval(tick, 3000);
+    return () => { alive = false; clearInterval(interval); };
+  }, [id]);
 
   useEffect(() => {
     load();
@@ -341,7 +357,27 @@ export default function DiaryScreen() {
         </ScrollView>
       )}
       <View style={s.inputArea}>
-        <View style={s.mediaButtons}>
+        {walktalkQueue.length > 0 && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#BC6AFF15', borderColor: '#BC6AFF44', borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 8, gap: 8 }}>
+            <Text style={{ fontSize: 16 }}>🎙</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: '#BC6AFF', fontWeight: '700', fontSize: 13 }}>
+                {walktalkQueue.filter(q => q.status === 'uploading').length > 0 ? 'Uploading walk & talk…' :
+                 walktalkQueue.filter(q => q.status === 'failed').length === walktalkQueue.length ? `${walktalkQueue.length} failed — tap to retry` :
+                 `${walktalkQueue.length} walk & talk${walktalkQueue.length === 1 ? '' : 's'} pending upload`}
+              </Text>
+              {walktalkQueue[0]?.lastError && (
+                <Text style={{ color: '#fbbf24', fontSize: 11, marginTop: 2 }} numberOfLines={1}>{walktalkQueue[0].lastError}</Text>
+              )}
+            </View>
+            {walktalkQueue.some(q => q.status === 'failed') && (
+              <TouchableOpacity onPress={() => walktalkQueue.filter(q => q.status === 'failed').forEach(q => manualRetry(q.id))} style={{ paddingHorizontal: 10, paddingVertical: 4, backgroundColor: '#BC6AFF', borderRadius: 6 }}>
+                <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>Retry</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+                <View style={s.mediaButtons}>
           <TouchableOpacity onPress={takePhoto} style={s.mediaBtn}><Text style={s.mediaBtnTxt}>📷 Camera</Text></TouchableOpacity>
           <TouchableOpacity onPress={pickPhoto} style={s.mediaBtn}><Text style={s.mediaBtnTxt}>🖼 Gallery</Text></TouchableOpacity>
           <TouchableOpacity onPress={() => router.push({ pathname: '/(installer)/capture', params: { id, name: name || 'Site' } })} style={[s.mediaBtn, { backgroundColor: '#BC6AFF22', borderColor: '#BC6AFF' }]}><Text style={[s.mediaBtnTxt, { color: '#BC6AFF', fontWeight: '700' }]}>🎙 Walk</Text></TouchableOpacity>

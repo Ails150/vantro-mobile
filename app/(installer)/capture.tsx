@@ -3,7 +3,8 @@ import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Alert, Activity
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from "expo-camera";
 import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { authFetch } from "@/lib/api";
+import { addToQueue } from "@/lib/walktalk-queue";
+import { tickUploader } from "@/lib/walktalk-uploader";
 
 const C = { bg: "#0f1923", card: "#1a2635", teal: "#00d4a0", purple: "#BC6AFF", muted: "#4d6478", text: "#ffffff", red: "#f87171", amber: "#fbbf24" };
 
@@ -18,8 +19,7 @@ export default function CaptureScreen() {
   const [micPerm, requestMicPerm] = useMicrophonePermissions();
   const [recording, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
-  const [uploading, setUploading] = useState(false);
-  const [processing, setProcessing] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
   const cameraRef = useRef<CameraView>(null);
   const timerRef = useRef<any>(null);
@@ -52,7 +52,7 @@ export default function CaptureScreen() {
     try {
       const video = await cameraRef.current.recordAsync({ maxDuration: MAX_SECONDS });
       if (video?.uri) {
-        await uploadAndSave(video.uri);
+        await saveLocally(video.uri);
       }
     } catch (e) {
       console.error("Record error:", e);
@@ -76,9 +76,10 @@ export default function CaptureScreen() {
     }
   }
 
-  async function uploadAndSave(uri: string) {
-    setUploading(true);
+  async function saveLocally(uri: string) {
+    setSaving(true);
     try {
+      // Capture GPS (best effort, non-blocking)
       let lat: number | null = null, lng: number | null = null;
       try {
         const { status } = await Location.getForegroundPermissionsAsync();
@@ -89,52 +90,29 @@ export default function CaptureScreen() {
         }
       } catch {}
 
-      console.log("[VOICE] getting upload URL");
-      const urlRes = await authFetch("/api/stream/upload-url", { method: "POST" });
-      if (!urlRes.ok) throw new Error("Upload URL request failed");
-      const { uploadURL, uid, playbackUrl } = await urlRes.json();
-      console.log("[VOICE] got uid=", uid);
+      const duration = finalSecondsRef.current || seconds;
 
-      const formData = new FormData();
-      formData.append("file", { uri, name: `voice_${Date.now()}.mp4`, type: "video/mp4" } as any);
-      console.log("[VOICE] uploading to Cloudflare");
-      const cfRes = await fetch(uploadURL, { method: "POST", body: formData });
-      console.log("[VOICE] direct upload status=", cfRes?.status);
-      if (!cfRes.ok) throw new Error("Stream upload failed");
-
-      const saveRes = await authFetch("/api/walkthroughs/upload-clip", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jobId: id,
-          streamUid: uid,
-          playbackUrl,
-          durationSeconds: finalSecondsRef.current || seconds,
-          lat,
-          lng,
-        })
+      // Save to local queue — instant, works offline
+      console.log("[CAPTURE] saving to local queue, duration=", duration);
+      await addToQueue({
+        jobId: id || "",
+        jobName: name || "Site",
+        sourceUri: uri,
+        durationSeconds: duration,
+        lat,
+        lng,
       });
 
-      if (!saveRes.ok) {
-        const errBody = await saveRes.json().catch(() => ({}));
-        if (errBody.capReached) {
-          Alert.alert("Limit reached", errBody.message || "You have used your 5 walkthroughs this month.");
-          router.back();
-          return;
-        }
-        throw new Error(errBody.error || "Save failed");
-      }
+      // Kick the uploader (will run in background, non-blocking)
+      tickUploader().catch(e => console.warn("[CAPTURE] uploader kick failed:", e));
 
-      console.log("[VOICE] SUCCESS");
-      setUploading(false);
       setDone(true);
       setTimeout(() => router.back(), 1500);
     } catch (e: any) {
-      console.error("Upload error:", e);
-      Alert.alert("Upload failed", e.message || "Please try again.");
+      console.error("Save error:", e);
+      Alert.alert("Save failed", e.message || "Please try again.");
+      setSaving(false);
     }
-    setUploading(false);
-    setProcessing(false);
   }
 
   if (!camPerm || !micPerm) {
@@ -160,31 +138,19 @@ export default function CaptureScreen() {
       <SafeAreaView style={s.safe}>
         <View style={s.doneBox}>
           <Text style={s.doneIcon}>✓</Text>
-          <Text style={s.doneTitle}>Walk & Talk saved ✓</Text>
-          <Text style={s.sub}>AI is processing in the background. You can carry on.</Text>
+          <Text style={s.doneTitle}>Walk & Talk saved</Text>
+          <Text style={s.sub}>Stored on this phone. Will upload automatically when online.</Text>
         </View>
       </SafeAreaView>
     );
   }
 
-  if (processing) {
+  if (saving) {
     return (
       <SafeAreaView style={s.safe}>
         <View style={s.doneBox}>
           <ActivityIndicator color={C.purple} size="large" />
-          <Text style={s.doneTitle}>Analysing your walkthrough…</Text>
-          <Text style={s.sub}>Transcribing and structuring with AI</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (uploading) {
-    return (
-      <SafeAreaView style={s.safe}>
-        <View style={s.doneBox}>
-          <ActivityIndicator color={C.teal} size="large" />
-          <Text style={s.doneTitle}>Uploading…</Text>
+          <Text style={s.doneTitle}>Saving locally…</Text>
           <Text style={s.sub}>{seconds}s recorded</Text>
         </View>
       </SafeAreaView>
@@ -213,7 +179,7 @@ export default function CaptureScreen() {
         )}
         {!recording && (
           <View style={s.tipPill}>
-            <Text style={s.tipTxt}>💡 Tip: Show what you say. Take your time.</Text>
+            <Text style={s.tipTxt}>💡 Saved on phone first — uploads when online. No data lost.</Text>
           </View>
         )}
       </View>
