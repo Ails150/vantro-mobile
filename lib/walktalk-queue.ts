@@ -121,3 +121,9 @@ export async function resetItemForRetry(id: string): Promise<void> {
 }
 
 export const QUEUE_MAX_ATTEMPTS = MAX_ATTEMPTS;
+
+
+export async function clearAllQueue(): Promise<void> {
+  await AsyncStorage.removeItem(QUEUE_KEY);
+  console.log("[walktalk-queue] CLEARED ALL");
+}

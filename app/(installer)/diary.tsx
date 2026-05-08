@@ -312,33 +312,122 @@ export default function DiaryScreen() {
       </Modal>
       {offline && <View style={s.offlineBanner}><Text style={s.offlineTxt}>Offline — showing cached entries</Text></View>}
       <ScrollView ref={scrollRef} style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 8 }}>
-        {entries.map((e: any) => (
-          <View key={e.id} style={[s.entry, e.ai_alert_type && e.ai_alert_type !== 'none' && { borderLeftWidth: 3, borderLeftColor: alertColor(e.ai_alert_type) }]}>
-            <View style={s.entryRow}>
-              {e.ai_alert_type && e.ai_alert_type !== 'none' && (
-                <View style={[s.badge, { backgroundColor: alertColor(e.ai_alert_type) + '22' }]}>
-                  <Text style={[s.badgeTxt, { color: alertColor(e.ai_alert_type) }]}>{e.ai_alert_type.toUpperCase()}</Text>
+        {(() => {
+          const labelForDate = (d: Date) => {
+            const today = new Date(); today.setHours(0,0,0,0);
+            const y = new Date(today); y.setDate(y.getDate()-1);
+            const tw = new Date(today); tw.setDate(tw.getDate()-2);
+            const ds = new Date(d); ds.setHours(0,0,0,0);
+            if (ds.getTime() === today.getTime()) return 'Today';
+            if (ds.getTime() === y.getTime()) return 'Yesterday';
+            if (ds.getTime() >= tw.getTime() - 5*86400000) {
+              return d.toLocaleDateString('en-GB', { weekday: 'long' });
+            }
+            return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
+          };
+          const timeOnly = (d: Date) => d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+          // entries are oldest-first per server, but we want newest-first in the feed
+          const ordered = [...entries].sort((a: any, b: any) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
+
+          const blocks: any[] = [];
+          let lastLabel = '';
+          for (const e of ordered) {
+            const d = new Date(e.created_at);
+            const label = labelForDate(d);
+            if (label !== lastLabel) {
+              blocks.push(
+                <Text key={'hdr-' + label + '-' + e.id} style={s.dayHeader}>{label}</Text>
+              );
+              lastLabel = label;
+            }
+            if (e.kind === 'walktalk') {
+              const expanded = !!walktalkExpanded[e.id];
+              const themes = Array.isArray(e.ai_themes) ? e.ai_themes : [];
+              const sentimentLabel = e.ai_sentiment ? e.ai_sentiment.toUpperCase() : null;
+              const isAlert = e.ai_alert_type && e.ai_alert_type !== 'none';
+              blocks.push(
+                <TouchableOpacity
+                  key={e.id}
+                  activeOpacity={0.85}
+                  onPress={() => setWalktalkExpanded(prev => ({ ...prev, [e.id]: !prev[e.id] }))}
+                  style={[s.entry, { borderLeftWidth: 3, borderLeftColor: '#BC6AFF' }]}>
+                  <View style={s.entryRow}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Text style={{ fontSize: 16 }}>🎙</Text>
+                      <View style={[s.badge, { backgroundColor: '#BC6AFF22' }]}>
+                        <Text style={[s.badgeTxt, { color: '#BC6AFF' }]}>WALK & TALK</Text>
+                      </View>
+                      {sentimentLabel && (
+                        <View style={[s.badge, { backgroundColor: isAlert ? alertColor(e.ai_alert_type) + '22' : '#3a4754' }]}>
+                          <Text style={[s.badgeTxt, { color: isAlert ? alertColor(e.ai_alert_type) : '#a8b3bf' }]}>{sentimentLabel}</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text style={s.entryTime}>{timeOnly(d)}</Text>
+                  </View>
+                  <Text style={s.entryText}>{e.ai_summary || 'Walk & Talk recorded — analysis in progress.'}</Text>
+                  {themes.length > 0 && (
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                      {themes.slice(0, 6).map((t: string, i: number) => (
+                        <View key={i} style={{ paddingHorizontal: 8, paddingVertical: 3, backgroundColor: '#1a242f', borderRadius: 6 }}>
+                          <Text style={{ color: '#a8b3bf', fontSize: 11 }}>#{t}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                  {expanded && Array.isArray(e.clips) && e.clips.length > 0 && (
+                    <View style={{ marginTop: 10, gap: 8 }}>
+                      {e.clips.map((c: any, i: number) => (
+                        <View key={i} style={{ backgroundColor: '#0f1923', borderRadius: 6, padding: 10 }}>
+                          {c.transcript ? (
+                            <Text style={{ color: '#cbd5e1', fontSize: 13, lineHeight: 18 }}>{c.transcript}</Text>
+                          ) : (
+                            <Text style={{ color: '#6b7785', fontSize: 13, fontStyle: 'italic' }}>(no transcript yet)</Text>
+                          )}
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                  <Text style={{ color: '#BC6AFF', fontSize: 11, marginTop: 6 }}>
+                    {expanded ? 'Tap to collapse ↑' : 'Tap to view transcript ↓'}
+                  </Text>
+                </TouchableOpacity>
+              );
+            } else {
+              blocks.push(
+                <View key={e.id} style={[s.entry, e.ai_alert_type && e.ai_alert_type !== 'none' && { borderLeftWidth: 3, borderLeftColor: alertColor(e.ai_alert_type) }]}>
+                  <View style={s.entryRow}>
+                    {e.ai_alert_type && e.ai_alert_type !== 'none' && (
+                      <View style={[s.badge, { backgroundColor: alertColor(e.ai_alert_type) + '22' }]}>
+                        <Text style={[s.badgeTxt, { color: alertColor(e.ai_alert_type) }]}>{e.ai_alert_type.toUpperCase()}</Text>
+                      </View>
+                    )}
+                    <Text style={s.entryTime}>{timeOnly(d)}</Text>
+                  </View>
+                  {e.entry_text && e.entry_text !== '📷 Photo entry' && <Text style={s.entryText}>{e.entry_text}</Text>}
+                  {e.ai_summary && e.ai_alert_type !== 'none' && <Text style={[s.aiSummary, { color: alertColor(e.ai_alert_type) }]}>AI: {e.ai_summary}</Text>}
+                  {e.photo_urls && e.photo_urls.length > 0 && (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
+                      {e.photo_urls.map((url: string, i: number) => (
+                        <Image key={i} source={{ uri: url }} style={s.photoThumb} />
+                      ))}
+                    </ScrollView>
+                  )}
+                  {e.reply && (
+                    <View style={s.replyBox}>
+                      <Text style={s.replyLabel}>Admin reply</Text>
+                      <Text style={s.replyText}>{e.reply}</Text>
+                    </View>
+                  )}
                 </View>
-              )}
-              <Text style={s.entryTime}>{(() => { const d = new Date(e.created_at); const t = new Date(); const y = new Date(); y.setDate(y.getDate()-1); const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); if (d.toDateString() === t.toDateString()) return time; if (d.toDateString() === y.toDateString()) return 'Yest ' + time; return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) + ' ' + time; })()}</Text>
-            </View>
-            {e.entry_text && e.entry_text !== '📷 Photo entry' && <Text style={s.entryText}>{e.entry_text}</Text>}
-            {e.ai_summary && e.ai_alert_type !== 'none' && <Text style={[s.aiSummary, { color: alertColor(e.ai_alert_type) }]}>AI: {e.ai_summary}</Text>}
-            {e.photo_urls && e.photo_urls.length > 0 && (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
-                {e.photo_urls.map((url: string, i: number) => (
-                  <Image key={i} source={{ uri: url }} style={s.photoThumb} />
-                ))}
-              </ScrollView>
-            )}
-            {e.reply && (
-              <View style={s.replyBox}>
-                <Text style={s.replyLabel}>Admin reply</Text>
-                <Text style={s.replyText}>{e.reply}</Text>
-              </View>
-            )}
-          </View>
-        ))}
+              );
+            }
+          }
+          return blocks;
+        })()}
       </ScrollView>
       {video && (
         <View style={{ paddingHorizontal: 16, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#1a2635' }}>
@@ -406,6 +495,16 @@ const s = StyleSheet.create({
   windowLabel: { color: '#4d6478', fontSize: 12, fontWeight: '500' },
   windowBtn: { color: '#00d4a0', fontSize: 12, fontWeight: '600' },
   offlineTxt: { color: '#fbbf24', fontSize: 12 },
+  dayHeader: {
+    color: '#a8b3bf',
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginTop: 16,
+    marginBottom: 6,
+    marginLeft: 4,
+  },
   entry: { backgroundColor: '#1a2635', borderRadius: 12, padding: 12, marginBottom: 10 },
   entryRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
   badge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, marginRight: 8 },
