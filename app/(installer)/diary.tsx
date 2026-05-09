@@ -29,6 +29,7 @@ export default function DiaryScreen() {
   const [video, setVideo] = useState<string|null>(null);
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [walktalkQueue, setWalktalkQueue] = useState<WalkthroughQueueItem[]>([]);
+  const [walktalkExpanded, setWalktalkExpanded] = useState<Record<string, boolean>>({});
   const scrollRef = useRef<ScrollView>(null);
   const appState = useRef(AppState.currentState);
   const DIARY_CACHE_KEY = 'vantro_diary_' + id;
