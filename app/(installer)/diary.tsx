@@ -313,6 +313,33 @@ export default function DiaryScreen() {
       </Modal>
       {offline && <View style={s.offlineBanner}><Text style={s.offlineTxt}>Offline — showing cached entries</Text></View>}
       <ScrollView ref={scrollRef} style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 8 }}>
+        {/* Date range filter pills */}
+        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+          {[
+            { label: 'Today', value: 1 },
+            { label: '7d', value: 7 },
+            { label: '30d', value: 30 },
+            { label: 'All', value: null as number | null },
+          ].map(opt => {
+            const active = windowDays === opt.value;
+            return (
+              <TouchableOpacity
+                key={String(opt.value)}
+                onPress={() => setWindowDays(opt.value)}
+                style={{
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: 16,
+                  backgroundColor: active ? C.teal : 'transparent',
+                  borderWidth: 1,
+                  borderColor: active ? C.teal : '#3a4754',
+                }}
+              >
+                <Text style={{ color: active ? '#0f1923' : '#a8b3bf', fontSize: 12, fontWeight: '700' }}>{opt.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
         {(() => {
           const labelForDate = (d: Date) => {
             const today = new Date(); today.setHours(0,0,0,0);
