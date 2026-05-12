@@ -75,7 +75,7 @@ export interface TrackingWindow {
   shift: ActiveShift | null;
 }
 
-const WINDOW_HOURS_BEFORE = 3;
+const WINDOW_HOURS_BEFORE = 2  // Geofence-only: watch for sign-out in last 2h of shift. Pre-window exits (lunch, parts runs, coffee) ignored.;
 
 export async function getTrackingWindow(): Promise<TrackingWindow> {
   const shift = await getActiveShift();
