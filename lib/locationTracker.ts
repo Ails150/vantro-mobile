@@ -2,9 +2,12 @@ import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getToken } from './api';
-import { getTrackingWindow } from './activeShift';
+import { getActiveShift, getTrackingWindow } from './activeShift';
 
-// Report current GPS permission level — cached locally + sent to backend
+const API_BASE = 'https://app.getvantro.com';
+const GEOFENCE_TASK = 'vantro-site-geofence';
+const GEOFENCE_RADIUS_M = 150;
+
 async function reportPermissionLevel(level: 'always' | 'whenInUse' | 'denied') {
   try { await AsyncStorage.setItem('gps_permission_level', level); } catch {}
   const token = await getToken();
@@ -13,159 +16,157 @@ async function reportPermissionLevel(level: 'always' | 'whenInUse' | 'denied') {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
     body: JSON.stringify({ level }),
-  }).catch((e) => console.warn('[location] permission report failed (non-blocking):', e));
+  }).catch((e) => console.warn('[location] permission report failed:', e));
 }
-
-const API_BASE = 'https://app.getvantro.com';
-const LOCATION_TASK = 'vantro-background-location';
 
 async function postLocation(lat: number, lng: number, accuracy: number, source: string) {
   const token = await getToken();
-  if (!token) {
-    console.log('[location] no token, skipping post');
-    return;
-  }
+  if (!token) return;
   try {
     const res = await fetch(`${API_BASE}/api/location`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({ lat, lng, accuracy: Math.round(accuracy || 0) }),
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ lat, lng, accuracy: Math.round(accuracy || 0), source }),
     });
-    if (!res.ok) {
-      const text = await res.text().catch(() => '');
-      console.log('[location] post failed (will retry)', source, res.status);
-    } else {
-      console.log('[location] post success', source);
-    }
+    console.log('[location] post', source, res.status);
   } catch (e) {
-    console.log('[location] offline, breadcrumb not sent (will retry on next interval)', source);
+    console.log('[location] offline', source);
   }
 }
 
-// Background location task - re-checks window before every post
-TaskManager.defineTask(LOCATION_TASK, async ({ data, error }: any) => {
-  if (error) { console.error('Background location error:', error); return; }
+async function postGeofenceExit(jobId: string, lat: number, lng: number) {
+  const token = await getToken();
+  if (!token) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/installer/geofence-exit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ jobId, lat, lng, exitedAt: new Date().toISOString() }),
+    });
+    console.log('[geofence] exit posted', res.status);
+  } catch (e) {
+    console.log('[geofence] exit post failed, queued for retry', e);
+  }
+}
+
+TaskManager.defineTask(GEOFENCE_TASK, async ({ data, error }: any) => {
+  if (error) { console.error('[geofence] task error:', error); return; }
   if (!data) return;
 
-  // Check window - if we're past it, stop tracking
-  const window = await getTrackingWindow();
-  if (!window.shouldTrack) {
-    console.log('[location] task fired outside window, stopping:', window.reason);
-    await stopBackgroundTracking().catch(() => {});
+  const { eventType, region } = data;
+  console.log('[geofence] event', eventType, region?.identifier);
+
+  const shift = await getActiveShift();
+  if (!shift) {
+    console.log('[geofence] no active shift, ignoring');
     return;
   }
 
-  const { locations } = data;
-  if (!locations || locations.length === 0) return;
-  const loc = locations[locations.length - 1];
-  await postLocation(loc.coords.latitude, loc.coords.longitude, loc.coords.accuracy || 0, 'background');
+  let lat = region?.latitude ?? shift.jobLat ?? 0;
+  let lng = region?.longitude ?? shift.jobLng ?? 0;
+  try {
+    const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+    lat = loc.coords.latitude;
+    lng = loc.coords.longitude;
+  } catch {}
+
+  if (eventType === Location.GeofencingEventType.Enter) {
+    await postLocation(lat, lng, 0, 'geofence-enter');
+  } else if (eventType === Location.GeofencingEventType.Exit) {
+    await postLocation(lat, lng, 0, 'geofence-exit');
+    await postGeofenceExit(shift.jobId, lat, lng);
+  }
 });
 
-export async function startBackgroundTracking() {
-  // Check window before even starting
+export async function startSiteGeofence() {
   const window = await getTrackingWindow();
   if (!window.shouldTrack) {
-    console.log('[location] not starting - outside window:', window.reason);
+    console.log('[geofence] not starting - outside window:', window.reason);
+    return false;
+  }
+
+  const shift = window.shift;
+  if (!shift || shift.jobLat == null || shift.jobLng == null) {
+    console.log('[geofence] no shift coords');
     return false;
   }
 
   const { status: fg } = await Location.requestForegroundPermissionsAsync();
   if (fg !== 'granted') {
-    console.log('[location] foreground permission denied');
     await reportPermissionLevel('denied');
     return false;
   }
 
   const { status: bg } = await Location.requestBackgroundPermissionsAsync();
   if (bg !== 'granted') {
-    console.log('[location] background permission denied (whenInUse only)');
+    console.log('[geofence] bg perm denied - foreground only');
     await reportPermissionLevel('whenInUse');
-    return false;
-  }
-  await reportPermissionLevel('always');
-
-  const isTracking = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK).catch(() => false);
-  if (isTracking) {
-    console.log('[location] already tracking');
-    return true;
+  } else {
+    await reportPermissionLevel('always');
   }
 
-  await Location.startLocationUpdatesAsync(LOCATION_TASK, {
-    accuracy: Location.Accuracy.High,
-    timeInterval: 900000,        // 15 min
-    distanceInterval: 0,         // time-only, no movement triggers (prevents duplicate pings)
-    deferredUpdatesInterval: 900000,
-    showsBackgroundLocationIndicator: true,
-    foregroundService: {
-      notificationTitle: 'Vantro',
-      notificationBody: 'Shift in progress',
-      notificationColor: '#00d4a0',
-    },
-  });
+  await stopSiteGeofence().catch(() => {});
 
-  console.log('[location] tracking started, window ends:', window.signOutDate?.toISOString());
+  await Location.startGeofencingAsync(GEOFENCE_TASK, [{
+    identifier: `site-${shift.jobId}`,
+    latitude: shift.jobLat,
+    longitude: shift.jobLng,
+    radius: GEOFENCE_RADIUS_M,
+    notifyOnEnter: true,
+    notifyOnExit: true,
+  }]);
+
+  console.log('[geofence] started', shift.jobName, shift.jobLat, shift.jobLng);
   return true;
 }
 
-export async function stopBackgroundTracking() {
-  const isTracking = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK).catch(() => false);
-  if (isTracking) {
-    await Location.stopLocationUpdatesAsync(LOCATION_TASK);
-    console.log('[location] tracking stopped');
+export async function stopSiteGeofence() {
+  const isRegistered = await TaskManager.isTaskRegisteredAsync(GEOFENCE_TASK).catch(() => false);
+  if (isRegistered) {
+    await Location.stopGeofencingAsync(GEOFENCE_TASK);
+    console.log('[geofence] stopped');
   }
 }
 
-export async function isTrackingActive() {
-  return Location.hasStartedLocationUpdatesAsync(LOCATION_TASK).catch(() => false);
+export async function isGeofenceActive() {
+  return TaskManager.isTaskRegisteredAsync(GEOFENCE_TASK).catch(() => false);
 }
 
-// In-memory throttle: skip foreground heartbeats fired within the last
-// THROTTLE_MS unless explicitly forced. Sign-in, sign-out, and explicit
-// server-driven pings should pass force=true so they always log.
 let lastForegroundLogAt = 0;
 const THROTTLE_MS = 5 * 60 * 1000;
 
-// Manual foreground breadcrumb - fires regardless of tracking window.
-// Throttled to one log per 5 minutes by default; pass force=true for
-// situations where a fresh log is required (sign-in, sign-out, ping).
 export async function logCurrentLocation(source: string = 'foreground', force: boolean = false) {
   try {
     if (!force) {
       const since = Date.now() - lastForegroundLogAt;
-      if (since < THROTTLE_MS) {
-        console.log('[location] manual log throttled', source, 'since=' + Math.round(since / 1000) + 's');
-        return;
-      }
+      if (since < THROTTLE_MS) return;
     }
     const { status } = await Location.getForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      console.log('[location] no foreground permission for manual log');
-      return;
-    }
+    if (status !== 'granted') return;
     const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
     await postLocation(loc.coords.latitude, loc.coords.longitude, loc.coords.accuracy || 0, source);
     lastForegroundLogAt = Date.now();
   } catch (e) {
-    console.log('[location] manual log failed (offline?)', e);
+    console.log('[location] manual log failed', e);
   }
 }
 
-// Main decision loop - evaluates current state and starts/stops tracking as needed
-// Called by: scheduler (background fetch), app launch, sign-in, sign-out, screen focus
+// Backward-compat exports
+export const startBackgroundTracking = startSiteGeofence;
+export const stopBackgroundTracking = stopSiteGeofence;
+export const isTrackingActive = isGeofenceActive;
+
 export async function evaluateTrackingState() {
   const window = await getTrackingWindow();
-  const isTracking = await isTrackingActive();
+  const isActive = await isGeofenceActive();
 
-  if (window.shouldTrack && !isTracking) {
-    console.log('[evaluate] window open, starting tracking (reason:', window.reason, ')');
-    await startBackgroundTracking();
-  } else if (!window.shouldTrack && isTracking) {
-    console.log('[evaluate] window closed, stopping tracking (reason:', window.reason, ')');
-    await stopBackgroundTracking();
+  if (window.shouldTrack && !isActive) {
+    console.log('[evaluate] window open, starting geofence');
+    await startSiteGeofence();
+  } else if (!window.shouldTrack && isActive) {
+    console.log('[evaluate] window closed, stopping');
+    await stopSiteGeofence();
   } else {
-    console.log('[evaluate] no action - shouldTrack:', window.shouldTrack, 'isTracking:', isTracking, 'reason:', window.reason);
+    await logCurrentLocation('evaluate-tick', false);
   }
 }

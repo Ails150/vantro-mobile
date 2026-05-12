@@ -13,17 +13,13 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.getvantro.app",
-      "buildNumber": "7",
+      "buildNumber": "9",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Vantro needs your location to verify you are on site before signing in.",
         "NSCameraUsageDescription": "Vantro needs camera access to capture QA photos and defect evidence.",
         "NSPhotoLibraryUsageDescription": "Vantro needs photo library access to attach images to reports.",
         "ITSAppUsesNonExemptEncryption": false,
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Vantro tracks your location while you are signed in to a job site to verify attendance.",
-        "NSLocationAlwaysUsageDescription": "Vantro needs background location access to track attendance while you are on site.",
-        "UIBackgroundModes": [
-          "location"
-        ]
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Vantro detects when you arrive at or leave a job site so your attendance is logged accurately, even if you forget to sign out. We only check your location at the site boundary - no continuous tracking."
       }
     },
     "android": {
@@ -32,7 +28,7 @@
         "backgroundColor": "#0f1923"
       },
       "package": "com.getvantro.app",
-      "versionCode": 16,
+      "versionCode": 17,
       "permissions": [
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION",

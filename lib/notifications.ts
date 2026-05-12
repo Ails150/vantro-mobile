@@ -15,6 +15,8 @@ Notifications.setNotificationHandler({
     const isSilent = !!data?.silent;
     return {
       shouldShowAlert: !isSilent,
+      shouldShowBanner: !isSilent,
+      shouldShowList: !isSilent,
       shouldPlaySound: !isSilent,
       shouldSetBadge: !isSilent,
     };
