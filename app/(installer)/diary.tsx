@@ -497,7 +497,7 @@ export default function DiaryScreen() {
                 <View style={s.mediaButtons}>
           <TouchableOpacity onPress={takePhoto} style={s.mediaBtn}><Text style={s.mediaBtnTxt}>📷 Camera</Text></TouchableOpacity>
           <TouchableOpacity onPress={pickPhoto} style={s.mediaBtn}><Text style={s.mediaBtnTxt}>🖼 Gallery</Text></TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push({ pathname: '/(installer)/capture', params: { id, name: name || 'Site' } })} style={[s.mediaBtn, { backgroundColor: '#BC6AFF22', borderColor: '#BC6AFF' }]}><Text style={[s.mediaBtnTxt, { color: '#BC6AFF', fontWeight: '700' }]}>🎙 Walk</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push({ pathname: '/(installer)/capture', params: { id, name: name || 'Site' } })} style={[s.mediaBtn, { backgroundColor: '#BC6AFF22', borderColor: '#BC6AFF' }]}><Text style={[s.mediaBtnTxt, { color: '#BC6AFF', fontWeight: '700' }]}>🎙 Walk & Talk</Text></TouchableOpacity>
           <TouchableOpacity onPress={pickVideo} style={s.mediaBtn}><Text style={s.mediaBtnTxt}>📁 Video</Text></TouchableOpacity>
         </View>
         <View style={[s.inputRow, { marginBottom: insets.bottom }]}>

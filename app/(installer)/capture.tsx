@@ -123,10 +123,15 @@ export default function CaptureScreen() {
     return (
       <SafeAreaView style={s.safe}>
         <View style={s.permBox}>
-          <Text style={s.permTitle}>Camera access needed</Text>
-          <Text style={s.permText}>Vantro needs camera and microphone access to record voice walkthroughs.</Text>
+          <Text style={s.permEmoji}>🎙</Text>
+          <Text style={s.permTitle}>Record a Walk & Talk</Text>
+          <Text style={s.permText}>Walk through the site and describe what you see. Vantro AI structures your voice into an audit-ready record with summary, themes, and timestamps.</Text>
+          <Text style={s.permSubText}>We only access the camera and microphone while you're recording. You can revoke access anytime in your phone settings.</Text>
           <TouchableOpacity style={s.permBtn} onPress={async () => { await requestCamPerm(); await requestMicPerm(); }}>
-            <Text style={s.permBtnTxt}>Grant access</Text>
+            <Text style={s.permBtnTxt}>Allow camera & microphone</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={s.permBtnGhost} onPress={() => router.back()}>
+            <Text style={s.permBtnGhostTxt}>Maybe later</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -217,11 +222,15 @@ const s = StyleSheet.create({
   controls: { padding: 16, paddingBottom: 32 },
   recordBtn: { paddingVertical: 18, borderRadius: 16, alignItems: "center" },
   recordBtnTxt: { color: "#fff", fontSize: 16, fontWeight: "800", letterSpacing: 1 },
-  permBox: { flex: 1, justifyContent: "center", padding: 24 },
-  permTitle: { color: C.text, fontSize: 20, fontWeight: "700", marginBottom: 12 },
-  permText: { color: C.muted, fontSize: 14, marginBottom: 24 },
-  permBtn: { backgroundColor: C.teal, padding: 16, borderRadius: 12, alignItems: "center" },
-  permBtnTxt: { color: "#0f1923", fontWeight: "700" },
+  permBox: { flex: 1, justifyContent: "center", paddingHorizontal: 32, alignItems: "center" },
+  permEmoji: { fontSize: 56, marginBottom: 18, textAlign: "center" },
+  permTitle: { color: C.text, fontSize: 24, fontWeight: "700", marginBottom: 14, textAlign: "center", letterSpacing: -0.5 },
+  permText: { color: C.text, fontSize: 15, lineHeight: 22, marginBottom: 12, textAlign: "center", opacity: 0.85 },
+  permSubText: { color: C.muted, fontSize: 13, lineHeight: 19, marginBottom: 28, textAlign: "center" },
+  permBtn: { backgroundColor: C.purple, paddingVertical: 16, paddingHorizontal: 28, borderRadius: 14, width: "100%", marginBottom: 10 },
+  permBtnTxt: { color: "#fff", fontSize: 16, fontWeight: "700", textAlign: "center" },
+  permBtnGhost: { paddingVertical: 14, paddingHorizontal: 28, width: "100%" },
+  permBtnGhostTxt: { color: C.muted, fontSize: 14, fontWeight: "500", textAlign: "center" },
   doneBox: { flex: 1, justifyContent: "center", alignItems: "center", padding: 24 },
   doneIcon: { fontSize: 64, color: C.teal, marginBottom: 16 },
   doneTitle: { color: C.text, fontSize: 20, fontWeight: "700", marginBottom: 8, textAlign: "center" },
