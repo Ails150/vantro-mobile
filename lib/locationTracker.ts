@@ -141,8 +141,11 @@ export async function logCurrentLocation(source: string = 'foreground', force: b
       const since = Date.now() - lastForegroundLogAt;
       if (since < THROTTLE_MS) return;
     }
-    const { status } = await Location.getForegroundPermissionsAsync();
-    if (status !== 'granted') return;
+    // When called from background scheduler, foreground permission appears denied even when Always is granted.
+    // Check background permission first (covers background ticks), fall back to foreground (covers in-app calls).
+    const bgPerm = await Location.getBackgroundPermissionsAsync();
+    const fgPerm = await Location.getForegroundPermissionsAsync();
+    if (bgPerm.status !== 'granted' && fgPerm.status !== 'granted') return;
     const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
     await postLocation(loc.coords.latitude, loc.coords.longitude, loc.coords.accuracy || 0, source);
     lastForegroundLogAt = Date.now();
