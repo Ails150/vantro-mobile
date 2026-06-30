@@ -86,13 +86,31 @@ export default function ScheduleScreen() {
         router.replace('/login');
         return;
       }
-      const data = await res.json();
-      setContext(data);
+      if (!res.ok) {
+        // 404 / 500 / proxy errors return a JSON error object, not a schedule.
+        // Don't trust it as context — fall through to the "Couldn't load" UI.
+        console.error('[schedule] load failed', res.status);
+        setContext(null);
+      } else {
+        const data = await res.json();
+        // A real payload always has balance + leave_year. Anything missing those
+        // is a malformed/partial response — treat as a load failure rather than
+        // letting render crash on context.balance / context.leave_year.
+        if (!data || !data.balance || !data.leave_year) {
+          console.error('[schedule] load returned malformed payload');
+          setContext(null);
+        } else {
+          setContext(data);
+        }
+      }
     } catch (err) {
       console.error('[schedule] load failed', err);
+      setContext(null);
+    } finally {
+      // finally so the 401 early-return path can't leave the spinner stuck.
+      setLoading(false);
+      setRefreshing(false);
     }
-    setLoading(false);
-    setRefreshing(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -117,18 +135,25 @@ export default function ScheduleScreen() {
     );
   }
 
-  const balance = context.balance;
+  // Defense-in-depth: even though load() now rejects malformed payloads, default
+  // every field render touches so a missing/partial context can never throw here
+  // (there is no error boundary above this screen to catch it).
+  const balance = context.balance ?? { entitlement: 0, used: 0, remaining: 0 };
+  const entries = Array.isArray(context.my_entries) ? context.my_entries : [];
+  const holidays = Array.isArray(context.public_holidays) ? context.public_holidays : [];
+  const leaveYear = context.leave_year ?? { start: '', end: '' };
+
   const usedPercent = balance.entitlement > 0
     ? Math.min(100, (balance.used / balance.entitlement) * 100)
     : 0;
 
-  const sortedEntries = [...context.my_entries].sort((a, b) =>
+  const sortedEntries = [...entries].sort((a, b) =>
     b.start_date.localeCompare(a.start_date)
   );
 
   const pendingCount = sortedEntries.filter((e) => e.status === 'pending').length;
 
-  const nextHoliday = context.public_holidays.find(
+  const nextHoliday = holidays.find(
     (h) => h.date >= new Date().toISOString().slice(0, 10)
   );
 
@@ -241,8 +266,8 @@ export default function ScheduleScreen() {
           <Text style={styles.cardTitle}>This week</Text>
           {weekDays.map((wd, i) => {
             const jobs = jobsOnDate(wd.date);
-            const ph = context.public_holidays.find((h) => h.date === wd.date);
-            const leave = context.my_entries.find(
+            const ph = holidays.find((h) => h.date === wd.date);
+            const leave = entries.find(
               (e) => e.status === 'approved' && wd.date >= e.start_date && wd.date <= e.end_date
             );
             const dayKey = dayKeys[i];
@@ -289,8 +314,8 @@ export default function ScheduleScreen() {
           <Text style={styles.cardTitle}>Next week</Text>
           {nextWeekDays.map((wd, i) => {
             const jobs = jobsOnDate(wd.date);
-            const ph = context.public_holidays.find((h) => h.date === wd.date);
-            const leave = context.my_entries.find(
+            const ph = holidays.find((h) => h.date === wd.date);
+            const leave = entries.find(
               (e) => e.status === 'approved' && wd.date >= e.start_date && wd.date <= e.end_date
             );
             const dayKey = dayKeys[i];
@@ -370,7 +395,7 @@ export default function ScheduleScreen() {
             <View style={[styles.balanceFill, { width: `${usedPercent}%` }]} />
           </View>
           <Text style={styles.balanceFootnote}>
-            {balance.used} of {balance.entitlement} used · year ends {formatDate(context.leave_year.end)}
+            {balance.used} of {balance.entitlement} used · year ends {formatDate(leaveYear.end)}
           </Text>
         </View>
 
