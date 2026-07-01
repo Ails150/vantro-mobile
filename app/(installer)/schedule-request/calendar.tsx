@@ -7,6 +7,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Calendar, DateData } from 'react-native-calendars';
 import { authFetch } from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
 
 const C = {
   bg: '#0f1923', card: '#1a2635', teal: '#00d4a0',
@@ -38,6 +39,7 @@ interface CalendarContext {
 
 export default function CalendarPickerScreen() {
   const router = useRouter();
+  const { logout } = useAuth();
   const { type } = useLocalSearchParams<{ type: string }>();
   const typeLabel = TYPE_LABELS[type || ''] || 'Time off';
   const isAnnualLeave = type === 'annual_leave';
@@ -51,12 +53,34 @@ export default function CalendarPickerScreen() {
     (async () => {
       try {
         const res = await authFetch('/api/installer/calendar-context');
-        const data = await res.json();
-        setContext(data);
+        if (res.status === 401) {
+          await logout();
+          router.replace('/login');
+          return;
+        }
+        if (!res.ok) {
+          // 404 / 500 / proxy errors return a JSON error object, not calendar
+          // data. Don't trust it as context — show the error state instead.
+          console.error('[calendar] load failed', res.status);
+          setContext(null);
+        } else {
+          const data = await res.json();
+          // A real payload always has balance + leave_year. Anything missing
+          // those is malformed — treat as a load failure rather than letting
+          // markedDates throw on context.public_holidays / context.my_entries.
+          if (!data || !data.balance || !data.leave_year) {
+            console.error('[calendar] load returned malformed payload');
+            setContext(null);
+          } else {
+            setContext(data);
+          }
+        }
       } catch (err) {
         console.error('[calendar] load failed', err);
+        setContext(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     })();
   }, []);
 
@@ -69,8 +93,13 @@ export default function CalendarPickerScreen() {
     if (!context) return {};
     const marks: Record<string, any> = {};
 
+    // Defensive defaults: a partial context must never throw here (there is no
+    // error boundary on the live app to catch it).
+    const holidays = Array.isArray(context.public_holidays) ? context.public_holidays : [];
+    const entries = Array.isArray(context.my_entries) ? context.my_entries : [];
+
     // Public holidays
-    for (const h of context.public_holidays) {
+    for (const h of holidays) {
       marks[h.date] = {
         ...(marks[h.date] || {}),
         marked: true,
@@ -79,7 +108,7 @@ export default function CalendarPickerScreen() {
     }
 
     // My approved entries — blocked
-    for (const e of context.my_entries) {
+    for (const e of entries) {
       if (e.status !== 'approved') continue;
       const days = expandDates(e.start_date, e.end_date);
       for (const d of days) {
@@ -154,7 +183,7 @@ export default function CalendarPickerScreen() {
   // Compute balance impact (only for annual leave)
   const balanceImpact = useMemo(() => {
     if (!isAnnualLeave || !context || !selection) return null;
-    const remaining = context.balance.remaining - selection.days;
+    const remaining = (context.balance?.remaining ?? 0) - selection.days;
     return {
       remaining,
       overage: remaining < 0 ? -remaining : 0,
@@ -183,6 +212,36 @@ export default function CalendarPickerScreen() {
       </SafeAreaView>
     );
   }
+
+  // Load failed / malformed response — show a recoverable error state with a way
+  // back, rather than crashing to a black screen.
+  if (!context) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.headerBack}>
+            <Ionicons name="chevron-back" size={28} color={C.text} />
+          </TouchableOpacity>
+          <View style={{ alignItems: 'center', flex: 1 }}>
+            <Text style={styles.headerTitle}>{typeLabel}</Text>
+          </View>
+          <View style={{ width: 40 }} />
+        </View>
+        <View style={styles.loading}>
+          <Ionicons name="cloud-offline-outline" size={40} color={C.muted} />
+          <Text style={[styles.footerSub, { marginTop: 12, textAlign: 'center', paddingHorizontal: 32 }]}>
+            Couldn't load the calendar. Please go back and try again.
+          </Text>
+          <TouchableOpacity style={styles.errorBackBtn} onPress={() => router.back()}>
+            <Text style={styles.errorBackBtnText}>Go back</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // context is guaranteed present below; still default the array we read in render.
+  const holidays = Array.isArray(context.public_holidays) ? context.public_holidays : [];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -224,8 +283,8 @@ export default function CalendarPickerScreen() {
       </View>
 
       {/* Public holiday tag for selected days */}
-      {startDate && context && (() => {
-        const ph = context.public_holidays.find((h) => h.date === startDate);
+      {startDate && (() => {
+        const ph = holidays.find((h) => h.date === startDate);
         if (!ph) return null;
         return (
           <View style={styles.holidayChip}>
@@ -367,4 +426,10 @@ const styles = StyleSheet.create({
   },
   continueBtnDisabled: { opacity: 0.4 },
   continueBtnText: { color: C.bg, fontSize: 15, fontWeight: '600' },
+
+  errorBackBtn: {
+    marginTop: 20, paddingVertical: 12, paddingHorizontal: 28,
+    borderRadius: 12, backgroundColor: C.teal,
+  },
+  errorBackBtnText: { color: C.bg, fontSize: 15, fontWeight: '600' },
 });
