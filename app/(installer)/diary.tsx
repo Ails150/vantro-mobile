@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, Alert, AppState, Image, Modal } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, Alert, AppState, Image, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { authFetch, authFormFetch } from '@/lib/api';
@@ -312,6 +312,7 @@ export default function DiaryScreen() {
         </View>
       </Modal>
       {offline && <View style={s.offlineBanner}><Text style={s.offlineTxt}>Offline — showing cached entries</Text></View>}
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView ref={scrollRef} style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 8 }}>
         {/* Date range filter pills */}
         <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
@@ -507,6 +508,7 @@ export default function DiaryScreen() {
           </TouchableOpacity>
         </View>
       </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
