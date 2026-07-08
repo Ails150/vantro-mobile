@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, Alert, AppState, Image, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
@@ -281,7 +281,7 @@ export default function DiaryScreen() {
   return (
     <SafeAreaView style={s.safe}>
       <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()} style={s.back}><Text style={s.backTxt}>←</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => router.back()} style={s.back}><Text style={s.backTxt}>â†</Text></TouchableOpacity>
         <View style={{ flex: 1 }}><Text style={s.title} numberOfLines={1}>{name}</Text><Text style={s.sub}>Site Diary</Text></View>
       </View>
       <Modal visible={showStatusModal} transparent animationType='fade' onRequestClose={() => setShowStatusModal(false)}>
@@ -291,17 +291,17 @@ export default function DiaryScreen() {
             <Text style={{ fontSize: 15, color: 'rgba(255,255,255,0.6)', textAlign: 'center', marginBottom: 24 }}>Is work still going?</Text>
 
             <TouchableOpacity onPress={() => handleStatusTap('carrying_on')} style={{ backgroundColor: 'rgba(0,212,160,0.12)', borderWidth: 1, borderColor: 'rgba(0,212,160,0.35)', borderRadius: 12, padding: 16, marginBottom: 10 }}>
-              <Text style={{ fontSize: 16, fontWeight: '700', color: '#00d4a0' }}>🟢 Yes, carrying on</Text>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: '#00d4a0' }}>ðŸŸ¢ Yes, carrying on</Text>
               <Text style={{ fontSize: 13, color: 'rgba(0,212,160,0.7)', marginTop: 2 }}>Just logging this for the record</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => handleStatusTap('paused')} style={{ backgroundColor: 'rgba(251,191,36,0.12)', borderWidth: 1, borderColor: 'rgba(251,191,36,0.35)', borderRadius: 12, padding: 16, marginBottom: 10 }}>
-              <Text style={{ fontSize: 16, fontWeight: '700', color: '#fbbf24' }}>🟡 Paused, sorting it</Text>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: '#fbbf24' }}>ðŸŸ¡ Paused, sorting it</Text>
               <Text style={{ fontSize: 13, color: 'rgba(251,191,36,0.7)', marginTop: 2 }}>Under an hour, fix in motion</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => handleStatusTap('stopped')} style={{ backgroundColor: 'rgba(239,68,68,0.12)', borderWidth: 1, borderColor: 'rgba(239,68,68,0.35)', borderRadius: 12, padding: 16, marginBottom: 16 }}>
-              <Text style={{ fontSize: 16, fontWeight: '700', color: '#ef4444' }}>🔴 Stopped — need help</Text>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: '#ef4444' }}>ðŸ”´ Stopped â€” need help</Text>
               <Text style={{ fontSize: 13, color: 'rgba(239,68,68,0.7)', marginTop: 2 }}>Admin and foreman alerted now</Text>
             </TouchableOpacity>
 
@@ -311,8 +311,8 @@ export default function DiaryScreen() {
           </View>
         </View>
       </Modal>
-      {offline && <View style={s.offlineBanner}><Text style={s.offlineTxt}>Offline — showing cached entries</Text></View>}
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      {offline && <View style={s.offlineBanner}><Text style={s.offlineTxt}>Offline â€” showing cached entries</Text></View>}
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior='padding'>
       <ScrollView ref={scrollRef} style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 8 }}>
         {/* Date range filter pills */}
         <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
@@ -385,7 +385,7 @@ export default function DiaryScreen() {
                   style={[s.entry, { borderLeftWidth: 3, borderLeftColor: '#BC6AFF' }]}>
                   <View style={s.entryRow}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <Text style={{ fontSize: 16 }}>🎙</Text>
+                      <Text style={{ fontSize: 16 }}>ðŸŽ™</Text>
                       <View style={[s.badge, { backgroundColor: '#BC6AFF22' }]}>
                         <Text style={[s.badgeTxt, { color: '#BC6AFF' }]}>WALK & TALK</Text>
                       </View>
@@ -397,7 +397,7 @@ export default function DiaryScreen() {
                     </View>
                     <Text style={s.entryTime}>{timeOnly(d)}</Text>
                   </View>
-                  <Text style={s.entryText}>{e.ai_summary || 'Walk & Talk recorded — analysis in progress.'}</Text>
+                  <Text style={s.entryText}>{e.ai_summary || 'Walk & Talk recorded â€” analysis in progress.'}</Text>
                   {themes.length > 0 && (
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
                       {themes.slice(0, 6).map((t: string, i: number) => (
@@ -421,7 +421,7 @@ export default function DiaryScreen() {
                     </View>
                   )}
                   <Text style={{ color: '#BC6AFF', fontSize: 11, marginTop: 6 }}>
-                    {expanded ? 'Tap to collapse ↑' : 'Tap to view transcript ↓'}
+                    {expanded ? 'Tap to collapse â†‘' : 'Tap to view transcript â†“'}
                   </Text>
                 </TouchableOpacity>
               );
@@ -436,7 +436,7 @@ export default function DiaryScreen() {
                     )}
                     <Text style={s.entryTime}>{timeOnly(d)}</Text>
                   </View>
-                  {e.entry_text && e.entry_text !== '📷 Photo entry' && <Text style={s.entryText}>{e.entry_text}</Text>}
+                  {e.entry_text && e.entry_text !== 'ðŸ“· Photo entry' && <Text style={s.entryText}>{e.entry_text}</Text>}
                   {e.ai_summary && e.ai_alert_type !== 'none' && <Text style={[s.aiSummary, { color: alertColor(e.ai_alert_type) }]}>AI: {e.ai_summary}</Text>}
                   {e.photo_urls && e.photo_urls.length > 0 && (
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
@@ -460,8 +460,8 @@ export default function DiaryScreen() {
       </ScrollView>
       {video && (
         <View style={{ paddingHorizontal: 16, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#1a2635' }}>
-          <Text style={{ color: '#00d4a0', fontSize: 13 }}>🎥 Video ready</Text>
-          <TouchableOpacity onPress={() => setVideo(null)}><Text style={{ color: '#f87171', fontSize: 12 }}>✕ Remove</Text></TouchableOpacity>
+          <Text style={{ color: '#00d4a0', fontSize: 13 }}>ðŸŽ¥ Video ready</Text>
+          <TouchableOpacity onPress={() => setVideo(null)}><Text style={{ color: '#f87171', fontSize: 12 }}>âœ• Remove</Text></TouchableOpacity>
         </View>
       )}
       {photos.length > 0 && (
@@ -469,7 +469,7 @@ export default function DiaryScreen() {
           {photos.map((uri, i) => (
             <View key={i} style={s.photoPreviewItem}>
               <Image source={{ uri }} style={s.photoPreviewImg} />
-              <TouchableOpacity onPress={() => removePhoto(uri)} style={s.photoRemove}><Text style={{ color: '#fff', fontSize: 12 }}>✕</Text></TouchableOpacity>
+              <TouchableOpacity onPress={() => removePhoto(uri)} style={s.photoRemove}><Text style={{ color: '#fff', fontSize: 12 }}>âœ•</Text></TouchableOpacity>
             </View>
           ))}
         </ScrollView>
@@ -477,11 +477,11 @@ export default function DiaryScreen() {
       <View style={s.inputArea}>
         {walktalkQueue.length > 0 && (
           <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#BC6AFF15', borderColor: '#BC6AFF44', borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 8, gap: 8 }}>
-            <Text style={{ fontSize: 16 }}>🎙</Text>
+            <Text style={{ fontSize: 16 }}>ðŸŽ™</Text>
             <View style={{ flex: 1 }}>
               <Text style={{ color: '#BC6AFF', fontWeight: '700', fontSize: 13 }}>
-                {walktalkQueue.filter(q => q.status === 'uploading').length > 0 ? 'Uploading walk & talk…' :
-                 walktalkQueue.filter(q => q.status === 'failed').length === walktalkQueue.length ? `${walktalkQueue.length} failed — tap to retry` :
+                {walktalkQueue.filter(q => q.status === 'uploading').length > 0 ? 'Uploading walk & talkâ€¦' :
+                 walktalkQueue.filter(q => q.status === 'failed').length === walktalkQueue.length ? `${walktalkQueue.length} failed â€” tap to retry` :
                  `${walktalkQueue.length} walk & talk${walktalkQueue.length === 1 ? '' : 's'} pending upload`}
               </Text>
               {walktalkQueue[0]?.lastError && (
@@ -496,15 +496,15 @@ export default function DiaryScreen() {
           </View>
         )}
                 <View style={s.mediaButtons}>
-          <TouchableOpacity onPress={takePhoto} style={s.mediaBtn}><Text style={s.mediaBtnTxt}>📷 Camera</Text></TouchableOpacity>
-          <TouchableOpacity onPress={pickPhoto} style={s.mediaBtn}><Text style={s.mediaBtnTxt}>🖼 Gallery</Text></TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push({ pathname: '/(installer)/capture', params: { id, name: name || 'Site' } })} style={[s.mediaBtn, { backgroundColor: '#BC6AFF22', borderColor: '#BC6AFF' }]}><Text style={[s.mediaBtnTxt, { color: '#BC6AFF', fontWeight: '700' }]}>🎙 Walk & Talk</Text></TouchableOpacity>
-          <TouchableOpacity onPress={pickVideo} style={s.mediaBtn}><Text style={s.mediaBtnTxt}>📁 Video</Text></TouchableOpacity>
+          <TouchableOpacity onPress={takePhoto} style={s.mediaBtn}><Text style={s.mediaBtnTxt}>ðŸ“· Camera</Text></TouchableOpacity>
+          <TouchableOpacity onPress={pickPhoto} style={s.mediaBtn}><Text style={s.mediaBtnTxt}>ðŸ–¼ Gallery</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push({ pathname: '/(installer)/capture', params: { id, name: name || 'Site' } })} style={[s.mediaBtn, { backgroundColor: '#BC6AFF22', borderColor: '#BC6AFF' }]}><Text style={[s.mediaBtnTxt, { color: '#BC6AFF', fontWeight: '700' }]}>ðŸŽ™ Walk & Talk</Text></TouchableOpacity>
+          <TouchableOpacity onPress={pickVideo} style={s.mediaBtn}><Text style={s.mediaBtnTxt}>ðŸ“ Video</Text></TouchableOpacity>
         </View>
         <View style={[s.inputRow, { marginBottom: insets.bottom }]}>
           <TextInput style={s.input} placeholder="Add diary entry..." placeholderTextColor={C.muted} value={text} onChangeText={setText} multiline maxLength={1000} />
           <TouchableOpacity style={[s.send, (loading || (!text.trim() && photos.length === 0 && !video)) && s.sendDisabled]} onPress={submit} disabled={loading || (!text.trim() && photos.length === 0 && !video)}>
-            <Text style={s.sendTxt}>{uploading ? '⬆' : loading ? '...' : '→'}</Text>
+            <Text style={s.sendTxt}>{uploading ? 'â¬†' : loading ? '...' : 'â†’'}</Text>
           </TouchableOpacity>
         </View>
       </View>
