@@ -16,7 +16,7 @@
       "buildNumber": "10",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Vantro needs your location to verify you are on site before signing in.",
-        "NSCameraUsageDescription": "Vantro needs camera access to capture QA photos and defect evidence.",
+        "NSCameraUsageDescription": "Vantro uses the camera to capture site photos, defect evidence, and receipts for your work record.",
         "NSPhotoLibraryUsageDescription": "Vantro needs photo library access to attach images to reports.",
         "ITSAppUsesNonExemptEncryption": false,
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Vantro detects when you arrive at or leave a job site so your attendance is logged accurately, even if you forget to sign out. We only check your location at the site boundary - no continuous tracking."
@@ -61,7 +61,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Vantro needs camera access for QA photos."
+          "cameraPermission": "Vantro uses the camera to capture site photos, defect evidence, and receipts for your work record."
         }
       ],
       "expo-task-manager",

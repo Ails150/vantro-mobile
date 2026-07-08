@@ -299,14 +299,14 @@ export default function QAScreen() {
       </View>
 
       {!loading && checklists.length > 1 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.tabs} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.tabs} contentContainerStyle={{ paddingLeft: 16, paddingRight: 36, gap: 8 }}>
           {checklists.map((cl: any, i: number) => {
             const done = submitted[cl.id];
             return (
               <TouchableOpacity key={cl.id} onPress={() => setActiveChecklist(i)}
                 style={[s.tab, activeChecklist === i && s.tabActive]}>
-                <Text style={[s.tabText, activeChecklist === i && s.tabTextActive]}>{cl.name}</Text>
-                {done && <Text style={{ color: C.teal, fontSize: 10, marginLeft: 4 }}>Done</Text>}
+                <Text numberOfLines={2} ellipsizeMode="tail" style={[s.tabText, activeChecklist === i && s.tabTextActive]}>{cl.name}</Text>
+                {done && <Text style={s.tabDone}>Done</Text>}
               </TouchableOpacity>
             );
           })}
@@ -346,7 +346,7 @@ export default function QAScreen() {
                       </View>
                     </View>
                     <View style={[s.stateBadge, state === 'pass' || state === 'submitted' ? s.stateBadgeGreen : state === 'fail' ? s.stateBadgeRed : s.stateBadgeGrey]}>
-                      <Text style={[s.stateText, state === 'pass' || state === 'submitted' ? s.stateTextGreen : state === 'fail' ? s.stateTextRed : s.stateTextGrey]}>
+                      <Text numberOfLines={1} style={[s.stateText, state === 'pass' || state === 'submitted' ? s.stateTextGreen : state === 'fail' ? s.stateTextRed : s.stateTextGrey]}>
                         {state === 'submitted' ? 'Done' : state === 'pass' ? 'Pass' : state === 'fail' ? 'Fail' : 'Pending'}
                       </Text>
                     </View>
@@ -471,11 +471,12 @@ const s = StyleSheet.create({
   back: { fontSize: 15, color: C.muted },
   title: { fontSize: 15, fontWeight: '600', color: C.text },
   subtitle: { fontSize: 12, color: C.muted },
-  tabs: { borderBottomWidth: 1, borderBottomColor: C.border, paddingVertical: 12 },
-  tab: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.04)', flexDirection: 'row', alignItems: 'center' },
-  tabActive: { backgroundColor: 'rgba(0,212,160,0.1)', borderWidth: 1, borderColor: 'rgba(0,212,160,0.3)' },
-  tabText: { fontSize: 13, color: C.muted },
+  tabs: { borderBottomWidth: 1, borderBottomColor: C.border, paddingVertical: 12, flexGrow: 0 },
+  tab: { width: 138, minHeight: 52, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', justifyContent: 'center' },
+  tabActive: { backgroundColor: 'rgba(0,212,160,0.12)', borderColor: 'rgba(0,212,160,0.4)' },
+  tabText: { fontSize: 13, lineHeight: 17, color: '#aeb9c4' },
   tabTextActive: { color: C.teal, fontWeight: '600' },
+  tabDone: { color: C.teal, fontSize: 10, fontWeight: '600', marginTop: 3 },
   scroll: { padding: 16, paddingBottom: 40 },
   loading: { color: C.muted, textAlign: 'center', marginTop: 40 },
   empty: { alignItems: 'center', paddingVertical: 48 },
@@ -490,7 +491,7 @@ const s = StyleSheet.create({
   itemLabel: { fontSize: 14, fontWeight: '500', color: C.text },
   tagRed: { fontSize: 11, color: C.red },
   tagBlue: { fontSize: 11, color: '#60a5fa' },
-  stateBadge: { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
+  stateBadge: { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, flexShrink: 0 },
   stateBadgeGreen: { backgroundColor: 'rgba(0,212,160,0.1)' },
   stateBadgeRed: { backgroundColor: 'rgba(248,113,113,0.1)' },
   stateBadgeGrey: { backgroundColor: 'rgba(255,255,255,0.05)' },

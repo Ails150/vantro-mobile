@@ -207,6 +207,19 @@ export default function JobsScreen() {
 
   return (
     <SafeAreaView style={s.safe}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 }}>
+        <View>
+          <Text style={{ color: '#ffffff', fontSize: 22, fontWeight: '700' }}>Jobs</Text>
+          {user?.name ? <Text style={{ color: '#4d6478', fontSize: 13, marginTop: 2 }}>{user.name}</Text> : null}
+        </View>
+        <TouchableOpacity
+          onPress={() => router.push('/(installer)/expenses')}
+          style={{ backgroundColor: '#00d4a0', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10, flexDirection: 'row', alignItems: 'center', gap: 6 }}
+        >
+          <Ionicons name="camera" size={16} color="#0f1923" />
+          <Text style={{ color: '#0f1923', fontWeight: '700', fontSize: 14 }}>Snap expense</Text>
+        </TouchableOpacity>
+      </View>
       <View style={s.header}>
         <View>
           <Text style={s.headerName}>{user?.name}</Text>
