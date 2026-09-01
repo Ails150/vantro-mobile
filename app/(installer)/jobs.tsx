@@ -14,7 +14,8 @@ import { logCurrentLocation, evaluateTrackingState } from '@/lib/locationTracker
 import { setActiveShift, hydrateActiveShift } from '@/lib/activeShift';
 import { isOnline, cacheJobs, getCachedJobs, queueAction, syncQueue } from '@/lib/offline';
 import { distanceToJob, geofenceRadius } from '@/lib/geo';
-import { colors, radius, space, type } from '@/theme';
+import { colors, formatDistance, radius, space, type } from '@/theme';
+import PrimaryButton from '@/components/PrimaryButton';
 import ScreenHeader from '@/components/ScreenHeader';
 
 const C = {
@@ -36,6 +37,10 @@ function cardState(job: any, distance: number | null): CardState {
 // jobs.start_time / jobs.sign_out_time are SQL time columns ("08:00:00").
 function hhmm(t?: string | null): string | null {
   return t ? String(t).slice(0, 5) : null;
+}
+
+function tooFarCopy(metres: number, fence: number): string {
+  return `You are ${formatDistance(metres)} away. Sign in opens within ${fence} m of the address.`;
 }
 
 function scheduledWindow(job: any): string | null {
@@ -197,7 +202,10 @@ export default function JobsScreen() {
         });
         const data = await res.json();
         if (!res.ok) {
-          setGpsMsg({ id: job.id, msg: data.error || 'Cannot sign in', ok: false });
+          const msg = data.distanceMetres != null
+            ? tooFarCopy(data.distanceMetres, data.radiusMetres ?? geofenceRadius(job))
+            : (data.error || 'Cannot sign in');
+          setGpsMsg({ id: job.id, msg, ok: false });
         } else {
           setGpsMsg({ id: job.id, msg: 'Signed in - ' + data.distanceMetres + 'm from site', ok: true });
           // Start GPS breadcrumb tracking
@@ -336,6 +344,10 @@ export default function JobsScreen() {
                 </View>
               )}
 
+              {state === 'outOfRange' && distance != null && (
+                <Text style={s.fenceCopy}>{tooFarCopy(distance, geofenceRadius(job))}</Text>
+              )}
+
               <TouchableOpacity
                 style={[s.btn, primary.disabled && s.btnDisabled]}
                 onPress={primary.onPress}
@@ -344,7 +356,11 @@ export default function JobsScreen() {
                 <Text style={s.btnText}>{primary.label}</Text>
               </TouchableOpacity>
 
-              {state !== 'outOfRange' && (
+              {state === 'outOfRange' ? (
+                <View style={s.blockedBtn}>
+                  <PrimaryButton label="Sign in to job" blockedLabel="Too far to sign in" disabled />
+                </View>
+              ) : (
                 <Pressable onPress={() => openMaps(job)} hitSlop={8} style={s.directionsLink}>
                   <Text style={s.directionsLinkText}>Get directions</Text>
                 </Pressable>
@@ -398,6 +414,8 @@ const s = StyleSheet.create({
   btn: { backgroundColor: C.teal, borderRadius: 12, paddingVertical: 13, alignItems: 'center' },
   btnDisabled: { opacity: 0.5 },
   btnText: { color: '#0f1923', fontSize: 15, fontWeight: '700' },
+  fenceCopy: { ...type.sub, marginBottom: space.md },
+  blockedBtn: { marginTop: space.sm },
   directionsLink: { alignSelf: 'center', paddingVertical: space.md },
   directionsLinkText: { ...type.sub, color: colors.blue },
 });
