@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, SafeAreaView, RefreshControl, ActivityIndicator,
+  StyleSheet, RefreshControl, ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 import { authFetch } from '@/lib/api';
+import ScreenHeader from '@/components/ScreenHeader';
 
 const C = {
   bg: '#0f1923', card: '#1a2635', teal: '#00d4a0',
@@ -117,21 +118,21 @@ export default function ScheduleScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.loadingBox}>
           <ActivityIndicator color={C.teal} />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (!context) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.loadingBox}>
           <Text style={styles.muted}>Couldn't load your schedule. Pull to refresh.</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -206,15 +207,8 @@ export default function ScheduleScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.headerBack}>
-          <Ionicons name="chevron-back" size={28} color={C.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Schedule</Text>
-        <View style={{ width: 40 }} />
-      </View>
+    <View style={styles.container}>
+      <ScreenHeader title="Schedule" />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -448,7 +442,7 @@ export default function ScheduleScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

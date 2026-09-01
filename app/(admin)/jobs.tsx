@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
 import { authFetch } from '@/lib/api';
+import ScreenHeader from '@/components/ScreenHeader';
 
 const C = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)', red: '#f87171', amber: '#fbbf24' };
 
@@ -23,8 +24,8 @@ export default function AdminJobsScreen() {
   const filtered = filter === 'all' ? jobs : jobs.filter(j => j.status === filter);
 
   return (
-    <SafeAreaView style={s.safe}>
-      <View style={s.header}><Text style={s.title}>Jobs</Text></View>
+    <View style={s.safe}>
+      <ScreenHeader title="Jobs" />
       <View style={s.filterRow}>
         {filters.map(f => (
           <TouchableOpacity key={f} onPress={() => setFilter(f)} style={[s.filterBtn, filter === f && s.filterBtnActive]}>
@@ -47,7 +48,7 @@ export default function AdminJobsScreen() {
           </View>
         ))}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

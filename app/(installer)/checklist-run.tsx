@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, SafeAreaView, Alert, Image, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Alert, Image, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { authFetch, authFormFetch } from '@/lib/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import ScreenHeader from '@/components/ScreenHeader';
 
 const C = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)', red: '#f87171' };
 
@@ -214,14 +215,8 @@ export default function ChecklistRunScreen() {
   }
 
   return (
-    <SafeAreaView style={s.safe}>
-      <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()}><Text style={s.back}>Back</Text></TouchableOpacity>
-        <View>
-          <Text style={s.title}>{templateName}</Text>
-          <Text style={s.subtitle}>{jobName}</Text>
-        </View>
-      </View>
+    <View style={s.safe}>
+      <ScreenHeader title={templateName} subtitle={jobName} onBack={() => router.back()} />
 
       <ScrollView contentContainerStyle={s.scroll}>
         {loading && <ActivityIndicator color={C.teal} style={{ marginTop: 40 }} />}
@@ -325,7 +320,7 @@ export default function ChecklistRunScreen() {
           );
         })}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

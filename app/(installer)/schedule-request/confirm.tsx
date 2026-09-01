@@ -1,12 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, SafeAreaView,
+  View, Text, TouchableOpacity, StyleSheet,
   TextInput, Switch, ScrollView, ActivityIndicator, Alert,
   KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { authFetch } from '@/lib/api';
+import ScreenHeader from '@/components/ScreenHeader';
 
 const C = {
   bg: '#0f1923', card: '#1a2635', teal: '#00d4a0',
@@ -82,18 +83,12 @@ export default function ConfirmScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.headerBack}>
-            <Ionicons name="chevron-back" size={28} color={C.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Confirm</Text>
-          <View style={{ width: 40 }} />
-        </View>
+        <ScreenHeader title="Confirm" onBack={() => router.back()} />
 
         <ScrollView contentContainerStyle={styles.body}>
           {/* Summary card */}
@@ -201,7 +196,7 @@ export default function ConfirmScreen() {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 

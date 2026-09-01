@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, ScrollView, StyleSheet, SafeAreaView, RefreshControl, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, RefreshControl, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { authFetch } from '@/lib/api';
+import ScreenHeader from '@/components/ScreenHeader';
 
 const C = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)', red: '#f87171', amber: '#fbbf24' };
 
@@ -41,19 +42,19 @@ export default function DashboardScreen() {
   ] : [];
 
   return (
-    <SafeAreaView style={s.safe}>
-      <View style={s.header}>
-        <View>
-          <Text style={s.headerTitle}>Van<Text style={{ color: C.teal }}>tro</Text></Text>
-          <Text style={s.headerSub}>Admin Dashboard</Text>
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          {data && <View style={s.onSitePill}><View style={s.onSiteDot} /><Text style={s.onSiteText}>{data.signins.length} on site</Text></View>}
-          <TouchableOpacity onPress={() => { logout(); router.replace('/login'); }} style={s.signOutBtn}>
-            <Text style={s.signOutText}>Out</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+    <View style={s.safe}>
+      <ScreenHeader
+        title="Vantro"
+        subtitle="Admin dashboard"
+        right={
+          <>
+            {data && <View style={s.onSitePill}><View style={s.onSiteDot} /><Text style={s.onSiteText}>{data.signins.length} on site</Text></View>}
+            <TouchableOpacity onPress={() => { logout(); router.replace('/login'); }} style={s.signOutBtn}>
+              <Text style={s.signOutText}>Out</Text>
+            </TouchableOpacity>
+          </>
+        }
+      />
 
       <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={C.teal} />} contentContainerStyle={s.scroll}>
         <View style={s.kpiGrid}>
@@ -108,7 +109,7 @@ export default function DashboardScreen() {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

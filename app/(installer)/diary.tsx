@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, Alert, AppState, Image, Modal, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, AppState, Image, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { authFetch, authFormFetch } from '@/lib/api';
@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { listQueue, type WalkthroughQueueItem } from '@/lib/walktalk-queue';
 import { tickUploader, manualRetry } from '@/lib/walktalk-uploader';
+import ScreenHeader from '@/components/ScreenHeader';
 
 const C = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)', red: '#f87171', amber: '#fbbf24' };
 
@@ -279,11 +280,8 @@ export default function DiaryScreen() {
   const alertColor = (t: string) => t === 'blocker' ? C.red : t === 'issue' ? C.amber : C.teal;
 
   return (
-    <SafeAreaView style={s.safe}>
-      <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()} style={s.back}><Text style={s.backTxt}>←</Text></TouchableOpacity>
-        <View style={{ flex: 1 }}><Text style={s.title} numberOfLines={1}>{name}</Text><Text style={s.sub}>Site Diary</Text></View>
-      </View>
+    <View style={s.safe}>
+      <ScreenHeader title={name} subtitle="Site diary" onBack={() => router.back()} />
       <Modal visible={showStatusModal} transparent animationType='fade' onRequestClose={() => setShowStatusModal(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'center', padding: 20 }}>
           <View style={{ backgroundColor: '#1a2635', borderRadius: 16, padding: 24 }}>
@@ -509,7 +507,7 @@ export default function DiaryScreen() {
         </View>
       </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 

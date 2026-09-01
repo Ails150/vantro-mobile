@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authFetch } from '@/lib/api';
+import ScreenHeader from '@/components/ScreenHeader';
 
 const CHECKLIST_LIB_CACHE_KEY = 'vantro_checklist_library_cache';
 
@@ -55,14 +56,8 @@ export default function ChecklistLibraryScreen() {
   }
 
   return (
-    <SafeAreaView style={s.safe}>
-      <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()} style={s.back}><Text style={s.backTxt}>←</Text></TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Text style={s.title}>Checklist Library</Text>
-          <Text style={s.sub} numberOfLines={1}>{jobName}</Text>
-        </View>
-      </View>
+    <View style={s.safe}>
+      <ScreenHeader title="Checklist library" subtitle={jobName} onBack={() => router.back()} />
       {offline && <View style={s.offlineBanner}><Text style={s.offlineTxt}>{'Offline \u2014 showing cached checklists'}</Text></View>}
       <ScrollView contentContainerStyle={{ padding: 16 }}>
         <Text style={s.sectionLabel}>Select a checklist to complete</Text>
@@ -86,7 +81,7 @@ export default function ChecklistLibraryScreen() {
           </TouchableOpacity>
         ))}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

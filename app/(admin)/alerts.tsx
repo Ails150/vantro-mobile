@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView, RefreshControl, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Alert } from 'react-native';
 import { authFetch } from '@/lib/api';
+import ScreenHeader from '@/components/ScreenHeader';
 
 const C = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)', red: '#f87171', amber: '#fbbf24' };
 
@@ -37,8 +38,8 @@ export default function AlertsScreen() {
   }
 
   return (
-    <SafeAreaView style={s.safe}>
-      <View style={s.header}><Text style={s.title}>Alerts & QA</Text></View>
+    <View style={s.safe}>
+      <ScreenHeader title="Alerts and QA" />
       <View style={s.tabs}>
         <TouchableOpacity onPress={() => setTab('alerts')} style={[s.tab, tab === 'alerts' && s.tabActive]}>
           <Text style={[s.tabText, tab === 'alerts' && s.tabTextActive]}>Alerts {alerts.length > 0 ? `(${alerts.length})` : ''}</Text>
@@ -88,7 +89,7 @@ export default function AlertsScreen() {
             ))
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

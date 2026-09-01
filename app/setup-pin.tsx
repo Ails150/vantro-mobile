@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter, useLocalSearchParams } from 'expo-router'
 import * as SecureStore from 'expo-secure-store'
 
@@ -65,7 +66,7 @@ export default function SetupPin() {
   const keys = ['1','2','3','4','5','6','7','8','9','','0','del']
 
   return (
-    <View style={s.container}>
+    <SafeAreaView style={s.container}>
       <View style={s.logo}><Text style={s.logoText}>V</Text></View>
       <Text style={s.title}>{stage === 'enter' ? 'Choose your PIN' : 'Confirm your PIN'}</Text>
       <Text style={s.sub}>{stage === 'enter' ? 'This 4-digit PIN is how you sign in each day' : 'Enter your PIN again to confirm'}</Text>
@@ -88,7 +89,7 @@ export default function SetupPin() {
           ))}
         </View>
       )}
-    </View>
+    </SafeAreaView>
   )
 }
 

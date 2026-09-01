@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, Pressable, Animated,
-  StyleSheet, SafeAreaView, RefreshControl, Alert, Linking, AppState,
+  StyleSheet, RefreshControl, Alert, Linking, AppState,
 } from 'react-native';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
@@ -15,6 +15,7 @@ import { setActiveShift, hydrateActiveShift } from '@/lib/activeShift';
 import { isOnline, cacheJobs, getCachedJobs, queueAction, syncQueue } from '@/lib/offline';
 import { distanceToJob, geofenceRadius } from '@/lib/geo';
 import { colors, radius, space, type } from '@/theme';
+import ScreenHeader from '@/components/ScreenHeader';
 
 const C = {
   bg: '#0f1923', card: '#1a2635', teal: '#00d4a0',
@@ -234,30 +235,25 @@ export default function JobsScreen() {
   const signedInJob = jobs.find(j => j.signed_in);
 
   return (
-    <SafeAreaView style={s.safe}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 }}>
-        <View>
-          <Text style={{ color: '#ffffff', fontSize: 22, fontWeight: '700' }}>Jobs</Text>
-          {user?.name ? <Text style={{ color: '#4d6478', fontSize: 13, marginTop: 2 }}>{user.name}</Text> : null}
-        </View>
-        <TouchableOpacity
-          onPress={() => router.push('/(installer)/expenses')}
-          style={{ backgroundColor: '#00d4a0', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10, flexDirection: 'row', alignItems: 'center', gap: 6 }}
-        >
-          <Ionicons name="camera" size={16} color="#0f1923" />
-          <Text style={{ color: '#0f1923', fontWeight: '700', fontSize: 14 }}>Snap expense</Text>
-        </TouchableOpacity>
-      </View>
+    <View style={s.safe}>
+      <ScreenHeader
+        title="Jobs"
+        right={
+          <TouchableOpacity onPress={() => { logout(); router.replace('/login'); }} style={s.signOutBtn}>
+            <Text style={s.signOutText}>Sign out</Text>
+          </TouchableOpacity>
+        }
+      />
+      {/* The installer's name lives here only. It used to print in the header too. */}
       <View style={s.header}>
         <View>
           <Text style={s.headerName}>{user?.name}</Text>
           <Text style={s.headerRole}>Installer</Text>
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <TouchableOpacity onPress={() => { logout(); router.replace('/login'); }} style={s.signOutBtn}>
-            <Text style={s.signOutText}>Sign out</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity onPress={() => router.push('/(installer)/expenses')} style={s.snapBtn}>
+          <Ionicons name="camera" size={16} color={colors.base} />
+          <Text style={s.snapBtnText}>Snap expense</Text>
+        </TouchableOpacity>
       </View>
 
       {gpsLevel && gpsLevel !== 'always' && (
@@ -357,7 +353,7 @@ export default function JobsScreen() {
           );
         })}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -366,6 +362,11 @@ const s = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: C.border },
   headerName: { fontSize: 15, fontWeight: '600', color: C.text },
   headerRole: { fontSize: 12, color: C.muted },
+  snapBtn: {
+    backgroundColor: colors.teal, paddingHorizontal: space.lg, paddingVertical: space.md,
+    borderRadius: radius.sm, flexDirection: 'row', alignItems: 'center', gap: space.sm,
+  },
+  snapBtnText: { color: colors.base, fontWeight: '700', fontSize: 14 },
   signOutBtn: { borderWidth: 1, borderColor: C.border, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6 },
   signOutText: { fontSize: 13, color: C.muted },
   offlineBanner: { flexDirection: 'row', alignItems: 'center', margin: 16, marginBottom: 0, backgroundColor: 'rgba(251,191,36,0.08)', borderWidth: 1, borderColor: 'rgba(251,191,36,0.25)', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10 },

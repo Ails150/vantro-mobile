@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, Alert, Image, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Image, Modal, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import ScreenHeader from '@/components/ScreenHeader';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { authFetch, authFormFetch } from '@/lib/api';
@@ -234,19 +236,17 @@ export default function ExpensesScreen() {
   const tagJobName = tagJobId ? (jobs.find(j => j.id === tagJobId)?.name || 'Unknown') : null;
 
   return (
-    <SafeAreaView style={s.safe}>
-      <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()} style={s.back}>
-          <Text style={s.backTxt}>{'\u2190'}</Text>
-        </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Text style={s.title} numberOfLines={1}>{initialJobName || 'My Expenses'}</Text>
-          <Text style={s.sub}>{initialJobName ? 'Receipts on this job' : 'All your receipts'}</Text>
-        </View>
-        <TouchableOpacity onPress={openAdd} style={s.addBtn}>
-          <Text style={s.addBtnTxt}>+ Snap</Text>
-        </TouchableOpacity>
-      </View>
+    <View style={s.safe}>
+      <ScreenHeader
+        title={initialJobName || 'My expenses'}
+        subtitle={initialJobName ? 'Receipts on this job' : 'All your receipts'}
+        onBack={router.canGoBack() ? () => router.back() : undefined}
+        right={
+          <TouchableOpacity onPress={openAdd} style={s.addBtn}>
+            <Text style={s.addBtnTxt}>+ Snap</Text>
+          </TouchableOpacity>
+        }
+      />
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
         {expenses.length > 0 && (
@@ -484,7 +484,7 @@ export default function ExpensesScreen() {
           </ScrollView>
         </SafeAreaView>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, SafeAreaView,
+  View, Text, TouchableOpacity, StyleSheet,
   ActivityIndicator, Alert,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Calendar, DateData } from 'react-native-calendars';
 import { authFetch } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import ScreenHeader from '@/components/ScreenHeader';
 
 const C = {
   bg: '#0f1923', card: '#1a2635', teal: '#00d4a0',
@@ -205,11 +206,11 @@ export default function CalendarPickerScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.loading}>
           <ActivityIndicator color={C.teal} />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -217,16 +218,8 @@ export default function CalendarPickerScreen() {
   // back, rather than crashing to a black screen.
   if (!context) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.headerBack}>
-            <Ionicons name="chevron-back" size={28} color={C.text} />
-          </TouchableOpacity>
-          <View style={{ alignItems: 'center', flex: 1 }}>
-            <Text style={styles.headerTitle}>{typeLabel}</Text>
-          </View>
-          <View style={{ width: 40 }} />
-        </View>
+      <View style={styles.container}>
+        <ScreenHeader title={typeLabel} onBack={() => router.back()} />
         <View style={styles.loading}>
           <Ionicons name="cloud-offline-outline" size={40} color={C.muted} />
           <Text style={[styles.footerSub, { marginTop: 12, textAlign: 'center', paddingHorizontal: 32 }]}>
@@ -236,7 +229,7 @@ export default function CalendarPickerScreen() {
             <Text style={styles.errorBackBtnText}>Go back</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -244,7 +237,7 @@ export default function CalendarPickerScreen() {
   const holidays = Array.isArray(context.public_holidays) ? context.public_holidays : [];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.headerBack}>
           <Ionicons name="chevron-back" size={28} color={C.text} />
@@ -338,7 +331,7 @@ export default function CalendarPickerScreen() {
           <Text style={styles.footerHint}>Tap a day to start, then tap another to set the end.</Text>
         )}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

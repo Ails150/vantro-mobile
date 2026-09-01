@@ -1,9 +1,10 @@
 import React from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, SafeAreaView,
+  View, Text, TouchableOpacity, StyleSheet,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import ScreenHeader from '@/components/ScreenHeader';
 
 const C = {
   bg: '#0f1923', card: '#1a2635', teal: '#00d4a0',
@@ -25,14 +26,8 @@ export default function TypeSelectScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.headerBack}>
-          <Ionicons name="close" size={28} color={C.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Request time off</Text>
-        <View style={{ width: 40 }} />
-      </View>
+    <View style={styles.container}>
+      <ScreenHeader title="Request time off" onBack={() => router.back()} />
 
       <View style={styles.body}>
         <Text style={styles.intro}>What kind of time off?</Text>
@@ -53,7 +48,7 @@ export default function TypeSelectScreen() {
           ))}
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

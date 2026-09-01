@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Alert, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from "react-native";
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from "expo-camera";
 import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { addToQueue } from "@/lib/walktalk-queue";
 import { tickUploader } from "@/lib/walktalk-uploader";
+import { SafeAreaView } from 'react-native-safe-area-context';
+import ScreenHeader from '@/components/ScreenHeader';
 
 const C = { bg: "#0f1923", card: "#1a2635", teal: "#00d4a0", purple: "#BC6AFF", muted: "#4d6478", text: "#ffffff", red: "#f87171", amber: "#fbbf24" };
 
@@ -163,16 +165,17 @@ export default function CaptureScreen() {
   }
 
   return (
-    <SafeAreaView style={s.safe}>
-      <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()} style={s.back}>
-          <Text style={s.backTxt}>← Cancel</Text>
-        </TouchableOpacity>
-        <View style={[s.stageBadge, { backgroundColor: C.purple + "22", borderColor: C.purple }]}>
-          <Text style={[s.stageTxt, { color: C.purple }]}>WALK & TALK</Text>
-        </View>
-      </View>
-      <Text style={s.jobName}>{name}</Text>
+    <View style={s.safe}>
+      <ScreenHeader
+        title="Walk and Talk"
+        subtitle={name}
+        onBack={() => router.back()}
+        right={
+          <View style={[s.stageBadge, { backgroundColor: C.purple + "22", borderColor: C.purple }]}>
+            <Text style={[s.stageTxt, { color: C.purple }]}>Walk and Talk</Text>
+          </View>
+        }
+      />
       <Text style={s.sub}>Walk through the site and narrate what you see. AI will structure it into a report. Min {MIN_SECONDS}s · Max {MAX_SECONDS}s</Text>
       <View style={s.cameraWrap}>
         <CameraView ref={cameraRef} style={s.camera} mode="video" facing="back" />
@@ -199,7 +202,7 @@ export default function CaptureScreen() {
           </TouchableOpacity>
         )}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

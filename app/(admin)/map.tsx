@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, SafeAreaView, Platform } from "react-native";
+import { View, Text, StyleSheet, Platform } from "react-native";
 import { authFetch } from "@/lib/api";
+import ScreenHeader from '@/components/ScreenHeader';
 
 const C = { bg: "#0f1923", teal: "#00d4a0", muted: "#4d6478", text: "#ffffff", border: "rgba(255,255,255,0.05)" };
 
@@ -20,11 +21,8 @@ export default function MapScreen() {
   }
 
   return (
-    <SafeAreaView style={s.safe}>
-      <View style={s.header}>
-        <Text style={s.title}>Live Map</Text>
-        <Text style={s.sub}>Map view available in native app</Text>
-      </View>
+    <View style={s.safe}>
+      <ScreenHeader title="Live map" subtitle="Map view available in native app" />
       <View style={s.body}>
         <Text style={s.sectionTitle}>Currently on site ({signins.length})</Text>
         {signins.map(si => (
@@ -45,7 +43,7 @@ export default function MapScreen() {
           </View>
         ))}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

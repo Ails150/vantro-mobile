@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, SafeAreaView, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
 import { authFetch } from '@/lib/api';
+import ScreenHeader from '@/components/ScreenHeader';
 
 const C = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)', red: '#f87171', amber: '#fbbf24' };
 
@@ -23,8 +24,8 @@ export default function TeamScreen() {
   const onSiteIds = new Set(signins.map((s: any) => s.user_id));
 
   return (
-    <SafeAreaView style={s.safe}>
-      <View style={s.header}><Text style={s.title}>Team</Text><Text style={s.sub}>{members.length} members</Text></View>
+    <View style={s.safe}>
+      <ScreenHeader title="Team" subtitle={`${members.length} members`} />
       <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={C.teal} />} contentContainerStyle={s.scroll}>
         {members.map(m => {
           const onSite = onSiteIds.has(m.id);
@@ -48,7 +49,7 @@ export default function TeamScreen() {
           );
         })}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

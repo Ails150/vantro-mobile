@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, Image, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authFetch, authFormFetch } from '@/lib/api';
+import ScreenHeader from '@/components/ScreenHeader';
 
 const C = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)', red: '#f87171', amber: '#fbbf24' };
 
@@ -163,11 +164,8 @@ export default function DefectsScreen() {
   const severityColor = (s: string) => s === 'critical' ? C.red : s === 'major' ? C.amber : C.muted;
 
   return (
-    <SafeAreaView style={s.safe}>
-      <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()}><Text style={s.back}>{'\u2190'}</Text></TouchableOpacity>
-        <View><Text style={s.title}>Defects</Text><Text style={s.subtitle}>{name}</Text></View>
-      </View>
+    <View style={s.safe}>
+      <ScreenHeader title="Defects" subtitle={name} onBack={() => router.back()} />
       {offline && <View style={s.offlineBanner}><Text style={s.offlineTxt}>{'Offline \u2014 cached defects, new will queue'}</Text></View>}
       <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
         <View style={s.card}>
@@ -222,7 +220,7 @@ export default function DefectsScreen() {
           </>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
