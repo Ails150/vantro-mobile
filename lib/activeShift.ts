@@ -1,5 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
-import { authFetch } from './api';
+import { authFetch, hasToken } from './api';
 
 const STORAGE_KEY = 'vantro_active_shift';
 
@@ -48,18 +48,33 @@ export async function clearActiveShift(): Promise<void> {
 
 // Hydrate from server - fetches current open signin from /api/installer/active-shift
 // and caches locally. Returns the shift or null.
+// Why the last hydrate failed, so a screen can say something better than
+// nothing when the shift is unknown.
+let lastHydrateError: string | null = null;
+export function getHydrateError(): string | null { return lastHydrateError; }
+
 export async function hydrateActiveShift(): Promise<ActiveShift | null> {
   try {
+    if (!(await hasToken())) {
+      lastHydrateError = 'Not signed in on this device.';
+      console.log('[activeShift] hydrate skipped, no token');
+      return await getActiveShift();
+    }
     const res = await authFetch('/api/installer/active-shift', { method: 'GET' });
     if (!res.ok) {
+      lastHydrateError = res.status === 401
+        ? 'Your session has expired. Sign in again.'
+        : `Could not load your shift (${res.status}).`;
       console.log('[activeShift] hydrate http error', res.status);
       return await getActiveShift(); // fall back to cached
     }
+    lastHydrateError = null;
     const data = await res.json();
     const shift = data.activeShift as ActiveShift | null;
     await setActiveShift(shift);
     return shift;
   } catch (e) {
+    lastHydrateError = 'Could not reach the server to load your shift.';
     console.error('[activeShift] hydrate failed', e);
     return await getActiveShift(); // fall back to cached
   }
