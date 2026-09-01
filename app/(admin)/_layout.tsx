@@ -2,8 +2,9 @@ import { Tabs } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { Redirect } from 'expo-router';
 import { View, Text, ActivityIndicator } from 'react-native';
+import { alpha, colors } from '@/theme';
 
-const C = { bg: '#0f1923', teal: '#00d4a0', muted: '#4d6478', border: 'rgba(255,255,255,0.07)' };
+const C = { bg: colors.base, teal: colors.teal, muted: colors.textMuted, border: alpha(colors.textPrimary, 0.07) };
 
 export default function AdminLayout() {
   const { user, loading } = useAuth();

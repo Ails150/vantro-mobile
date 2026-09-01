@@ -7,9 +7,9 @@ import { authFetch, authFormFetch } from '@/lib/api';
 import ScreenHeader from '@/components/ScreenHeader';
 import PrimaryButton from '@/components/PrimaryButton';
 import EmptyState from '@/components/EmptyState';
-import { colors, space, type } from '@/theme';
+import { alpha, colors, space, type } from '@/theme';
 
-const C = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)', red: '#f87171', amber: '#fbbf24' };
+const C = { bg: colors.base, card: colors.surface1, teal: colors.teal, muted: colors.textMuted, text: colors.textPrimary, border: alpha(colors.textPrimary, 0.05), red: colors.red, amber: colors.amber };
 
 const SEVERITIES = [
   { label: 'Minor', value: 'minor', fill: colors.surface3 },
@@ -199,7 +199,7 @@ export default function DefectsScreen() {
             })}
           </View>
           {photo ? <Image source={{ uri: photo }} style={s.photoPreview} /> : null}
-          {video ? <View style={[s.photoPreview, {backgroundColor: '#0f1923', justifyContent: 'center', alignItems: 'center'}]}><Text style={{color: C.teal, fontSize: 14}}>Video selected</Text><Text style={{color: C.muted, fontSize: 11, marginTop: 4}}>Tap below to change</Text></View> : null}
+          {video ? <View style={[s.photoPreview, {backgroundColor: colors.base, justifyContent: 'center', alignItems: 'center'}]}><Text style={{color: C.teal, fontSize: 14}}>Video selected</Text><Text style={{color: C.muted, fontSize: 11, marginTop: 4}}>Tap below to change</Text></View> : null}
           <View style={{flexDirection: 'row', gap: 8}}>
             <TouchableOpacity style={[s.photoBtn, {flex: 1}]} onPress={takePhoto}>
               <Text style={s.photoBtnText}>Take photo</Text>
@@ -243,7 +243,7 @@ export default function DefectsScreen() {
                 </View>
                 <Text style={s.defectDesc}>{d.description}</Text>
                 {d.photo_url ? <Image source={{ uri: d.photo_url }} style={s.defectPhoto} /> : null}
-                {d.video_url ? <View style={[s.defectPhoto, {backgroundColor: '#0f1923', justifyContent: 'center', alignItems: 'center'}]}><Text style={{color: C.teal}}>Video attached</Text></View> : null}
+                {d.video_url ? <View style={[s.defectPhoto, {backgroundColor: colors.base, justifyContent: 'center', alignItems: 'center'}]}><Text style={{color: C.teal}}>Video attached</Text></View> : null}
                 {d.resolution_note ? <Text style={s.resNote}>Resolution: {d.resolution_note}</Text> : null}
               </View>
             ))}
@@ -263,25 +263,25 @@ const s = StyleSheet.create({
   scroll: { padding: 16, paddingBottom: 100 },
   card: { backgroundColor: C.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: C.border, gap: 12 },
   sectionTitle: { fontSize: 15, fontWeight: '600', color: C.text },
-  input: { backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: 12, color: C.text, fontSize: 14, minHeight: 100, borderWidth: 1, borderColor: C.border },
+  input: { backgroundColor: alpha(colors.textPrimary, 0.04), borderRadius: 10, padding: 12, color: C.text, fontSize: 14, minHeight: 100, borderWidth: 1, borderColor: C.border },
   severityRow: { flexDirection: 'row', gap: 8 },
   severityBtn: { flex: 1, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: C.border, alignItems: 'center' },
-  severityBtnActive: { backgroundColor: 'rgba(255,255,255,0.06)' },
+  severityBtnActive: { backgroundColor: alpha(colors.textPrimary, 0.06) },
   severityText: { fontSize: 13, fontWeight: '500' },
   severityLabel: { ...type.caption, marginBottom: -space.xs },
   severityTextActive: { fontWeight: '700' },
   photoPreview: { width: '100%', height: 160, borderRadius: 10, resizeMode: 'cover' },
-  photoBtn: { backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 10, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: C.border },
+  photoBtn: { backgroundColor: alpha(colors.textPrimary, 0.04), borderRadius: 10, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: C.border },
   photoBtnText: { color: C.teal, fontSize: 14 },
   submitBtn: { backgroundColor: C.teal, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   submitBtnDisabled: { opacity: 0.4 },
-  submitBtnText: { color: '#0f1923', fontWeight: '700', fontSize: 15 },
+  submitBtnText: { color: colors.base, fontWeight: '700', fontSize: 15 },
   prevTitle: { fontSize: 13, color: C.muted, fontWeight: '500', marginTop: 20, marginBottom: 10 },
   defectCard: { backgroundColor: C.card, borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: C.border },
   badge: { fontSize: 12, borderWidth: 1, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 3, fontWeight: '500' },
   defectDesc: { fontSize: 14, color: C.text },
   defectPhoto: { width: '100%', height: 130, borderRadius: 8, resizeMode: 'cover', marginTop: 8 },
   resNote: { fontSize: 12, color: C.muted, marginTop: 6 },
-  offlineBanner: { backgroundColor: 'rgba(251, 191, 36, 0.12)', borderColor: '#fbbf24', borderWidth: 1, marginHorizontal: 16, marginTop: 12, borderRadius: 8, padding: 10 },
-  offlineTxt: { color: '#fbbf24', fontSize: 12, fontWeight: '500' },
+  offlineBanner: { backgroundColor: alpha(colors.amber, 0.12), borderColor: colors.amber, borderWidth: 1, marginHorizontal: 16, marginTop: 12, borderRadius: 8, padding: 10 },
+  offlineTxt: { color: colors.amber, fontSize: 12, fontWeight: '500' },
 });

@@ -8,11 +8,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 import { authFetch } from '@/lib/api';
 import ScreenHeader from '@/components/ScreenHeader';
+import { alpha, colors } from '@/theme';
 
 const C = {
-  bg: '#0f1923', card: '#1a2635', teal: '#00d4a0',
-  muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)',
-  red: '#f87171', amber: '#fbbf24', subtle: 'rgba(255,255,255,0.04)',
+  bg: colors.base, card: colors.surface1, teal: colors.teal,
+  muted: colors.textMuted, text: colors.textPrimary, border: alpha(colors.textPrimary, 0.05),
+  red: colors.red, amber: colors.amber, subtle: alpha(colors.textPrimary, 0.04),
 };
 
 const DAY_NAMES = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
@@ -467,9 +468,9 @@ function formatDateRange(start: string, end: string): string {
 }
 
 function statusPillStyle(status: string) {
-  if (status === 'approved') return { backgroundColor: 'rgba(0,212,160,0.15)' };
-  if (status === 'rejected') return { backgroundColor: 'rgba(248,113,113,0.15)' };
-  return { backgroundColor: 'rgba(251,191,36,0.15)' };
+  if (status === 'approved') return { backgroundColor: alpha(colors.teal, 0.15) };
+  if (status === 'rejected') return { backgroundColor: alpha(colors.red, 0.15) };
+  return { backgroundColor: alpha(colors.amber, 0.15) };
 }
 function statusTextStyle(status: string) {
   if (status === 'approved') return { color: C.teal };
@@ -501,7 +502,7 @@ const styles = StyleSheet.create({
 
   pendingBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: 'rgba(251,191,36,0.1)', borderRadius: 10,
+    backgroundColor: alpha(colors.amber, 0.1), borderRadius: 10,
     paddingHorizontal: 12, paddingVertical: 10, marginBottom: 16,
   },
   pendingText: { color: C.amber, fontSize: 13, flex: 1 },
@@ -552,19 +553,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6,
   },
   statusText: { fontSize: 10, fontWeight: '600', letterSpacing: 0.5 },
-  jobRowToday: { paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#243443' },
-  jobName: { color: '#ffffff', fontSize: 15, fontWeight: '600' },
-  jobAddress: { color: '#8aa0b3', fontSize: 13, marginTop: 2 },
-  weekRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#1f2d3c' },
-  weekRowToday: { backgroundColor: 'rgba(0, 212, 160, 0.06)', borderRadius: 6, paddingHorizontal: 6 },
+  jobRowToday: { paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.surface2 },
+  jobName: { color: colors.textPrimary, fontSize: 15, fontWeight: '600' },
+  jobAddress: { color: colors.textMuted, fontSize: 13, marginTop: 2 },
+  weekRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: colors.surface1 },
+  weekRowToday: { backgroundColor: alpha(colors.teal, 0.06), borderRadius: 6, paddingHorizontal: 6 },
   weekDayCol: { width: 56, flexDirection: 'row', alignItems: 'baseline' },
-  weekDayLabel: { color: '#8aa0b3', fontSize: 13, fontWeight: '600', width: 32 },
-  weekDayLabelToday: { color: '#00d4a0' },
-  weekDayDate: { color: '#dbe5ee', fontSize: 13 },
+  weekDayLabel: { color: colors.textMuted, fontSize: 13, fontWeight: '600', width: 32 },
+  weekDayLabelToday: { color: colors.teal },
+  weekDayDate: { color: colors.textSecondary, fontSize: 13 },
   weekJobsCol: { flex: 1, paddingLeft: 8 },
-  weekJobName: { color: '#ffffff', fontSize: 14, paddingVertical: 1 },
-  weekOff: { color: '#4d6478', fontSize: 13, fontStyle: 'italic' },
-  weekHours: { color: '#dbe5ee', fontSize: 13 },
-  weekLeave: { color: '#fbbf24', fontSize: 13 },
-  weekHoliday: { color: '#00d4a0', fontSize: 13 },
+  weekJobName: { color: colors.textPrimary, fontSize: 14, paddingVertical: 1 },
+  weekOff: { color: colors.textMuted, fontSize: 13, fontStyle: 'italic' },
+  weekHours: { color: colors.textSecondary, fontSize: 13 },
+  weekLeave: { color: colors.amber, fontSize: 13 },
+  weekHoliday: { color: colors.teal, fontSize: 13 },
 });

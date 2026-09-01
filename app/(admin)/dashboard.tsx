@@ -4,8 +4,9 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { authFetch } from '@/lib/api';
 import ScreenHeader from '@/components/ScreenHeader';
+import { alpha, colors } from '@/theme';
 
-const C = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)', red: '#f87171', amber: '#fbbf24' };
+const C = { bg: colors.base, card: colors.surface1, teal: colors.teal, muted: colors.textMuted, text: colors.textPrimary, border: alpha(colors.textPrimary, 0.05), red: colors.red, amber: colors.amber };
 
 export default function DashboardScreen() {
   const { user, logout } = useAuth();
@@ -118,7 +119,7 @@ const s = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: C.border },
   headerTitle: { fontSize: 20, fontWeight: '700', color: C.text },
   headerSub: { fontSize: 12, color: C.muted },
-  onSitePill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(0,212,160,0.08)', borderWidth: 1, borderColor: 'rgba(0,212,160,0.2)', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6 },
+  onSitePill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: alpha(colors.teal, 0.08), borderWidth: 1, borderColor: alpha(colors.teal, 0.2), borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6 },
   onSiteDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: C.teal },
   onSiteText: { fontSize: 12, color: C.teal, fontWeight: '500' },
   signOutBtn: { borderWidth: 1, borderColor: C.border, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6 },
@@ -131,7 +132,7 @@ const s = StyleSheet.create({
   section: { backgroundColor: C.card, borderRadius: 16, borderWidth: 1, borderColor: C.border, marginBottom: 14, overflow: 'hidden' },
   sectionTitle: { fontSize: 14, fontWeight: '600', color: C.text, padding: 16, borderBottomWidth: 1, borderBottomColor: C.border },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.border },
-  avatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.06)', alignItems: 'center', justifyContent: 'center' },
+  avatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: alpha(colors.textPrimary, 0.06), alignItems: 'center', justifyContent: 'center' },
   avatarText: { fontSize: 13, fontWeight: '600', color: C.text },
   rowName: { fontSize: 14, fontWeight: '500', color: C.text },
   rowSub: { fontSize: 12, color: C.muted },
@@ -140,5 +141,5 @@ const s = StyleSheet.create({
   alertRowBlocker: { borderLeftWidth: 3, borderLeftColor: C.red },
   alertJob: { fontSize: 11, color: C.muted, marginBottom: 2 },
   alertMsg: { fontSize: 13, color: C.text },
-  pendingBadge: { fontSize: 12, color: C.amber, backgroundColor: 'rgba(251,191,36,0.1)', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
+  pendingBadge: { fontSize: 12, color: C.amber, backgroundColor: alpha(colors.amber, 0.1), borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
 });

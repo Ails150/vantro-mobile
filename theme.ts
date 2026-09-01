@@ -6,6 +6,7 @@ export const colors = {
   teal: '#00C896',
   tealDim: '#0E7A5E',
   violet: '#A78BFA',
+  purple: '#BC6AFF',
   blue: '#60A5FA',
   amber: '#F59E0B',
   red: '#F87171',
@@ -13,7 +14,18 @@ export const colors = {
   textSecondary: '#9BA9B4',
   textMuted: '#5B6770',
   border: '#1C2530',
+  black: '#000000',
 } as const;
+
+// Tint a palette colour. Screens borrow colours at low opacity constantly, and
+// hand rolled rgba() strings are how the old brand teal survived a rebrand in
+// two dozen places. Going through here means a palette change carries.
+export function alpha(color: string, opacity: number): string {
+  const hex = color.replace('#', '');
+  const full = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex.slice(0, 6);
+  const n = parseInt(full, 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${opacity})`;
+}
 
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 28 } as const;
 export const radius = { sm: 8, md: 12, lg: 16, pill: 999 } as const;

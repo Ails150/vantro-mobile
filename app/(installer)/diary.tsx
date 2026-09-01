@@ -10,8 +10,9 @@ import { listQueue, type WalkthroughQueueItem } from '@/lib/walktalk-queue';
 import { tickUploader, manualRetry } from '@/lib/walktalk-uploader';
 import ScreenHeader from '@/components/ScreenHeader';
 import EmptyState from '@/components/EmptyState';
+import { alpha, colors } from '@/theme';
 
-const C = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)', red: '#f87171', amber: '#fbbf24' };
+const C = { bg: colors.base, card: colors.surface1, teal: colors.teal, muted: colors.textMuted, text: colors.textPrimary, border: alpha(colors.textPrimary, 0.05), red: colors.red, amber: colors.amber };
 
 export default function DiaryScreen() {
   const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
@@ -284,28 +285,28 @@ export default function DiaryScreen() {
     <View style={s.safe}>
       <ScreenHeader title={name} subtitle="Site diary" onBack={() => router.back()} />
       <Modal visible={showStatusModal} transparent animationType='fade' onRequestClose={() => setShowStatusModal(false)}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'center', padding: 20 }}>
-          <View style={{ backgroundColor: '#1a2635', borderRadius: 16, padding: 24 }}>
-            <Text style={{ fontSize: 18, fontWeight: '700', color: '#fff', textAlign: 'center', marginBottom: 6 }}>Quick question</Text>
-            <Text style={{ fontSize: 15, color: 'rgba(255,255,255,0.6)', textAlign: 'center', marginBottom: 24 }}>Is work still going?</Text>
+        <View style={{ flex: 1, backgroundColor: alpha(colors.black, 0.75), justifyContent: 'center', padding: 20 }}>
+          <View style={{ backgroundColor: colors.surface1, borderRadius: 16, padding: 24 }}>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: colors.textPrimary, textAlign: 'center', marginBottom: 6 }}>Quick question</Text>
+            <Text style={{ fontSize: 15, color: alpha(colors.textPrimary, 0.6), textAlign: 'center', marginBottom: 24 }}>Is work still going?</Text>
 
-            <TouchableOpacity onPress={() => handleStatusTap('carrying_on')} style={{ backgroundColor: 'rgba(0,212,160,0.12)', borderWidth: 1, borderColor: 'rgba(0,212,160,0.35)', borderRadius: 12, padding: 16, marginBottom: 10 }}>
-              <Text style={{ fontSize: 16, fontWeight: '700', color: '#00d4a0' }}>🟢 Yes, carrying on</Text>
-              <Text style={{ fontSize: 13, color: 'rgba(0,212,160,0.7)', marginTop: 2 }}>Just logging this for the record</Text>
+            <TouchableOpacity onPress={() => handleStatusTap('carrying_on')} style={{ backgroundColor: alpha(colors.teal, 0.12), borderWidth: 1, borderColor: alpha(colors.teal, 0.35), borderRadius: 12, padding: 16, marginBottom: 10 }}>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: colors.teal }}>🟢 Yes, carrying on</Text>
+              <Text style={{ fontSize: 13, color: alpha(colors.teal, 0.7), marginTop: 2 }}>Just logging this for the record</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => handleStatusTap('paused')} style={{ backgroundColor: 'rgba(251,191,36,0.12)', borderWidth: 1, borderColor: 'rgba(251,191,36,0.35)', borderRadius: 12, padding: 16, marginBottom: 10 }}>
-              <Text style={{ fontSize: 16, fontWeight: '700', color: '#fbbf24' }}>🟡 Paused, sorting it</Text>
-              <Text style={{ fontSize: 13, color: 'rgba(251,191,36,0.7)', marginTop: 2 }}>Under an hour, fix in motion</Text>
+            <TouchableOpacity onPress={() => handleStatusTap('paused')} style={{ backgroundColor: alpha(colors.amber, 0.12), borderWidth: 1, borderColor: alpha(colors.amber, 0.35), borderRadius: 12, padding: 16, marginBottom: 10 }}>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: colors.amber }}>🟡 Paused, sorting it</Text>
+              <Text style={{ fontSize: 13, color: alpha(colors.amber, 0.7), marginTop: 2 }}>Under an hour, fix in motion</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => handleStatusTap('stopped')} style={{ backgroundColor: 'rgba(239,68,68,0.12)', borderWidth: 1, borderColor: 'rgba(239,68,68,0.35)', borderRadius: 12, padding: 16, marginBottom: 16 }}>
-              <Text style={{ fontSize: 16, fontWeight: '700', color: '#ef4444' }}>🔴 Stopped, need help</Text>
-              <Text style={{ fontSize: 13, color: 'rgba(239,68,68,0.7)', marginTop: 2 }}>Admin and foreman alerted now</Text>
+            <TouchableOpacity onPress={() => handleStatusTap('stopped')} style={{ backgroundColor: alpha(colors.red, 0.12), borderWidth: 1, borderColor: alpha(colors.red, 0.35), borderRadius: 12, padding: 16, marginBottom: 16 }}>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: colors.red }}>🔴 Stopped, need help</Text>
+              <Text style={{ fontSize: 13, color: alpha(colors.red, 0.7), marginTop: 2 }}>Admin and foreman alerted now</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => setShowStatusModal(false)} style={{ padding: 10, alignItems: 'center' }}>
-              <Text style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)' }}>Cancel</Text>
+              <Text style={{ fontSize: 14, color: alpha(colors.textPrimary, 0.45) }}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -332,10 +333,10 @@ export default function DiaryScreen() {
                   borderRadius: 16,
                   backgroundColor: active ? C.teal : 'transparent',
                   borderWidth: 1,
-                  borderColor: active ? C.teal : '#3a4754',
+                  borderColor: active ? C.teal : colors.surface3,
                 }}
               >
-                <Text style={{ color: active ? '#0f1923' : '#a8b3bf', fontSize: 12, fontWeight: '700' }}>{opt.label}</Text>
+                <Text style={{ color: active ? colors.base : colors.textSecondary, fontSize: 12, fontWeight: '700' }}>{opt.label}</Text>
               </TouchableOpacity>
             );
           })}
@@ -395,16 +396,16 @@ export default function DiaryScreen() {
                   key={e.id}
                   activeOpacity={0.85}
                   onPress={() => setWalktalkExpanded(prev => ({ ...prev, [e.id]: !prev[e.id] }))}
-                  style={[s.entry, { borderLeftWidth: 3, borderLeftColor: '#BC6AFF' }]}>
+                  style={[s.entry, { borderLeftWidth: 3, borderLeftColor: colors.purple }]}>
                   <View style={s.entryRow}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Text style={{ fontSize: 16 }}>🎙</Text>
-                      <View style={[s.badge, { backgroundColor: '#BC6AFF22' }]}>
-                        <Text style={[s.badgeTxt, { color: '#BC6AFF' }]}>WALK & TALK</Text>
+                      <View style={[s.badge, { backgroundColor: alpha(colors.purple, 0.13) }]}>
+                        <Text style={[s.badgeTxt, { color: colors.purple }]}>WALK & TALK</Text>
                       </View>
                       {sentimentLabel && (
-                        <View style={[s.badge, { backgroundColor: isAlert ? alertColor(e.ai_alert_type) + '22' : '#3a4754' }]}>
-                          <Text style={[s.badgeTxt, { color: isAlert ? alertColor(e.ai_alert_type) : '#a8b3bf' }]}>{sentimentLabel}</Text>
+                        <View style={[s.badge, { backgroundColor: isAlert ? alpha(alertColor(e.ai_alert_type), 0.13) : colors.surface3 }]}>
+                          <Text style={[s.badgeTxt, { color: isAlert ? alertColor(e.ai_alert_type) : colors.textSecondary }]}>{sentimentLabel}</Text>
                         </View>
                       )}
                     </View>
@@ -414,8 +415,8 @@ export default function DiaryScreen() {
                   {themes.length > 0 && (
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
                       {themes.slice(0, 6).map((t: string, i: number) => (
-                        <View key={i} style={{ paddingHorizontal: 8, paddingVertical: 3, backgroundColor: '#1a242f', borderRadius: 6 }}>
-                          <Text style={{ color: '#a8b3bf', fontSize: 11 }}>#{t}</Text>
+                        <View key={i} style={{ paddingHorizontal: 8, paddingVertical: 3, backgroundColor: colors.surface1, borderRadius: 6 }}>
+                          <Text style={{ color: colors.textSecondary, fontSize: 11 }}>#{t}</Text>
                         </View>
                       ))}
                     </View>
@@ -423,17 +424,17 @@ export default function DiaryScreen() {
                   {expanded && Array.isArray(e.clips) && e.clips.length > 0 && (
                     <View style={{ marginTop: 10, gap: 8 }}>
                       {e.clips.map((c: any, i: number) => (
-                        <View key={i} style={{ backgroundColor: '#0f1923', borderRadius: 6, padding: 10 }}>
+                        <View key={i} style={{ backgroundColor: colors.base, borderRadius: 6, padding: 10 }}>
                           {c.transcript ? (
-                            <Text style={{ color: '#cbd5e1', fontSize: 13, lineHeight: 18 }}>{c.transcript}</Text>
+                            <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 18 }}>{c.transcript}</Text>
                           ) : (
-                            <Text style={{ color: '#6b7785', fontSize: 13, fontStyle: 'italic' }}>(no transcript yet)</Text>
+                            <Text style={{ color: colors.textMuted, fontSize: 13, fontStyle: 'italic' }}>(no transcript yet)</Text>
                           )}
                         </View>
                       ))}
                     </View>
                   )}
-                  <Text style={{ color: '#BC6AFF', fontSize: 11, marginTop: 6 }}>
+                  <Text style={{ color: colors.purple, fontSize: 11, marginTop: 6 }}>
                     {expanded ? 'Tap to collapse ↑' : 'Tap to view transcript ↓'}
                   </Text>
                 </TouchableOpacity>
@@ -443,7 +444,7 @@ export default function DiaryScreen() {
                 <View key={e.id} style={[s.entry, e.ai_alert_type && e.ai_alert_type !== 'none' && { borderLeftWidth: 3, borderLeftColor: alertColor(e.ai_alert_type) }]}>
                   <View style={s.entryRow}>
                     {e.ai_alert_type && e.ai_alert_type !== 'none' && (
-                      <View style={[s.badge, { backgroundColor: alertColor(e.ai_alert_type) + '22' }]}>
+                      <View style={[s.badge, { backgroundColor: alpha(alertColor(e.ai_alert_type), 0.13) }]}>
                         <Text style={[s.badgeTxt, { color: alertColor(e.ai_alert_type) }]}>{e.ai_alert_type.toUpperCase()}</Text>
                       </View>
                     )}
@@ -472,9 +473,9 @@ export default function DiaryScreen() {
         })()}
       </ScrollView>
       {video && (
-        <View style={{ paddingHorizontal: 16, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#1a2635' }}>
-          <Text style={{ color: '#00d4a0', fontSize: 13 }}>🎥 Video ready</Text>
-          <TouchableOpacity onPress={() => setVideo(null)}><Text style={{ color: '#f87171', fontSize: 12 }}>✕ Remove</Text></TouchableOpacity>
+        <View style={{ paddingHorizontal: 16, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.surface1 }}>
+          <Text style={{ color: colors.teal, fontSize: 13 }}>🎥 Video ready</Text>
+          <TouchableOpacity onPress={() => setVideo(null)}><Text style={{ color: colors.red, fontSize: 12 }}>✕ Remove</Text></TouchableOpacity>
         </View>
       )}
       {photos.length > 0 && (
@@ -482,28 +483,28 @@ export default function DiaryScreen() {
           {photos.map((uri, i) => (
             <View key={i} style={s.photoPreviewItem}>
               <Image source={{ uri }} style={s.photoPreviewImg} />
-              <TouchableOpacity onPress={() => removePhoto(uri)} style={s.photoRemove}><Text style={{ color: '#fff', fontSize: 12 }}>✕</Text></TouchableOpacity>
+              <TouchableOpacity onPress={() => removePhoto(uri)} style={s.photoRemove}><Text style={{ color: colors.textPrimary, fontSize: 12 }}>✕</Text></TouchableOpacity>
             </View>
           ))}
         </ScrollView>
       )}
       <View style={s.inputArea}>
         {walktalkQueue.length > 0 && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#BC6AFF15', borderColor: '#BC6AFF44', borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 8, gap: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: alpha(colors.purple, 0.08), borderColor: alpha(colors.purple, 0.27), borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 8, gap: 8 }}>
             <Text style={{ fontSize: 16 }}>🎙</Text>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: '#BC6AFF', fontWeight: '700', fontSize: 13 }}>
+              <Text style={{ color: colors.purple, fontWeight: '700', fontSize: 13 }}>
                 {walktalkQueue.filter(q => q.status === 'uploading').length > 0 ? 'Uploading walk & talk...' :
                  walktalkQueue.filter(q => q.status === 'failed').length === walktalkQueue.length ? `${walktalkQueue.length} failed, tap to retry` :
                  `${walktalkQueue.length} walk & talk${walktalkQueue.length === 1 ? '' : 's'} pending upload`}
               </Text>
               {walktalkQueue[0]?.lastError && (
-                <Text style={{ color: '#fbbf24', fontSize: 11, marginTop: 2 }} numberOfLines={1}>{walktalkQueue[0].lastError}</Text>
+                <Text style={{ color: colors.amber, fontSize: 11, marginTop: 2 }} numberOfLines={1}>{walktalkQueue[0].lastError}</Text>
               )}
             </View>
             {walktalkQueue.some(q => q.status === 'failed') && (
-              <TouchableOpacity onPress={() => walktalkQueue.filter(q => q.status === 'failed').forEach(q => manualRetry(q.id))} style={{ paddingHorizontal: 10, paddingVertical: 4, backgroundColor: '#BC6AFF', borderRadius: 6 }}>
-                <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>Retry</Text>
+              <TouchableOpacity onPress={() => walktalkQueue.filter(q => q.status === 'failed').forEach(q => manualRetry(q.id))} style={{ paddingHorizontal: 10, paddingVertical: 4, backgroundColor: colors.purple, borderRadius: 6 }}>
+                <Text style={{ color: colors.textPrimary, fontSize: 12, fontWeight: '700' }}>Retry</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -511,7 +512,7 @@ export default function DiaryScreen() {
                 <View style={s.mediaButtons}>
           <TouchableOpacity onPress={takePhoto} style={s.mediaBtn}><Text style={s.mediaBtnTxt}>{'\u{1F4F7} Camera'}</Text></TouchableOpacity>
           <TouchableOpacity onPress={pickPhoto} style={s.mediaBtn}><Text style={s.mediaBtnTxt}>{'\u{1F5BC} Gallery'}</Text></TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push({ pathname: '/(installer)/capture', params: { id, name: name || 'Site' } })} style={[s.mediaBtn, { backgroundColor: '#BC6AFF22', borderColor: '#BC6AFF' }]}><Text style={[s.mediaBtnTxt, { color: '#BC6AFF', fontWeight: '700' }]}>{'\u{1F399} Walk & Talk'}</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push({ pathname: '/(installer)/capture', params: { id, name: name || 'Site' } })} style={[s.mediaBtn, { backgroundColor: alpha(colors.purple, 0.13), borderColor: colors.purple }]}><Text style={[s.mediaBtnTxt, { color: colors.purple, fontWeight: '700' }]}>{'\u{1F399} Walk & Talk'}</Text></TouchableOpacity>
           <TouchableOpacity onPress={pickVideo} style={s.mediaBtn}><Text style={s.mediaBtnTxt}>{'\u{1F39E} Video'}</Text></TouchableOpacity>
         </View>
         <View style={[s.inputRow, { marginBottom: insets.bottom }]}>
@@ -527,19 +528,19 @@ export default function DiaryScreen() {
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0f1923' },
-  header: { flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
+  safe: { flex: 1, backgroundColor: colors.base },
+  header: { flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: alpha(colors.textPrimary, 0.05) },
   back: { marginRight: 12, padding: 4 },
-  backTxt: { color: '#00d4a0', fontSize: 22 },
-  title: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  sub: { color: '#4d6478', fontSize: 12, marginTop: 2 },
-  offlineBanner: { backgroundColor: '#fbbf2422', padding: 8, alignItems: 'center' },
-  windowBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: 'rgba(255,255,255,0.02)', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
-  windowLabel: { color: '#4d6478', fontSize: 12, fontWeight: '500' },
-  windowBtn: { color: '#00d4a0', fontSize: 12, fontWeight: '600' },
-  offlineTxt: { color: '#fbbf24', fontSize: 12 },
+  backTxt: { color: colors.teal, fontSize: 22 },
+  title: { color: colors.textPrimary, fontSize: 16, fontWeight: '700' },
+  sub: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
+  offlineBanner: { backgroundColor: alpha(colors.amber, 0.13), padding: 8, alignItems: 'center' },
+  windowBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: alpha(colors.textPrimary, 0.02), borderBottomWidth: 1, borderBottomColor: alpha(colors.textPrimary, 0.05) },
+  windowLabel: { color: colors.textMuted, fontSize: 12, fontWeight: '500' },
+  windowBtn: { color: colors.teal, fontSize: 12, fontWeight: '600' },
+  offlineTxt: { color: colors.amber, fontSize: 12 },
   dayHeader: {
-    color: '#a8b3bf',
+    color: colors.textSecondary,
     fontSize: 12,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -548,28 +549,28 @@ const s = StyleSheet.create({
     marginBottom: 6,
     marginLeft: 4,
   },
-  entry: { backgroundColor: '#1a2635', borderRadius: 12, padding: 12, marginBottom: 10 },
+  entry: { backgroundColor: colors.surface1, borderRadius: 12, padding: 12, marginBottom: 10 },
   entryRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
   badge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, marginRight: 8 },
   badgeTxt: { fontSize: 10, fontWeight: '700' },
-  entryTime: { color: '#4d6478', fontSize: 11 },
-  entryText: { color: '#fff', fontSize: 14, lineHeight: 20 },
+  entryTime: { color: colors.textMuted, fontSize: 11 },
+  entryText: { color: colors.textPrimary, fontSize: 14, lineHeight: 20 },
   aiSummary: { fontSize: 12, marginTop: 4, fontStyle: 'italic' },
   photoThumb: { width: 80, height: 80, borderRadius: 8, marginRight: 8 },
-  replyBox: { marginTop: 8, backgroundColor: 'rgba(0,212,160,0.08)', borderRadius: 8, padding: 8 },
-  replyLabel: { color: '#00d4a0', fontSize: 10, fontWeight: '700', marginBottom: 2 },
-  replyText: { color: '#fff', fontSize: 13 },
+  replyBox: { marginTop: 8, backgroundColor: alpha(colors.teal, 0.08), borderRadius: 8, padding: 8 },
+  replyLabel: { color: colors.teal, fontSize: 10, fontWeight: '700', marginBottom: 2 },
+  replyText: { color: colors.textPrimary, fontSize: 13 },
   photoPreview: { maxHeight: 100, paddingHorizontal: 16, paddingVertical: 8 },
   photoPreviewItem: { position: 'relative', marginRight: 8 },
   photoPreviewImg: { width: 80, height: 80, borderRadius: 8 },
-  photoRemove: { position: 'absolute', top: 2, right: 2, backgroundColor: 'rgba(0,0,0,0.7)', borderRadius: 10, width: 20, height: 20, alignItems: 'center', justifyContent: 'center' },
-  inputArea: { borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 16, paddingBottom: 16, paddingTop: 8 },
+  photoRemove: { position: 'absolute', top: 2, right: 2, backgroundColor: alpha(colors.black, 0.7), borderRadius: 10, width: 20, height: 20, alignItems: 'center', justifyContent: 'center' },
+  inputArea: { borderTopWidth: 1, borderTopColor: alpha(colors.textPrimary, 0.05), paddingHorizontal: 16, paddingBottom: 16, paddingTop: 8 },
   mediaButtons: { flexDirection: 'row', gap: 8, marginBottom: 8 },
-  mediaBtn: { backgroundColor: '#1a2635', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
-  mediaBtnTxt: { color: '#00d4a0', fontSize: 13 },
+  mediaBtn: { backgroundColor: colors.surface1, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
+  mediaBtnTxt: { color: colors.teal, fontSize: 13 },
   inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
-  input: { flex: 1, backgroundColor: '#1a2635', borderRadius: 12, padding: 12, color: '#fff', fontSize: 14, maxHeight: 100 },
-  send: { backgroundColor: '#00d4a0', borderRadius: 12, width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  input: { flex: 1, backgroundColor: colors.surface1, borderRadius: 12, padding: 12, color: colors.textPrimary, fontSize: 14, maxHeight: 100 },
+  send: { backgroundColor: colors.teal, borderRadius: 12, width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   sendDisabled: { opacity: 0.4 },
-  sendTxt: { color: '#0f1923', fontSize: 20, fontWeight: '700' },
+  sendTxt: { color: colors.base, fontSize: 20, fontWeight: '700' },
 });

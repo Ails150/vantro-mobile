@@ -4,8 +4,9 @@ import { useRouter } from 'expo-router';
 import { authFetch } from '@/lib/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { alpha, colors } from '@/theme';
 
-const C = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)', red: '#f87171' };
+const C = { bg: colors.base, card: colors.surface1, teal: colors.teal, muted: colors.textMuted, text: colors.textPrimary, border: alpha(colors.textPrimary, 0.05), red: colors.red };
 
 export default function GPSAcknowledgmentScreen() {
   const router = useRouter();
@@ -83,7 +84,7 @@ const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
   scroll: { padding: 20, paddingBottom: 40 },
   iconWrap: { alignItems: 'center', marginBottom: 20, marginTop: 10 },
-  icon: { width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(0,212,160,0.1)', alignItems: 'center', justifyContent: 'center' },
+  icon: { width: 64, height: 64, borderRadius: 32, backgroundColor: alpha(colors.teal, 0.1), alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: 20, fontWeight: '700', color: C.text, textAlign: 'center', marginBottom: 6 },
   subtitle: { fontSize: 14, color: C.muted, textAlign: 'center', marginBottom: 24 },
   card: { backgroundColor: C.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: C.border },
@@ -93,10 +94,10 @@ const s = StyleSheet.create({
   policyLinkText: { fontSize: 14, color: C.teal, textDecorationLine: 'underline' },
   checkRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 20, paddingHorizontal: 4 },
   checkbox: { width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: C.muted, alignItems: 'center', justifyContent: 'center', marginTop: 2, flexShrink: 0 },
-  checkboxActive: { borderColor: C.teal, backgroundColor: 'rgba(0,212,160,0.15)' },
+  checkboxActive: { borderColor: C.teal, backgroundColor: alpha(colors.teal, 0.15) },
   checkmark: { color: C.teal, fontSize: 14, fontWeight: '700' },
   checkLabel: { fontSize: 13, color: C.text, lineHeight: 20, flex: 1, opacity: 0.85 },
   acceptBtn: { backgroundColor: C.teal, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   acceptBtnDisabled: { opacity: 0.4 },
-  acceptBtnText: { color: '#0f1923', fontWeight: '700', fontSize: 15 },
+  acceptBtnText: { color: colors.base, fontWeight: '700', fontSize: 15 },
 });

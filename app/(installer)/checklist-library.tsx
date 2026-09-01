@@ -4,10 +4,11 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authFetch } from '@/lib/api';
 import ScreenHeader from '@/components/ScreenHeader';
+import { alpha, colors } from '@/theme';
 
 const CHECKLIST_LIB_CACHE_KEY = 'vantro_checklist_library_cache';
 
-const C = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)', red: '#f87171', amber: '#fbbf24' };
+const C = { bg: colors.base, card: colors.surface1, teal: colors.teal, muted: colors.textMuted, text: colors.textPrimary, border: alpha(colors.textPrimary, 0.05), red: colors.red, amber: colors.amber };
 
 export default function ChecklistLibraryScreen() {
   const { jobId, jobName } = useLocalSearchParams<{ jobId: string; jobName: string }>();
@@ -86,21 +87,21 @@ export default function ChecklistLibraryScreen() {
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0f1923' },
-  header: { flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
+  safe: { flex: 1, backgroundColor: colors.base },
+  header: { flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: alpha(colors.textPrimary, 0.05) },
   back: { marginRight: 12, padding: 4 },
-  backTxt: { color: '#00d4a0', fontSize: 22 },
-  title: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  sub: { color: '#4d6478', fontSize: 12, marginTop: 2 },
-  sectionLabel: { color: '#4d6478', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 },
-  card: { backgroundColor: '#1a2635', borderRadius: 16, padding: 16, marginBottom: 10, flexDirection: 'row', alignItems: 'center' },
+  backTxt: { color: colors.teal, fontSize: 22 },
+  title: { color: colors.textPrimary, fontSize: 16, fontWeight: '700' },
+  sub: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
+  sectionLabel: { color: colors.textMuted, fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 },
+  card: { backgroundColor: colors.surface1, borderRadius: 16, padding: 16, marginBottom: 10, flexDirection: 'row', alignItems: 'center' },
   cardLeft: { flex: 1 },
-  cardTitle: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  cardSub: { color: '#4d6478', fontSize: 13, marginTop: 4 },
-  cardArrow: { color: '#00d4a0', fontSize: 20, fontWeight: '700' },
+  cardTitle: { color: colors.textPrimary, fontSize: 16, fontWeight: '600' },
+  cardSub: { color: colors.textMuted, fontSize: 13, marginTop: 4 },
+  cardArrow: { color: colors.teal, fontSize: 20, fontWeight: '700' },
   empty: { alignItems: 'center', marginTop: 60 },
-  emptyTxt: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  emptySubTxt: { color: '#4d6478', fontSize: 13, marginTop: 8, textAlign: 'center' },
-  offlineBanner: { backgroundColor: 'rgba(251, 191, 36, 0.12)', borderColor: '#fbbf24', borderWidth: 1, marginHorizontal: 16, marginTop: 12, borderRadius: 8, padding: 10 },
-  offlineTxt: { color: '#fbbf24', fontSize: 12, fontWeight: '500' },
+  emptyTxt: { color: colors.textPrimary, fontSize: 16, fontWeight: '600' },
+  emptySubTxt: { color: colors.textMuted, fontSize: 13, marginTop: 8, textAlign: 'center' },
+  offlineBanner: { backgroundColor: alpha(colors.amber, 0.12), borderColor: colors.amber, borderWidth: 1, marginHorizontal: 16, marginTop: 12, borderRadius: 8, padding: 10 },
+  offlineTxt: { color: colors.amber, fontSize: 12, fontWeight: '500' },
 });

@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Alert } from 'react-native';
 import { authFetch } from '@/lib/api';
 import ScreenHeader from '@/components/ScreenHeader';
+import { alpha, colors } from '@/theme';
 
-const C = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)', red: '#f87171', amber: '#fbbf24' };
+const C = { bg: colors.base, card: colors.surface1, teal: colors.teal, muted: colors.textMuted, text: colors.textPrimary, border: alpha(colors.textPrimary, 0.05), red: colors.red, amber: colors.amber };
 
 export default function AlertsScreen() {
   const [alerts, setAlerts] = useState<any[]>([]);
@@ -107,8 +108,8 @@ const s = StyleSheet.create({
   alertCard: { backgroundColor: C.card, borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: C.border, gap: 6 },
   alertCardBlocker: { borderLeftWidth: 3, borderLeftColor: C.red },
   alertType: { fontSize: 11, fontWeight: '700', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 },
-  alertTypeBlocker: { backgroundColor: 'rgba(248,113,113,0.15)', color: C.red },
-  alertTypeIssue: { backgroundColor: 'rgba(251,191,36,0.15)', color: C.amber },
+  alertTypeBlocker: { backgroundColor: alpha(colors.red, 0.15), color: C.red },
+  alertTypeIssue: { backgroundColor: alpha(colors.amber, 0.15), color: C.amber },
   alertJob: { fontSize: 12, color: C.muted, flex: 1 },
   alertMsg: { fontSize: 14, color: C.text },
   alertTime: { fontSize: 11, color: C.muted },
@@ -120,7 +121,7 @@ const s = StyleSheet.create({
   qaTime: { fontSize: 12, color: C.muted },
   qaActions: { flexDirection: 'row', gap: 10, marginTop: 10 },
   approveBtn: { flex: 1, backgroundColor: C.teal, borderRadius: 10, paddingVertical: 10, alignItems: 'center' },
-  approveBtnText: { fontSize: 14, fontWeight: '600', color: '#0f1923' },
-  rejectBtn: { flex: 1, backgroundColor: 'rgba(248,113,113,0.1)', borderRadius: 10, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(248,113,113,0.3)' },
+  approveBtnText: { fontSize: 14, fontWeight: '600', color: colors.base },
+  rejectBtn: { flex: 1, backgroundColor: alpha(colors.red, 0.1), borderRadius: 10, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderColor: alpha(colors.red, 0.3) },
   rejectBtnText: { fontSize: 14, fontWeight: '600', color: C.red },
 });

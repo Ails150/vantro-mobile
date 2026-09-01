@@ -3,8 +3,9 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-nati
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { alpha, colors } from '@/theme';
 
-const C = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)' };
+const C = { bg: colors.base, card: colors.surface1, teal: colors.teal, muted: colors.textMuted, text: colors.textPrimary, border: alpha(colors.textPrimary, 0.05) };
 
 export default function GPSAcknowledgmentScreen() {
   const router = useRouter();
@@ -47,19 +48,19 @@ export default function GPSAcknowledgmentScreen() {
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0f1923' },
+  safe: { flex: 1, backgroundColor: colors.base },
   scroll: { padding: 24, paddingTop: 56 },
-  title: { fontSize: 26, fontWeight: '700', color: '#ffffff', marginBottom: 8 },
-  subtitle: { fontSize: 15, color: '#4d6478', marginBottom: 32, lineHeight: 22 },
-  card: { backgroundColor: '#1a2635', borderRadius: 12, padding: 18, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
-  heading: { fontSize: 12, fontWeight: '700', color: '#00d4a0', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.8 },
-  body: { fontSize: 15, color: '#ffffff', lineHeight: 22 },
+  title: { fontSize: 26, fontWeight: '700', color: colors.textPrimary, marginBottom: 8 },
+  subtitle: { fontSize: 15, color: colors.textMuted, marginBottom: 32, lineHeight: 22 },
+  card: { backgroundColor: colors.surface1, borderRadius: 12, padding: 18, marginBottom: 16, borderWidth: 1, borderColor: alpha(colors.textPrimary, 0.05) },
+  heading: { fontSize: 12, fontWeight: '700', color: colors.teal, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.8 },
+  body: { fontSize: 15, color: colors.textPrimary, lineHeight: 22 },
   checkbox: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 8, marginBottom: 32, gap: 12 },
-  box: { width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: '#4d6478', alignItems: 'center', justifyContent: 'center', marginTop: 2 },
-  boxChecked: { backgroundColor: '#00d4a0', borderColor: '#00d4a0' },
-  tick: { color: '#000', fontWeight: '700', fontSize: 14 },
-  checkLabel: { flex: 1, fontSize: 15, color: '#ffffff', lineHeight: 22 },
-  btn: { backgroundColor: '#00d4a0', borderRadius: 12, padding: 18, alignItems: 'center' },
+  box: { width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: colors.textMuted, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
+  boxChecked: { backgroundColor: colors.teal, borderColor: colors.teal },
+  tick: { color: colors.black, fontWeight: '700', fontSize: 14 },
+  checkLabel: { flex: 1, fontSize: 15, color: colors.textPrimary, lineHeight: 22 },
+  btn: { backgroundColor: colors.teal, borderRadius: 12, padding: 18, alignItems: 'center' },
   btnDisabled: { opacity: 0.4 },
-  btnText: { color: '#000', fontWeight: '700', fontSize: 16 },
+  btnText: { color: colors.black, fontWeight: '700', fontSize: 16 },
 });

@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
 import { authFetch } from '@/lib/api';
 import ScreenHeader from '@/components/ScreenHeader';
+import { alpha, colors } from '@/theme';
 
-const C = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)', red: '#f87171', amber: '#fbbf24' };
+const C = { bg: colors.base, card: colors.surface1, teal: colors.teal, muted: colors.textMuted, text: colors.textPrimary, border: alpha(colors.textPrimary, 0.05), red: colors.red, amber: colors.amber };
 
-const roleColor = (r: string) => r === 'admin' ? '#a78bfa' : r === 'foreman' ? '#60a5fa' : C.muted;
+const roleColor = (r: string) => r === 'admin' ? colors.violet : r === 'foreman' ? colors.blue : C.muted;
 
 export default function TeamScreen() {
   const [members, setMembers] = useState<any[]>([]);
@@ -62,7 +63,7 @@ const s = StyleSheet.create({
   card: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: C.card, borderRadius: 16, padding: 16, marginBottom: 10, borderWidth: 1, borderColor: C.border },
   cardInactive: { opacity: 0.5 },
   avatarWrap: { position: 'relative' },
-  avatarText: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.06)', textAlign: 'center', textAlignVertical: 'center', fontSize: 15, fontWeight: '600', color: C.text, lineHeight: 44 },
+  avatarText: { width: 44, height: 44, borderRadius: 22, backgroundColor: alpha(colors.textPrimary, 0.06), textAlign: 'center', textAlignVertical: 'center', fontSize: 15, fontWeight: '600', color: C.text, lineHeight: 44 },
   onlineDot: { position: 'absolute', bottom: 0, right: 0, width: 10, height: 10, borderRadius: 5, backgroundColor: C.teal, borderWidth: 2, borderColor: C.card },
   name: { fontSize: 15, fontWeight: '600', color: C.text },
   email: { fontSize: 12, color: C.muted },

@@ -3,8 +3,9 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } fr
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter, useLocalSearchParams } from 'expo-router'
 import * as SecureStore from 'expo-secure-store'
+import { colors } from '@/theme';
 
-const COLORS = { bg: '#0f1923', card: '#1a2a22', green: '#00C896', text: '#e8f5f0', muted: '#6b8f7e' }
+const COLORS = { bg: colors.base, card: colors.surface1, green: colors.teal, text: colors.textSecondary, muted: colors.textMuted }
 
 export default function SetupPin() {
   const [pin, setPin] = useState('')
@@ -96,7 +97,7 @@ export default function SetupPin() {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg, alignItems: 'center', justifyContent: 'center', padding: 32 },
   logo: { width: 48, height: 48, borderRadius: 12, backgroundColor: COLORS.green, alignItems: 'center', justifyContent: 'center', marginBottom: 32 },
-  logoText: { color: '#07100D', fontWeight: '800', fontSize: 20 },
+  logoText: { color: colors.base, fontWeight: '800', fontSize: 20 },
   title: { fontSize: 22, fontWeight: '700', color: COLORS.text, marginBottom: 8 },
   sub: { fontSize: 14, color: COLORS.muted, textAlign: 'center', marginBottom: 32, maxWidth: 260 },
   dots: { flexDirection: 'row', gap: 16, marginBottom: 48 },

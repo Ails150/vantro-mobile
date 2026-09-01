@@ -12,6 +12,7 @@ import { useRouter } from "expo-router";
 import ScreenHeader from "@/components/ScreenHeader";
 import MapView, { Polyline, Marker, PROVIDER_DEFAULT } from "react-native-maps";
 import { authFetch } from "@/lib/api";
+import { colors } from '@/theme';
 
 type TrailPoint = {
   lat: number;
@@ -108,7 +109,7 @@ export default function MyHoursScreen() {
   if (loading) {
     return (
       <View style={styles.loadingWrap}>
-        <ActivityIndicator color="#00d4a0" size="large" />
+        <ActivityIndicator color={colors.teal} size="large" />
       </View>
     );
   }
@@ -139,7 +140,7 @@ export default function MyHoursScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#00d4a0"
+            tintColor={colors.teal}
           />
         }
       >
@@ -190,7 +191,7 @@ export default function MyHoursScreen() {
                     latitude: p.lat,
                     longitude: p.lng,
                   }))}
-                  strokeColor="#00d4a0"
+                  strokeColor={colors.teal}
                   strokeWidth={4}
                 />
                 <Marker
@@ -199,7 +200,7 @@ export default function MyHoursScreen() {
                     longitude: trail[0].lng,
                   }}
                   title="Sign in"
-                  pinColor="#00d4a0"
+                  pinColor={colors.teal}
                 />
                 <Marker
                   coordinate={{
@@ -207,7 +208,7 @@ export default function MyHoursScreen() {
                     longitude: trail[trail.length - 1].lng,
                   }}
                   title="Latest point"
-                  pinColor="#ff6b6b"
+                  pinColor={colors.red}
                 />
               </MapView>
             ) : (
@@ -276,32 +277,32 @@ export default function MyHoursScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0f1923" },
+  container: { flex: 1, backgroundColor: colors.base },
   loadingWrap: {
     flex: 1,
-    backgroundColor: "#0f1923",
+    backgroundColor: colors.base,
     alignItems: "center",
     justifyContent: "center",
   },
   scroll: { flex: 1 },
   scrollContent: { padding: 16 },
   heroCard: {
-    backgroundColor: "#1a2733",
+    backgroundColor: colors.surface1,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderLeftWidth: 4,
-    borderLeftColor: "#00d4a0",
+    borderLeftColor: colors.teal,
   },
   heroTitle: {
-    color: "#00d4a0",
+    color: colors.teal,
     fontSize: 16,
     fontWeight: "700",
     marginBottom: 6,
   },
-  heroBody: { color: "#cfd8dc", fontSize: 13, lineHeight: 19 },
+  heroBody: { color: colors.textSecondary, fontSize: 13, lineHeight: 19 },
   summaryCard: {
-    backgroundColor: "#1a2733",
+    backgroundColor: colors.surface1,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -309,35 +310,35 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  summaryLabel: { color: "#9aa5b1", fontSize: 13 },
-  summaryValue: { color: "#fff", fontSize: 22, fontWeight: "700" },
+  summaryLabel: { color: colors.textSecondary, fontSize: 13 },
+  summaryValue: { color: colors.textPrimary, fontSize: 22, fontWeight: "700" },
   emptyCard: {
-    backgroundColor: "#1a2733",
+    backgroundColor: colors.surface1,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
   },
-  emptyText: { color: "#cfd8dc", fontSize: 14, lineHeight: 20 },
+  emptyText: { color: colors.textSecondary, fontSize: 14, lineHeight: 20 },
   mapCard: {
-    backgroundColor: "#1a2733",
+    backgroundColor: colors.surface1,
     borderRadius: 12,
     padding: 12,
     marginBottom: 12,
   },
-  mapTitle: { color: "#fff", fontSize: 15, fontWeight: "700", marginBottom: 2 },
-  mapSub: { color: "#9aa5b1", fontSize: 12, marginBottom: 10 },
+  mapTitle: { color: colors.textPrimary, fontSize: 15, fontWeight: "700", marginBottom: 2 },
+  mapSub: { color: colors.textSecondary, fontSize: 12, marginBottom: 10 },
   map: { width: "100%", height: 240, borderRadius: 8 },
   mapPlaceholder: {
     width: "100%",
     height: 140,
-    backgroundColor: "#0f1923",
+    backgroundColor: colors.base,
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
     padding: 20,
   },
   mapPlaceholderText: {
-    color: "#9aa5b1",
+    color: colors.textSecondary,
     fontSize: 13,
     textAlign: "center",
     lineHeight: 18,
@@ -350,10 +351,10 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     paddingHorizontal: 4,
   },
-  dayHeaderTitle: { color: "#fff", fontSize: 14, fontWeight: "700" },
-  dayHeaderTotal: { color: "#00d4a0", fontSize: 14, fontWeight: "700" },
+  dayHeaderTitle: { color: colors.textPrimary, fontSize: 14, fontWeight: "700" },
+  dayHeaderTotal: { color: colors.teal, fontSize: 14, fontWeight: "700" },
   shiftRow: {
-    backgroundColor: "#1a2733",
+    backgroundColor: colors.surface1,
     borderRadius: 10,
     padding: 12,
     marginBottom: 6,
@@ -362,21 +363,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "transparent",
   },
-  shiftRowSelected: { borderColor: "#00d4a0" },
-  shiftJob: { color: "#fff", fontSize: 14, fontWeight: "600", marginBottom: 2 },
-  shiftTime: { color: "#9aa5b1", fontSize: 12 },
+  shiftRowSelected: { borderColor: colors.teal },
+  shiftJob: { color: colors.textPrimary, fontSize: 14, fontWeight: "600", marginBottom: 2 },
+  shiftTime: { color: colors.textSecondary, fontSize: 12 },
   shiftRight: { alignItems: "flex-end" },
-  shiftDuration: { color: "#fff", fontSize: 13, fontWeight: "700" },
-  shiftBc: { color: "#9aa5b1", fontSize: 11, marginTop: 2 },
+  shiftDuration: { color: colors.textPrimary, fontSize: 13, fontWeight: "700" },
+  shiftBc: { color: colors.textSecondary, fontSize: 11, marginTop: 2 },
   autoBadge: {
     marginTop: 4,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
-    backgroundColor: "#00d4a0",
+    backgroundColor: colors.teal,
   },
   autoBadgeText: {
-    color: "#0f1923",
+    color: colors.base,
     fontSize: 9,
     fontWeight: "800",
     letterSpacing: 0.5,

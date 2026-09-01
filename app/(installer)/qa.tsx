@@ -3,10 +3,10 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image,
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { authFetch, authFormFetch } from '@/lib/api';
-import { colors, radius, space, type } from '@/theme';
+import { alpha, colors, radius, space, type } from '@/theme';
 import ScreenHeader from '@/components/ScreenHeader';
 
-const C = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)', red: '#f87171' };
+const C = { bg: colors.base, card: colors.surface1, teal: colors.teal, muted: colors.textMuted, text: colors.textPrimary, border: alpha(colors.textPrimary, 0.05), red: colors.red };
 
 // checklist_items has no description column: the label carries the reference
 // and the wording together, e.g. "HS 1 - Fire exits kept clear". Split the
@@ -278,14 +278,14 @@ export default function QAScreen() {
           <View key={idx} style={{ position: 'relative' }}>
             <Image source={{ uri }} style={s.photoPreview} />
             <TouchableOpacity onPress={() => removePhoto(itemId, idx)} style={s.removePhotoBtn}>
-              <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>x</Text>
+              <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '700' }}>x</Text>
             </TouchableOpacity>
           </View>
         ))}
         {itemVideo && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(139,92,246,0.1)', padding: 10, borderRadius: 10 }}>
-            <Text style={{ color: '#a78bfa', fontSize: 13, flex: 1 }}>Video attached</Text>
-            <TouchableOpacity onPress={() => removeVideo(itemId)}><Text style={{ color: '#f87171', fontSize: 12 }}>Remove</Text></TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: alpha(colors.violet, 0.1), padding: 10, borderRadius: 10 }}>
+            <Text style={{ color: colors.violet, fontSize: 13, flex: 1 }}>Video attached</Text>
+            <TouchableOpacity onPress={() => removeVideo(itemId)}><Text style={{ color: colors.red, fontSize: 12 }}>Remove</Text></TouchableOpacity>
           </View>
         )}
         <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -466,7 +466,7 @@ export default function QAScreen() {
               <View style={{ gap: 6, marginTop: 8 }}>
                 {submitting && submitProgress ? (
                   <View style={[s.submitBtn, { flexDirection: 'row', gap: 10, justifyContent: 'center' }]}>
-                    <ActivityIndicator size="small" color="#0f1923" />
+                    <ActivityIndicator size="small" color={colors.base} />
                     <Text style={s.submitBtnText}>{submitProgress}</Text>
                   </View>
                 ) : (
@@ -518,9 +518,9 @@ const s = StyleSheet.create({
   title: { fontSize: 15, fontWeight: '600', color: C.text },
   subtitle: { fontSize: 12, color: C.muted },
   tabs: { borderBottomWidth: 1, borderBottomColor: C.border, paddingVertical: 12, flexGrow: 0 },
-  tab: { width: 138, minHeight: 52, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', justifyContent: 'center' },
-  tabActive: { backgroundColor: 'rgba(0,212,160,0.12)', borderColor: 'rgba(0,212,160,0.4)' },
-  tabText: { fontSize: 13, lineHeight: 17, color: '#aeb9c4' },
+  tab: { width: 138, minHeight: 52, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, backgroundColor: alpha(colors.textPrimary, 0.06), borderWidth: 1, borderColor: alpha(colors.textPrimary, 0.08), justifyContent: 'center' },
+  tabActive: { backgroundColor: alpha(colors.teal, 0.12), borderColor: alpha(colors.teal, 0.4) },
+  tabText: { fontSize: 13, lineHeight: 17, color: colors.textSecondary },
   tabTextActive: { color: C.teal, fontWeight: '600' },
   tabDone: { color: C.teal, fontSize: 10, fontWeight: '600', marginTop: 3 },
   scroll: { padding: 16, paddingBottom: 40 },
@@ -532,8 +532,8 @@ const s = StyleSheet.create({
   empty: { alignItems: 'center', paddingVertical: 48 },
   emptyText: { color: C.muted, fontSize: 15 },
   emptySubText: { color: C.muted, fontSize: 13, marginTop: 4, opacity: 0.6 },
-  badge: { backgroundColor: 'rgba(0,212,160,0.08)', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, marginBottom: 12, alignSelf: 'flex-start' },
-  badgeAudit: { backgroundColor: 'rgba(255,255,255,0.05)' },
+  badge: { backgroundColor: alpha(colors.teal, 0.08), borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, marginBottom: 12, alignSelf: 'flex-start' },
+  badgeAudit: { backgroundColor: alpha(colors.textPrimary, 0.05) },
   badgeText: { color: C.teal, fontSize: 12 },
   card: { backgroundColor: C.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: C.border },
   cardDone: { opacity: 0.6 },
@@ -548,26 +548,26 @@ const s = StyleSheet.create({
     paddingHorizontal: space.sm, paddingVertical: 2, overflow: 'hidden',
   },
   stateBadge: { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, flexShrink: 0 },
-  stateBadgeGreen: { backgroundColor: 'rgba(0,212,160,0.1)' },
-  stateBadgeRed: { backgroundColor: 'rgba(248,113,113,0.1)' },
-  stateBadgeGrey: { backgroundColor: 'rgba(255,255,255,0.05)' },
+  stateBadgeGreen: { backgroundColor: alpha(colors.teal, 0.1) },
+  stateBadgeRed: { backgroundColor: alpha(colors.red, 0.1) },
+  stateBadgeGrey: { backgroundColor: alpha(colors.textPrimary, 0.05) },
   stateText: { fontSize: 12, fontWeight: '500' },
   stateTextGreen: { color: C.teal },
   stateTextRed: { color: C.red },
   stateTextGrey: { color: C.muted },
-  actionBtn: { backgroundColor: 'rgba(0,212,160,0.1)', borderRadius: 10, paddingVertical: 11, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(0,212,160,0.2)' },
-  actionBtnRed: { backgroundColor: 'rgba(248,113,113,0.1)', borderColor: 'rgba(248,113,113,0.2)' },
+  actionBtn: { backgroundColor: alpha(colors.teal, 0.1), borderRadius: 10, paddingVertical: 11, alignItems: 'center', borderWidth: 1, borderColor: alpha(colors.teal, 0.2) },
+  actionBtnRed: { backgroundColor: alpha(colors.red, 0.1), borderColor: alpha(colors.red, 0.2) },
   actionBtnDisabled: { backgroundColor: colors.surface2, borderColor: colors.surface2 },
   actionBtnText: { fontSize: 14, color: C.teal, fontWeight: '500' },
   actionBtnTextRed: { color: C.red },
-  input: { backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, color: C.text, fontSize: 14, borderWidth: 1, borderColor: C.border },
+  input: { backgroundColor: alpha(colors.textPrimary, 0.04), borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, color: C.text, fontSize: 14, borderWidth: 1, borderColor: C.border },
   photoPreview: { width: '100%', height: 160, borderRadius: 10, resizeMode: 'cover' },
-  photoBtn: { backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 10, paddingVertical: 11, alignItems: 'center', borderWidth: 1, borderColor: C.border },
+  photoBtn: { backgroundColor: alpha(colors.textPrimary, 0.04), borderRadius: 10, paddingVertical: 11, alignItems: 'center', borderWidth: 1, borderColor: C.border },
   photoBtnText: { color: C.teal, fontSize: 14 },
-  removePhotoBtn: { position: 'absolute', top: 6, right: 6, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 12, width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
+  removePhotoBtn: { position: 'absolute', top: 6, right: 6, backgroundColor: alpha(colors.black, 0.5), borderRadius: 12, width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
   submitBtn: { backgroundColor: C.teal, borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginTop: 8 },
-  submitBtnDone: { backgroundColor: 'rgba(0,212,160,0.1)', borderWidth: 1, borderColor: 'rgba(0,212,160,0.3)' },
-  submitBtnText: { color: '#0f1923', fontWeight: '700', fontSize: 15 },
+  submitBtnDone: { backgroundColor: alpha(colors.teal, 0.1), borderWidth: 1, borderColor: alpha(colors.teal, 0.3) },
+  submitBtnText: { color: colors.base, fontWeight: '700', fontSize: 15 },
   submitBtnTextDone: { color: C.teal },
   submitBtnBlocked: { backgroundColor: colors.surface2 },
   submitBtnTextBlocked: { color: colors.textMuted },

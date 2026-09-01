@@ -7,8 +7,9 @@ import { addToQueue } from "@/lib/walktalk-queue";
 import { tickUploader } from "@/lib/walktalk-uploader";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ScreenHeader from '@/components/ScreenHeader';
+import { alpha, colors } from '@/theme';
 
-const C = { bg: "#0f1923", card: "#1a2635", teal: "#00d4a0", purple: "#BC6AFF", muted: "#4d6478", text: "#ffffff", red: "#f87171", amber: "#fbbf24" };
+const C = { bg: colors.base, card: colors.surface1, teal: colors.teal, purple: colors.purple, muted: colors.textMuted, text: colors.textPrimary, red: colors.red, amber: colors.amber };
 
 const MIN_SECONDS = 10;
 const MAX_SECONDS = 120;
@@ -171,7 +172,7 @@ export default function CaptureScreen() {
         subtitle={name}
         onBack={() => router.back()}
         right={
-          <View style={[s.stageBadge, { backgroundColor: C.purple + "22", borderColor: C.purple }]}>
+          <View style={[s.stageBadge, { backgroundColor: alpha(C.purple, 0.13), borderColor: C.purple }]}>
             <Text style={[s.stageTxt, { color: C.purple }]}>Walk and Talk</Text>
           </View>
         }
@@ -215,23 +216,23 @@ const s = StyleSheet.create({
   stageTxt: { fontSize: 12, fontWeight: "700", letterSpacing: 1 },
   jobName: { color: C.text, fontSize: 18, fontWeight: "700", paddingHorizontal: 16 },
   sub: { color: C.muted, fontSize: 12, paddingHorizontal: 16, marginTop: 4 },
-  cameraWrap: { flex: 1, margin: 16, borderRadius: 16, overflow: "hidden", backgroundColor: "#000" },
+  cameraWrap: { flex: 1, margin: 16, borderRadius: 16, overflow: "hidden", backgroundColor: colors.black },
   camera: { flex: 1 },
-  timerPill: { position: "absolute", top: 16, left: 16, backgroundColor: "rgba(0,0,0,0.7)", flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, gap: 6 },
+  timerPill: { position: "absolute", top: 16, left: 16, backgroundColor: alpha(colors.black, 0.7), flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, gap: 6 },
   recDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: C.red },
-  timerTxt: { color: "#fff", fontWeight: "700" },
-  tipPill: { position: "absolute", bottom: 16, left: 16, right: 16, backgroundColor: "rgba(0,0,0,0.7)", paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12 },
-  tipTxt: { color: "#fff", fontSize: 13, textAlign: "center" },
+  timerTxt: { color: colors.textPrimary, fontWeight: "700" },
+  tipPill: { position: "absolute", bottom: 16, left: 16, right: 16, backgroundColor: alpha(colors.black, 0.7), paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12 },
+  tipTxt: { color: colors.textPrimary, fontSize: 13, textAlign: "center" },
   controls: { padding: 16, paddingBottom: 32 },
   recordBtn: { paddingVertical: 18, borderRadius: 16, alignItems: "center" },
-  recordBtnTxt: { color: "#fff", fontSize: 16, fontWeight: "800", letterSpacing: 1 },
+  recordBtnTxt: { color: colors.textPrimary, fontSize: 16, fontWeight: "800", letterSpacing: 1 },
   permBox: { flex: 1, justifyContent: "center", paddingHorizontal: 32, alignItems: "center" },
   permEmoji: { fontSize: 56, marginBottom: 18, textAlign: "center" },
   permTitle: { color: C.text, fontSize: 24, fontWeight: "700", marginBottom: 14, textAlign: "center", letterSpacing: -0.5 },
   permText: { color: C.text, fontSize: 15, lineHeight: 22, marginBottom: 12, textAlign: "center", opacity: 0.85 },
   permSubText: { color: C.muted, fontSize: 13, lineHeight: 19, marginBottom: 28, textAlign: "center" },
   permBtn: { backgroundColor: C.purple, paddingVertical: 16, paddingHorizontal: 28, borderRadius: 14, width: "100%", marginBottom: 10 },
-  permBtnTxt: { color: "#fff", fontSize: 16, fontWeight: "700", textAlign: "center" },
+  permBtnTxt: { color: colors.textPrimary, fontSize: 16, fontWeight: "700", textAlign: "center" },
   permBtnGhost: { paddingVertical: 14, paddingHorizontal: 28, width: "100%" },
   permBtnGhostTxt: { color: C.muted, fontSize: 14, fontWeight: "500", textAlign: "center" },
   doneBox: { flex: 1, justifyContent: "center", alignItems: "center", padding: 24 },

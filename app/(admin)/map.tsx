@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, Platform } from "react-native";
 import { authFetch } from "@/lib/api";
 import ScreenHeader from '@/components/ScreenHeader';
+import { alpha, colors } from '@/theme';
 
-const C = { bg: "#0f1923", teal: "#00d4a0", muted: "#4d6478", text: "#ffffff", border: "rgba(255,255,255,0.05)" };
+const C = { bg: colors.base, teal: colors.teal, muted: colors.textMuted, text: colors.textPrimary, border: alpha(colors.textPrimary, 0.05) };
 
 export default function MapScreen() {
   const [signins, setSignins] = useState<any[]>([]);
@@ -55,7 +56,7 @@ const s = StyleSheet.create({
   body: { padding: 16 },
   sectionTitle: { fontSize: 13, color: C.muted, fontWeight: "600", marginBottom: 10 },
   row: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.border },
-  avatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(0,212,160,0.15)", alignItems: "center", justifyContent: "center" },
+  avatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: alpha(colors.teal, 0.15), alignItems: "center", justifyContent: "center" },
   avatarText: { fontSize: 13, fontWeight: "700", color: C.teal },
   name: { fontSize: 14, fontWeight: "500", color: C.text },
   jobName: { fontSize: 14, fontWeight: "500", color: C.text },

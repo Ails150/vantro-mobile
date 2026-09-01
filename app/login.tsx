@@ -5,8 +5,9 @@ import { useAuth } from '@/context/AuthContext';
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { alpha, colors } from '@/theme';
 
-const COLORS = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', error: '#f87171' };
+const COLORS = { bg: colors.base, card: colors.surface1, teal: colors.teal, muted: colors.textMuted, text: colors.textPrimary, error: colors.red };
 
 export default function LoginScreen() {
   const [pin, setPin] = useState('');
@@ -151,7 +152,7 @@ export default function LoginScreen() {
           />
           {error ? <Text style={s.error}>{error}</Text> : null}
           <TouchableOpacity style={s.emailBtn} onPress={handleEmailSubmit} disabled={loading}>
-            {loading ? <ActivityIndicator color="#0f1923"/> : <Text style={s.emailBtnText}>Continue →</Text>}
+            {loading ? <ActivityIndicator color={colors.base}/> : <Text style={s.emailBtnText}>Continue →</Text>}
           </TouchableOpacity>
           <TouchableOpacity onPress={() => { setShowEmailEntry(false); setError(''); }}>
             <Text style={[s.hint, { marginTop: 16 }]}>← Back to PIN login</Text>
@@ -201,7 +202,7 @@ export default function LoginScreen() {
         )}
       </View>
       <Modal visible={forgotPinModal} transparent animationType='fade' onRequestClose={() => setForgotPinModal(false)}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: 24 }}>
+        <View style={{ flex: 1, backgroundColor: alpha(colors.black, 0.7), justifyContent: 'center', padding: 24 }}>
           <View style={{ backgroundColor: COLORS.card, borderRadius: 16, padding: 24 }}>
             {!forgotPinSent ? (
               <>
@@ -222,7 +223,7 @@ export default function LoginScreen() {
                     <Text style={{ color: COLORS.text, fontWeight: '600' }}>Cancel</Text>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={submitForgotPin} disabled={forgotPinSending} style={{ flex: 1, padding: 14, borderRadius: 12, backgroundColor: COLORS.teal, alignItems: 'center', opacity: forgotPinSending ? 0.6 : 1 }}>
-                    <Text style={{ color: '#0f1923', fontWeight: '700' }}>{forgotPinSending ? 'Sending...' : 'Send'}</Text>
+                    <Text style={{ color: colors.base, fontWeight: '700' }}>{forgotPinSending ? 'Sending...' : 'Send'}</Text>
                   </TouchableOpacity>
                 </View>
               </>
@@ -232,7 +233,7 @@ export default function LoginScreen() {
                 <Text style={{ color: COLORS.text, fontSize: 18, fontWeight: '700', textAlign: 'center', marginBottom: 8 }}>Check your email</Text>
                 <Text style={{ color: COLORS.muted, fontSize: 14, textAlign: 'center', marginBottom: 20 }}>If your email is registered, a reset link has been sent.</Text>
                 <TouchableOpacity onPress={() => setForgotPinModal(false)} style={{ padding: 14, borderRadius: 12, backgroundColor: COLORS.teal, alignItems: 'center' }}>
-                  <Text style={{ color: '#0f1923', fontWeight: '700' }}>Done</Text>
+                  <Text style={{ color: colors.base, fontWeight: '700' }}>Done</Text>
                 </TouchableOpacity>
               </>
             )}
@@ -248,11 +249,11 @@ const s = StyleSheet.create({
   container: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
   logo: { alignItems: 'center', marginBottom: 40 },
   logoIcon: { width: 48, height: 48, backgroundColor: COLORS.teal, borderRadius: 12, flexDirection: 'row', flexWrap: 'wrap', padding: 10, gap: 4, marginBottom: 10 },
-  dot1: { width: 10, height: 10, backgroundColor: '#0f1923', borderRadius: 2, opacity: 1 },
-  dot2: { width: 10, height: 10, backgroundColor: '#0f1923', borderRadius: 2, opacity: 0.7 },
-  dot3: { width: 10, height: 10, backgroundColor: '#0f1923', borderRadius: 2, opacity: 0.7 },
-  dot4: { width: 10, height: 10, backgroundColor: '#0f1923', borderRadius: 2, opacity: 0.4 },
-  logoV: { color: '#07100D', fontWeight: '800', fontSize: 22 },
+  dot1: { width: 10, height: 10, backgroundColor: colors.base, borderRadius: 2, opacity: 1 },
+  dot2: { width: 10, height: 10, backgroundColor: colors.base, borderRadius: 2, opacity: 0.7 },
+  dot3: { width: 10, height: 10, backgroundColor: colors.base, borderRadius: 2, opacity: 0.7 },
+  dot4: { width: 10, height: 10, backgroundColor: colors.base, borderRadius: 2, opacity: 0.4 },
+  logoV: { color: colors.base, fontWeight: '800', fontSize: 22 },
   logoText: { fontSize: 24, fontWeight: '700', color: COLORS.text },
   logoSub: { fontSize: 12, color: COLORS.muted, marginTop: 2 },
   heading: { fontSize: 18, color: COLORS.text, fontWeight: '600', marginBottom: 8 },
@@ -267,8 +268,8 @@ const s = StyleSheet.create({
   keyText: { fontSize: 26, fontWeight: '300', color: COLORS.text },
   keyDel: { fontSize: 20, color: COLORS.muted },
   hint: { fontSize: 12, color: COLORS.muted, textAlign: 'center', marginTop: 8 },
-  emailInput: { width: '100%', maxWidth: 320, backgroundColor: COLORS.card, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, color: COLORS.text, fontSize: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', marginBottom: 12 },
+  emailInput: { width: '100%', maxWidth: 320, backgroundColor: COLORS.card, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, color: COLORS.text, fontSize: 16, borderWidth: 1, borderColor: alpha(colors.textPrimary, 0.08), marginBottom: 12 },
   emailBtn: { width: '100%', maxWidth: 320, backgroundColor: COLORS.teal, borderRadius: 12, paddingVertical: 15, alignItems: 'center' },
-  emailBtnText: { color: '#0f1923', fontWeight: '700', fontSize: 15 },
+  emailBtnText: { color: colors.base, fontWeight: '700', fontSize: 15 },
 });
 

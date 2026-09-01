@@ -5,8 +5,9 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { authFetch, authFormFetch } from '@/lib/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ScreenHeader from '@/components/ScreenHeader';
+import { alpha, colors } from '@/theme';
 
-const C = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)', red: '#f87171' };
+const C = { bg: colors.base, card: colors.surface1, teal: colors.teal, muted: colors.textMuted, text: colors.textPrimary, border: alpha(colors.textPrimary, 0.05), red: colors.red };
 
 export default function ChecklistRunScreen() {
   const { jobId, jobName, templateId, templateName } = useLocalSearchParams<{ jobId: string; jobName: string; templateId: string; templateName: string }>();
@@ -184,14 +185,14 @@ export default function ChecklistRunScreen() {
           <View key={idx} style={{ position: 'relative' }}>
             <Image source={{ uri }} style={s.photoPreview} />
             <TouchableOpacity onPress={() => removePhoto(itemId, idx)} style={s.removePhotoBtn}>
-              <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>x</Text>
+              <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '700' }}>x</Text>
             </TouchableOpacity>
           </View>
         ))}
         {itemVideo && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(139,92,246,0.1)', padding: 10, borderRadius: 10 }}>
-            <Text style={{ color: '#a78bfa', fontSize: 13, flex: 1 }}>Video attached</Text>
-            <TouchableOpacity onPress={() => removeVideo(itemId)}><Text style={{ color: '#f87171', fontSize: 12 }}>Remove</Text></TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: alpha(colors.violet, 0.1), padding: 10, borderRadius: 10 }}>
+            <Text style={{ color: colors.violet, fontSize: 13, flex: 1 }}>Video attached</Text>
+            <TouchableOpacity onPress={() => removeVideo(itemId)}><Text style={{ color: colors.red, fontSize: 12 }}>Remove</Text></TouchableOpacity>
           </View>
         )}
         <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -338,21 +339,21 @@ const s = StyleSheet.create({
   itemHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 12 },
   itemLabel: { fontSize: 14, fontWeight: '500', color: C.text },
   tagRed: { fontSize: 11, color: C.red },
-  tagBlue: { fontSize: 11, color: '#60a5fa' },
+  tagBlue: { fontSize: 11, color: colors.blue },
   stateBadge: { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
-  stateBadgeGreen: { backgroundColor: 'rgba(0,212,160,0.1)' },
-  stateBadgeRed: { backgroundColor: 'rgba(248,113,113,0.1)' },
+  stateBadgeGreen: { backgroundColor: alpha(colors.teal, 0.1) },
+  stateBadgeRed: { backgroundColor: alpha(colors.red, 0.1) },
   stateText: { fontSize: 12, fontWeight: '500' },
   stateTextGreen: { color: C.teal },
   stateTextRed: { color: C.red },
-  actionBtn: { backgroundColor: 'rgba(0,212,160,0.1)', borderRadius: 10, paddingVertical: 11, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(0,212,160,0.2)' },
-  actionBtnRed: { backgroundColor: 'rgba(248,113,113,0.1)', borderColor: 'rgba(248,113,113,0.2)' },
+  actionBtn: { backgroundColor: alpha(colors.teal, 0.1), borderRadius: 10, paddingVertical: 11, alignItems: 'center', borderWidth: 1, borderColor: alpha(colors.teal, 0.2) },
+  actionBtnRed: { backgroundColor: alpha(colors.red, 0.1), borderColor: alpha(colors.red, 0.2) },
   actionBtnDisabled: { opacity: 0.4 },
   actionBtnText: { fontSize: 14, color: C.teal, fontWeight: '500' },
   actionBtnTextRed: { color: C.red },
-  input: { backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, color: C.text, fontSize: 14, borderWidth: 1, borderColor: C.border, minHeight: 44 },
+  input: { backgroundColor: alpha(colors.textPrimary, 0.04), borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, color: C.text, fontSize: 14, borderWidth: 1, borderColor: C.border, minHeight: 44 },
   photoPreview: { width: '100%', height: 160, borderRadius: 10, resizeMode: 'cover' },
-  photoBtn: { backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 10, paddingVertical: 11, alignItems: 'center', borderWidth: 1, borderColor: C.border },
+  photoBtn: { backgroundColor: alpha(colors.textPrimary, 0.04), borderRadius: 10, paddingVertical: 11, alignItems: 'center', borderWidth: 1, borderColor: C.border },
   photoBtnText: { color: C.teal, fontSize: 14 },
-  removePhotoBtn: { position: 'absolute', top: 6, right: 6, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 12, width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
+  removePhotoBtn: { position: 'absolute', top: 6, right: 6, backgroundColor: alpha(colors.black, 0.5), borderRadius: 12, width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
 });

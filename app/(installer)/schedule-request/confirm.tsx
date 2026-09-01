@@ -8,11 +8,12 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { authFetch } from '@/lib/api';
 import ScreenHeader from '@/components/ScreenHeader';
+import { alpha, colors } from '@/theme';
 
 const C = {
-  bg: '#0f1923', card: '#1a2635', teal: '#00d4a0',
-  muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)',
-  red: '#f87171', amber: '#fbbf24',
+  bg: colors.base, card: colors.surface1, teal: colors.teal,
+  muted: colors.textMuted, text: colors.textPrimary, border: alpha(colors.textPrimary, 0.05),
+  red: colors.red, amber: colors.amber,
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -121,7 +122,7 @@ export default function ConfirmScreen() {
                   value={isHalfDay}
                   onValueChange={setIsHalfDay}
                   trackColor={{ false: C.border, true: C.teal }}
-                  thumbColor={'#fff'}
+                  thumbColor={colors.textPrimary}
                 />
               </View>
               {isHalfDay && (

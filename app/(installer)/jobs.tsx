@@ -14,15 +14,15 @@ import { logCurrentLocation, evaluateTrackingState } from '@/lib/locationTracker
 import { setActiveShift, hydrateActiveShift } from '@/lib/activeShift';
 import { isOnline, cacheJobs, getCachedJobs, queueAction, syncQueue } from '@/lib/offline';
 import { distanceToJob, geofenceRadius } from '@/lib/geo';
-import { colors, formatDistance, radius, space, type } from '@/theme';
+import { alpha, colors, formatDistance, radius, space, type } from '@/theme';
 import PrimaryButton from '@/components/PrimaryButton';
 import EmptyState from '@/components/EmptyState';
 import ScreenHeader from '@/components/ScreenHeader';
 
 const C = {
-  bg: '#0f1923', card: '#1a2635', teal: '#00d4a0',
-  muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)',
-  red: '#f87171', amber: '#fbbf24',
+  bg: colors.base, card: colors.surface1, teal: colors.teal,
+  muted: colors.textMuted, text: colors.textPrimary, border: alpha(colors.textPrimary, 0.05),
+  red: colors.red, amber: colors.amber,
 };
 
 // A card carries exactly one primary action, chosen by the state of the job.
@@ -268,13 +268,13 @@ export default function JobsScreen() {
       {gpsLevel && gpsLevel !== 'always' && (
         <TouchableOpacity
           onPress={() => Linking.openSettings()}
-          style={{ backgroundColor: '#fbbf24', padding: 12, marginHorizontal: 16, marginTop: 8, borderRadius: 8 }}
+          style={{ backgroundColor: colors.amber, padding: 12, marginHorizontal: 16, marginTop: 8, borderRadius: 8 }}
           accessibilityLabel="gps-limited-banner"
         >
-          <Text style={{ color: '#0f1923', fontWeight: '700', fontSize: 13 }}>
+          <Text style={{ color: colors.base, fontWeight: '700', fontSize: 13 }}>
             Limited GPS, breadcrumb trail not recording
           </Text>
-          <Text style={{ color: '#0f1923', fontSize: 12, marginTop: 2, opacity: 0.8 }}>
+          <Text style={{ color: colors.base, fontSize: 12, marginTop: 2, opacity: 0.8 }}>
             Tap to open Settings → Location → Always Allow
           </Text>
         </TouchableOpacity>
@@ -387,9 +387,9 @@ const s = StyleSheet.create({
   snapBtnText: { color: colors.base, fontWeight: '700', fontSize: 14 },
   signOutBtn: { borderWidth: 1, borderColor: C.border, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6 },
   signOutText: { fontSize: 13, color: C.muted },
-  offlineBanner: { flexDirection: 'row', alignItems: 'center', margin: 16, marginBottom: 0, backgroundColor: 'rgba(251,191,36,0.08)', borderWidth: 1, borderColor: 'rgba(251,191,36,0.25)', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10 },
+  offlineBanner: { flexDirection: 'row', alignItems: 'center', margin: 16, marginBottom: 0, backgroundColor: alpha(colors.amber, 0.08), borderWidth: 1, borderColor: alpha(colors.amber, 0.25), borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10 },
   offlineBannerText: { flex: 1, fontSize: 12, color: C.amber },
-  activeBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, margin: 16, backgroundColor: 'rgba(0,212,160,0.08)', borderWidth: 1, borderColor: 'rgba(0,212,160,0.2)', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10 },
+  activeBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, margin: 16, backgroundColor: alpha(colors.teal, 0.08), borderWidth: 1, borderColor: alpha(colors.teal, 0.2), borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10 },
   activeDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: C.teal },
   activeBannerText: { flex: 1, fontSize: 13, color: C.teal },
   scroll: { padding: 16, paddingBottom: 40 },
@@ -398,7 +398,7 @@ const s = StyleSheet.create({
   emptyText: { color: C.muted, fontSize: 15 },
   emptySubText: { color: C.muted, fontSize: 13, marginTop: 4, opacity: 0.7 },
   card: { backgroundColor: C.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: C.border },
-  cardActive: { borderColor: 'rgba(0,212,160,0.3)' },
+  cardActive: { borderColor: alpha(colors.teal, 0.3) },
   cardHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 14 },
   dot: { width: 10, height: 10, borderRadius: radius.pill, marginTop: 5 },
   dotTeal: { backgroundColor: colors.teal },
@@ -408,14 +408,14 @@ const s = StyleSheet.create({
   jobName: { fontSize: 15, fontWeight: '600', color: C.text },
   jobAddress: { fontSize: 13, color: C.muted, marginTop: 2 },
   gpsMsg: { borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 10 },
-  gpsMsgOk: { backgroundColor: 'rgba(0,212,160,0.08)', borderWidth: 1, borderColor: 'rgba(0,212,160,0.2)' },
-  gpsMsgErr: { backgroundColor: 'rgba(248,113,113,0.08)', borderWidth: 1, borderColor: 'rgba(248,113,113,0.2)' },
+  gpsMsgOk: { backgroundColor: alpha(colors.teal, 0.08), borderWidth: 1, borderColor: alpha(colors.teal, 0.2) },
+  gpsMsgErr: { backgroundColor: alpha(colors.red, 0.08), borderWidth: 1, borderColor: alpha(colors.red, 0.2) },
   gpsMsgText: { fontSize: 13 },
   gpsMsgTextOk: { color: C.teal },
   gpsMsgTextErr: { color: C.red },
   btn: { backgroundColor: C.teal, borderRadius: 12, paddingVertical: 13, alignItems: 'center' },
   btnDisabled: { opacity: 0.5 },
-  btnText: { color: '#0f1923', fontSize: 15, fontWeight: '700' },
+  btnText: { color: colors.base, fontSize: 15, fontWeight: '700' },
   fenceCopy: { ...type.sub, marginBottom: space.md },
   blockedBtn: { marginTop: space.sm },
   directionsLink: { alignSelf: 'center', paddingVertical: space.md },

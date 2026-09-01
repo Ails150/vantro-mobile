@@ -7,11 +7,12 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { authFetch, authFormFetch } from '@/lib/api';
 import * as ImagePicker from 'expo-image-picker';
+import { alpha, colors } from '@/theme';
 
 const C = {
-  bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478',
-  text: '#ffffff', border: 'rgba(255,255,255,0.05)',
-  red: '#f87171', amber: '#fbbf24', green: '#10b981', purple: '#BC6AFF',
+  bg: colors.base, card: colors.surface1, teal: colors.teal, muted: colors.textMuted,
+  text: colors.textPrimary, border: alpha(colors.textPrimary, 0.05),
+  red: colors.red, amber: colors.amber, green: colors.teal, purple: colors.purple,
 };
 
 interface Expense {
@@ -294,7 +295,7 @@ export default function ExpensesScreen() {
                 <View style={{ flex: 1 }}>
                   <View style={s.entryHeader}>
                     <Text style={s.entryAmount}>{'\u00A3' + Number(exp.amount).toFixed(2)}</Text>
-                    <View style={[s.statusBadge, { backgroundColor: statusColor(exp.status) + '22' }]}>
+                    <View style={[s.statusBadge, { backgroundColor: alpha(statusColor(exp.status), 0.13) }]}>
                       <Text style={[s.statusTxt, { color: statusColor(exp.status) }]}>{statusLabel(exp.status)}</Text>
                     </View>
                   </View>
@@ -304,7 +305,7 @@ export default function ExpensesScreen() {
                     {submittedDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} {'\u00B7'} {submittedDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
                   </Text>
                   {exp.review_note && (
-                    <View style={[s.reviewBox, { borderColor: statusColor(exp.status) + '40', backgroundColor: statusColor(exp.status) + '15' }]}>
+                    <View style={[s.reviewBox, { borderColor: alpha(statusColor(exp.status), 0.25), backgroundColor: alpha(statusColor(exp.status), 0.08) }]}>
                       <Text style={[s.reviewLabel, { color: statusColor(exp.status) }]}>Admin note</Text>
                       <Text style={s.reviewText}>{exp.review_note}</Text>
                     </View>
@@ -523,8 +524,8 @@ const s = StyleSheet.create({
   entryAmount: { color: C.text, fontSize: 18, fontWeight: '700' },
   statusBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
   statusTxt: { fontSize: 11, fontWeight: '600' },
-  entryCategory: { color: '#cbd5e1', fontSize: 13, marginBottom: 2 },
-  entryNote: { color: '#a8b3bf', fontSize: 13, marginTop: 2, fontStyle: 'italic' },
+  entryCategory: { color: colors.textSecondary, fontSize: 13, marginBottom: 2 },
+  entryNote: { color: colors.textSecondary, fontSize: 13, marginTop: 2, fontStyle: 'italic' },
   entryDate: { color: C.muted, fontSize: 11, marginTop: 4 },
   reviewBox: { marginTop: 8, borderRadius: 8, padding: 8, borderWidth: 1 },
   reviewLabel: { fontSize: 10, fontWeight: '700', marginBottom: 2, letterSpacing: 0.3 },
@@ -543,9 +544,9 @@ const s = StyleSheet.create({
   bigBtnSecondary: { backgroundColor: C.card, borderRadius: 14, paddingVertical: 18, alignItems: 'center', borderWidth: 1, borderColor: C.border },
   bigBtnSecondaryTxt: { color: C.teal, fontSize: 16, fontWeight: '600' },
 
-  warningBox: { backgroundColor: 'rgba(251,191,36,0.12)', borderColor: 'rgba(251,191,36,0.4)', borderWidth: 1, borderRadius: 10, padding: 12, marginBottom: 16 },
+  warningBox: { backgroundColor: alpha(colors.amber, 0.12), borderColor: alpha(colors.amber, 0.4), borderWidth: 1, borderRadius: 10, padding: 12, marginBottom: 16 },
   warningText: { color: C.amber, fontSize: 13 },
-  successBox: { backgroundColor: 'rgba(16,185,129,0.12)', borderColor: 'rgba(16,185,129,0.4)', borderWidth: 1, borderRadius: 10, padding: 12, marginBottom: 16 },
+  successBox: { backgroundColor: alpha(colors.teal, 0.12), borderColor: alpha(colors.teal, 0.4), borderWidth: 1, borderRadius: 10, padding: 12, marginBottom: 16 },
   successText: { color: C.green, fontSize: 13, fontWeight: '600' },
 
   fieldLabel: { color: C.muted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 },
@@ -559,18 +560,18 @@ const s = StyleSheet.create({
 
   categoryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   categoryBtn: { width: '31%', backgroundColor: C.card, borderRadius: 10, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: C.border },
-  categoryBtnActive: { borderColor: C.teal, backgroundColor: 'rgba(0,212,160,0.12)' },
-  categoryLabel: { color: '#a8b3bf', fontSize: 13, fontWeight: '600' },
+  categoryBtnActive: { borderColor: C.teal, backgroundColor: alpha(colors.teal, 0.12) },
+  categoryLabel: { color: colors.textSecondary, fontSize: 13, fontWeight: '600' },
   categoryLabelActive: { color: C.teal },
 
   jobPicker: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: C.card, borderRadius: 12, padding: 14 },
   jobPickerText: { color: C.text, fontSize: 15, flex: 1 },
 
   jobOption: { backgroundColor: C.card, borderRadius: 12, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: C.border },
-  jobOptionActive: { borderColor: C.teal, backgroundColor: 'rgba(0,212,160,0.08)' },
+  jobOptionActive: { borderColor: C.teal, backgroundColor: alpha(colors.teal, 0.08) },
   jobOptionText: { color: C.text, fontSize: 15, fontWeight: '600' },
   jobOptionSub: { color: C.muted, fontSize: 12, marginTop: 2 },
 
-  errorBox: { backgroundColor: 'rgba(248,113,113,0.12)', borderColor: 'rgba(248,113,113,0.4)', borderWidth: 1, borderRadius: 10, padding: 12, marginTop: 16 },
+  errorBox: { backgroundColor: alpha(colors.red, 0.12), borderColor: alpha(colors.red, 0.4), borderWidth: 1, borderRadius: 10, padding: 12, marginTop: 16 },
   errorText: { color: C.red, fontSize: 13 },
 });

@@ -9,11 +9,12 @@ import { Calendar, DateData } from 'react-native-calendars';
 import { authFetch } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import ScreenHeader from '@/components/ScreenHeader';
+import { alpha, colors } from '@/theme';
 
 const C = {
-  bg: '#0f1923', card: '#1a2635', teal: '#00d4a0',
-  muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)',
-  red: '#f87171', amber: '#fbbf24',
+  bg: colors.base, card: colors.surface1, teal: colors.teal,
+  muted: colors.textMuted, text: colors.textPrimary, border: alpha(colors.textPrimary, 0.05),
+  red: colors.red, amber: colors.amber,
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -118,7 +119,7 @@ export default function CalendarPickerScreen() {
           disabled: true,
           disableTouchEvent: true,
           customStyles: {
-            container: { backgroundColor: 'rgba(0,212,160,0.25)', borderRadius: 8 },
+            container: { backgroundColor: alpha(colors.teal, 0.25), borderRadius: 8 },
             text: { color: C.teal, fontWeight: '600' },
           },
         };
@@ -270,7 +271,7 @@ export default function CalendarPickerScreen() {
             textDayFontSize: 14,
             textDayHeaderFontSize: 12,
             arrowColor: C.teal,
-            textDisabledColor: 'rgba(255,255,255,0.18)',
+            textDisabledColor: alpha(colors.textPrimary, 0.18),
           }}
         />
       </View>
@@ -388,7 +389,7 @@ const styles = StyleSheet.create({
 
   holidayChip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: 'rgba(251,191,36,0.1)',
+    backgroundColor: alpha(colors.amber, 0.1),
     paddingHorizontal: 12, paddingVertical: 8,
     marginHorizontal: 16, marginBottom: 8,
     borderRadius: 8,
