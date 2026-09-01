@@ -8,7 +8,8 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
-import { Stack, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
+import ScreenHeader from "@/components/ScreenHeader";
 import MapView, { Polyline, Marker, PROVIDER_DEFAULT } from "react-native-maps";
 import { authFetch } from "@/lib/api";
 
@@ -107,7 +108,6 @@ export default function MyHoursScreen() {
   if (loading) {
     return (
       <View style={styles.loadingWrap}>
-        <Stack.Screen options={{ title: "My Hours" }} />
         <ActivityIndicator color="#00d4a0" size="large" />
       </View>
     );
@@ -131,14 +131,7 @@ export default function MyHoursScreen() {
 
   return (
     <View style={styles.container}>
-      <Stack.Screen
-        options={{
-          title: "My Hours",
-          headerStyle: { backgroundColor: "#0f1923" },
-          headerTintColor: "#fff",
-          headerTitleStyle: { color: "#fff" },
-        }}
-      />
+      <ScreenHeader title="My hours" />
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
