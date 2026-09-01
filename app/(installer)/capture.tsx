@@ -92,7 +92,7 @@ export default function CaptureScreen() {
 
       const duration = finalSecondsRef.current || seconds;
 
-      // Save to local queue — instant, works offline
+      // Save to local queue, instant, works offline
       console.log("[CAPTURE] saving to local queue, duration=", duration);
       await addToQueue({
         jobId: id || "",
@@ -155,7 +155,7 @@ export default function CaptureScreen() {
       <SafeAreaView style={s.safe}>
         <View style={s.doneBox}>
           <ActivityIndicator color={C.purple} size="large" />
-          <Text style={s.doneTitle}>Saving locally…</Text>
+          <Text style={s.doneTitle}>Saving locally...</Text>
           <Text style={s.sub}>{seconds}s recorded</Text>
         </View>
       </SafeAreaView>
@@ -184,7 +184,7 @@ export default function CaptureScreen() {
         )}
         {!recording && (
           <View style={s.tipPill}>
-            <Text style={s.tipTxt}>💡 Saved on phone first — uploads when online. No data lost.</Text>
+            <Text style={s.tipTxt}>💡 Saved on phone first, uploads when online. No data lost.</Text>
           </View>
         )}
       </View>

@@ -60,13 +60,13 @@ export default function CalendarPickerScreen() {
         }
         if (!res.ok) {
           // 404 / 500 / proxy errors return a JSON error object, not calendar
-          // data. Don't trust it as context — show the error state instead.
+          // data. Don't trust it as context, show the error state instead.
           console.error('[calendar] load failed', res.status);
           setContext(null);
         } else {
           const data = await res.json();
           // A real payload always has balance + leave_year. Anything missing
-          // those is malformed — treat as a load failure rather than letting
+          // those is malformed, treat as a load failure rather than letting
           // markedDates throw on context.public_holidays / context.my_entries.
           if (!data || !data.balance || !data.leave_year) {
             console.error('[calendar] load returned malformed payload');
@@ -107,7 +107,7 @@ export default function CalendarPickerScreen() {
       };
     }
 
-    // My approved entries — blocked
+    // My approved entries, blocked
     for (const e of entries) {
       if (e.status !== 'approved') continue;
       const days = expandDates(e.start_date, e.end_date);
@@ -163,7 +163,7 @@ export default function CalendarPickerScreen() {
       setEndDate(null);
       return;
     }
-    // We have a start, no end — set end (or swap if before)
+    // We have a start, no end, set end (or swap if before)
     if (d < startDate) {
       setEndDate(startDate);
       setStartDate(d);
@@ -213,7 +213,7 @@ export default function CalendarPickerScreen() {
     );
   }
 
-  // Load failed / malformed response — show a recoverable error state with a way
+  // Load failed / malformed response, show a recoverable error state with a way
   // back, rather than crashing to a black screen.
   if (!context) {
     return (
@@ -365,9 +365,9 @@ function formatRange(start: string, end: string): string {
   const s = new Date(start + 'T00:00:00Z');
   const e = new Date(end + 'T00:00:00Z');
   if (s.getUTCMonth() === e.getUTCMonth() && s.getUTCFullYear() === e.getUTCFullYear()) {
-    return `${s.getUTCDate()}–${e.getUTCDate()} ${s.toLocaleDateString('en-GB', { month: 'short' })}`;
+    return `${s.getUTCDate()} to ${e.getUTCDate()} ${s.toLocaleDateString('en-GB', { month: 'short' })}`;
   }
-  return `${formatDate(start)} – ${formatDate(end)}`;
+  return `${formatDate(start)} to ${formatDate(end)}`;
 }
 
 function formatDate(iso: string): string {

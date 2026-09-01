@@ -51,7 +51,7 @@ constants/
 - All users (installer, foreman, admin) log in with 4-digit PIN
 - Token stored in Expo SecureStore (encrypted on device)
 - Token is a base64 JSON payload with userId, companyId, 8h expiry
-- Same token format as web app â€” same /api/installer/auth endpoint
+- Same token format as web app, same /api/installer/auth endpoint
 
 ## Admin API routes needed on app.getvantro.com
 

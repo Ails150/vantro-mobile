@@ -247,7 +247,7 @@ export default function JobsScreen() {
           accessibilityLabel="gps-limited-banner"
         >
           <Text style={{ color: '#0f1923', fontWeight: '700', fontSize: 13 }}>
-            Limited GPS — breadcrumb trail not recording
+            Limited GPS, breadcrumb trail not recording
           </Text>
           <Text style={{ color: '#0f1923', fontSize: 12, marginTop: 2, opacity: 0.8 }}>
             Tap to open Settings → Location → Always Allow

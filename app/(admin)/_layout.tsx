@@ -23,11 +23,11 @@ export default function AdminLayout() {
       tabBarInactiveTintColor: C.muted,
       tabBarLabelStyle: { fontSize: 11, marginBottom: 2 },
     }}>
-      <Tabs.Screen name="dashboard" options={{ title: 'Overview', tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>â¬›</Text> }} />
-      <Tabs.Screen name="map" options={{ title: 'Live Map', tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>ðŸ“</Text> }} />
-      <Tabs.Screen name="jobs" options={{ title: 'Jobs', tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>ðŸ—ï¸</Text> }} />
-      <Tabs.Screen name="team" options={{ title: 'Team', tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>ðŸ‘·</Text> }} />
-      <Tabs.Screen name="alerts" options={{ title: 'Alerts', tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>ðŸ””</Text> }} />
+      <Tabs.Screen name="dashboard" options={{ title: 'Overview', tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>⬛</Text> }} />
+      <Tabs.Screen name="map" options={{ title: 'Live Map', tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>📍</Text> }} />
+      <Tabs.Screen name="jobs" options={{ title: 'Jobs', tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>🏗️</Text> }} />
+      <Tabs.Screen name="team" options={{ title: 'Team', tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>👷</Text> }} />
+      <Tabs.Screen name="alerts" options={{ title: 'Alerts', tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>🔔</Text> }} />
     </Tabs>
   );
 }

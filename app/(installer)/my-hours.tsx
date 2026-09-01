@@ -150,7 +150,7 @@ export default function MyHoursScreen() {
           />
         }
       >
-        {/* Hero card — explains the user benefit */}
+        {/* Hero card, explains the user benefit */}
         <View style={styles.heroCard}>
           <Text style={styles.heroTitle}>Your work record</Text>
           <Text style={styles.heroBody}>
@@ -177,7 +177,7 @@ export default function MyHoursScreen() {
         {selectedShift && (
           <View style={styles.mapCard}>
             <Text style={styles.mapTitle}>
-              GPS trail — {selectedShift.job_name}
+              GPS trail, {selectedShift.job_name}
             </Text>
             <Text style={styles.mapSub}>
               {fmtTime(selectedShift.signed_in_at)} →{" "}

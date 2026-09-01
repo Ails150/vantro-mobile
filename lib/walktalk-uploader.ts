@@ -18,7 +18,7 @@ async function isOnline(): Promise<boolean> {
     const state = await NetInfo.fetch();
     return !!(state.isConnected && state.isInternetReachable !== false);
   } catch {
-    return true;  // optimistic — let upload attempt fail naturally if not
+    return true;  // optimistic, let upload attempt fail naturally if not
   }
 }
 
@@ -82,7 +82,7 @@ async function uploadOne(item: WalkthroughQueueItem): Promise<void> {
       if (errBody.capReached) {
         await updateItem(item.id, {
           status: "failed",
-          lastError: "Monthly limit reached — recording kept on device for next month",
+          lastError: "Monthly limit reached, recording kept on device for next month",
         });
         return;
       }
@@ -134,7 +134,7 @@ export async function tickUploader(): Promise<void> {
     isProcessing = false;
   }
 
-  // Chain — try the next one immediately if there is one
+  // Chain, try the next one immediately if there is one
   const more = await nextPendingItem();
   if (more) {
     setTimeout(() => tickUploader(), 1000);

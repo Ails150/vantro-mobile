@@ -88,13 +88,13 @@ export default function ScheduleScreen() {
       }
       if (!res.ok) {
         // 404 / 500 / proxy errors return a JSON error object, not a schedule.
-        // Don't trust it as context — fall through to the "Couldn't load" UI.
+        // Don't trust it as context, fall through to the "Couldn't load" UI.
         console.error('[schedule] load failed', res.status);
         setContext(null);
       } else {
         const data = await res.json();
         // A real payload always has balance + leave_year. Anything missing those
-        // is a malformed/partial response — treat as a load failure rather than
+        // is a malformed/partial response, treat as a load failure rather than
         // letting render crash on context.balance / context.leave_year.
         if (!data || !data.balance || !data.leave_year) {
           console.error('[schedule] load returned malformed payload');
@@ -242,7 +242,7 @@ export default function ScheduleScreen() {
             todayHasContractedHours ? (
               <View>
                 <Text style={[styles.jobName, { color: C.teal }]}>
-                  Working {todaySchedule!.start}–{todaySchedule!.end}
+                  Working {todaySchedule!.start} to {todaySchedule!.end}
                 </Text>
                 <Text style={styles.muted}>No specific job assigned today.</Text>
               </View>
@@ -299,7 +299,7 @@ export default function ScheduleScreen() {
                       🎉 {ph.name}
                     </Text>
                   ) : isWorking ? (
-                    <Text style={styles.weekHours}>{day.start}–{day.end}</Text>
+                    <Text style={styles.weekHours}>{day.start} to {day.end}</Text>
                   ) : (
                     <Text style={styles.weekOff}>Off</Text>
                   )}
@@ -343,7 +343,7 @@ export default function ScheduleScreen() {
                       🎉 {ph.name}
                     </Text>
                   ) : isWorking ? (
-                    <Text style={styles.weekHours}>{day.start}–{day.end}</Text>
+                    <Text style={styles.weekHours}>{day.start} to {day.end}</Text>
                   ) : (
                     <Text style={styles.weekOff}>Off</Text>
                   )}
@@ -464,12 +464,12 @@ function formatDateRange(start: string, end: string): string {
   const sameYear = s.getUTCFullYear() === e.getUTCFullYear();
   const sameMonth = sameYear && s.getUTCMonth() === e.getUTCMonth();
   if (sameMonth) {
-    return `${s.getUTCDate()} – ${e.getUTCDate()} ${e.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`;
+    return `${s.getUTCDate()} to ${e.getUTCDate()} ${e.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`;
   }
   if (sameYear) {
-    return `${s.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} – ${e.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+    return `${s.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} to ${e.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`;
   }
-  return `${formatDate(start)} – ${formatDate(end)}`;
+  return `${formatDate(start)} to ${formatDate(end)}`;
 }
 
 function statusPillStyle(status: string) {

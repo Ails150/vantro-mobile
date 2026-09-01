@@ -106,7 +106,7 @@ export async function getPendingCount(): Promise<number> {
 }
 
 export async function getActivelyPendingCount(): Promise<number> {
-  // Count for the badge — exclude failed (those need manual retry)
+  // Count for the badge, exclude failed (those need manual retry)
   const queue = await listQueue();
   return queue.filter(q => q.status === "pending" || q.status === "uploading").length;
 }

@@ -19,7 +19,7 @@
                                                "NSCameraUsageDescription":  "Vantro uses the camera to capture site photos, defect evidence, and receipts for your work record.",
                                                "NSPhotoLibraryUsageDescription":  "Vantro needs photo library access to attach images to reports.",
                                                "ITSAppUsesNonExemptEncryption":  false,
-                                               "NSLocationAlwaysAndWhenInUseUsageDescription":  "Vantro uses your location only to confirm you\u0027re within range of a job site when signing in and out. No movement is tracked, recorded, or shared — location is checked at the site boundary only."
+                                               "NSLocationAlwaysAndWhenInUseUsageDescription":  "Vantro uses your location only to confirm you\u0027re within range of a job site when signing in and out. No movement is tracked, recorded, or shared, location is checked at the site boundary only."
                                            }
                          },
                  "android":  {

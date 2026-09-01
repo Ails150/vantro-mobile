@@ -21,7 +21,7 @@ Run `npx expo start` in dev mode throughout. Do not trigger an EAS build.
 
 ### P0.1 Encoding corruption
 
-Several screens render mojibake instead of icons: `ðŸ"·`, `ðŸ–¼`, `ðŸŽ™`, `â†`, `â†'`.
+Several screens render mojibake instead of icons: `ðŸ"·`, `🖼`, `🎙`, `â†`, `â†'`.
 Cause: files saved as ANSI or UTF-16 by a PowerShell or Notepad edit loop.
 
 1. Run `node scripts/fix-encoding.mjs --check` to list affected files.

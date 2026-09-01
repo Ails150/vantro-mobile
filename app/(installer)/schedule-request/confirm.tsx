@@ -210,9 +210,9 @@ function formatRange(start: string, end: string): string {
   const s = new Date(start + 'T00:00:00Z');
   const e = new Date(end + 'T00:00:00Z');
   if (s.getUTCMonth() === e.getUTCMonth() && s.getUTCFullYear() === e.getUTCFullYear()) {
-    return `${s.getUTCDate()}–${e.getUTCDate()} ${s.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}`;
+    return `${s.getUTCDate()} to ${e.getUTCDate()} ${s.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}`;
   }
-  return `${formatDate(start)} – ${formatDate(end)}`;
+  return `${formatDate(start)} to ${formatDate(end)}`;
 }
 
 function formatDate(iso: string): string {

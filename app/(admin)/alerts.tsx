@@ -51,7 +51,7 @@ export default function AlertsScreen() {
       <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={C.teal} />} contentContainerStyle={s.scroll}>
         {tab === 'alerts' && (
           alerts.length === 0
-            ? <Text style={s.empty}>No alerts â€” all clear</Text>
+            ? <Text style={s.empty}>No alerts, all clear</Text>
             : alerts.map(a => (
               <View key={a.id} style={[s.alertCard, a.alert_type === 'blocker' && s.alertCardBlocker]}>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
