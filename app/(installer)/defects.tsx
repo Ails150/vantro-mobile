@@ -11,10 +11,12 @@ import { alpha, colors, space, type } from '@/theme';
 
 const C = { bg: colors.base, card: colors.surface1, teal: colors.teal, muted: colors.textMuted, text: colors.textPrimary, border: alpha(colors.textPrimary, 0.05), red: colors.red, amber: colors.amber };
 
+// `on` carries the text colour because the fills split two ways: amber and red
+// are light enough to take the dark base, surface3 is not and needs white.
 const SEVERITIES = [
-  { label: 'Minor', value: 'minor', fill: colors.surface3 },
-  { label: 'Major', value: 'major', fill: colors.amber },
-  { label: 'Critical', value: 'critical', fill: colors.red },
+  { label: 'Minor', value: 'minor', fill: colors.surface3, on: colors.textPrimary },
+  { label: 'Major', value: 'major', fill: colors.amber, on: colors.base },
+  { label: 'Critical', value: 'critical', fill: colors.red, on: colors.base },
 ] as const;
 
 const DEFECT_CACHE_KEY = 'vantro_defects_cache';
@@ -181,17 +183,17 @@ export default function DefectsScreen() {
           <Text style={s.sectionTitle}>Log a defect</Text>
           <TextInput value={description} onChangeText={setDescription} placeholder="Describe the defect..." placeholderTextColor={C.muted} multiline numberOfLines={4} style={s.input} textAlignVertical="top" />
           <View style={s.severityRow}>
-            {SEVERITIES.map(({ label, value, fill }) => {
-              const on = severity === value;
+            {SEVERITIES.map(({ label, value, fill, on: onColor }) => {
+              const selected = severity === value;
               return (
                 <TouchableOpacity
                   key={value}
                   onPress={() => setSeverity(value)}
                   accessibilityRole="radio"
-                  accessibilityState={{ selected: on }}
-                  style={[s.severityBtn, on && { backgroundColor: fill, borderColor: fill }]}
+                  accessibilityState={{ selected }}
+                  style={[s.severityBtn, selected && { backgroundColor: fill, borderColor: fill }]}
                 >
-                  <Text style={[s.severityText, { color: on ? colors.base : fill }, on && { fontWeight: '700' }]}>
+                  <Text style={[s.severityText, { color: selected ? onColor : fill }, selected && { fontWeight: '700' }]}>
                     {label}
                   </Text>
                 </TouchableOpacity>
