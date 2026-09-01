@@ -12,7 +12,7 @@ interface AuthUser {
 interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
-  login: (pin: string) => Promise<{ error?: string }>;
+  login: (pin: string, email?: string) => Promise<{ error?: string; needsEmail?: boolean }>;
   logout: () => Promise<void>;
 }
 
@@ -51,12 +51,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(false);
   }
 
-  async function login(pin: string): Promise<{ error?: string }> {
+  async function login(pin: string, email?: string): Promise<{ error?: string; needsEmail?: boolean }> {
     try {
+      // A 4 digit PIN cannot identify a person on its own: the server used to
+      // compare it against every company's users and take the first hash that
+      // matched. The email scopes the lookup to one account before any compare.
+      const addr = (email || await SecureStore.getItemAsync('installer_email') || '').trim().toLowerCase();
+      if (!addr) {
+        return { error: 'Enter the email your manager invited you with.', needsEmail: true };
+      }
       const res = await fetch('https://app.getvantro.com/api/installer/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin }),
+        body: JSON.stringify({ pin, email: addr }),
       });
       const data = await res.json();
       if (!res.ok) return { error: data.error || 'Incorrect PIN' };
@@ -68,6 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role: data.role,
       };
 
+      await SecureStore.setItemAsync('installer_email', addr);
       await SecureStore.setItemAsync('vantro_token', data.token);
       await SecureStore.setItemAsync('vantro_user', JSON.stringify(authUser));
       setUser(authUser);

@@ -76,7 +76,11 @@ export default function LoginScreen() {
       });
       const data = await res.json();
       if (data.exists === false) { setError('Email not found. Check with your manager.'); setLoading(false); return }
-      if (data.hasPin) { setError('Account already set up. Enter your PIN below.'); setShowEmailEntry(false); setLoading(false); return }
+      if (data.hasPin) {
+        // Remember it so the PIN alone is enough on this device from now on.
+        await SecureStore.setItemAsync('installer_email', emailInput.trim().toLowerCase());
+        setError('Enter your PIN below.'); setShowEmailEntry(false); setLoading(false); return
+      }
       setSetupEmail(emailInput.trim().toLowerCase());
       setMode('setup');
       setShowEmailEntry(false);
@@ -111,7 +115,8 @@ export default function LoginScreen() {
         }
       } else {
         const result = await login(newPin);
-        if (result.error) { shake(); setError(result.error); setPin(''); }
+        if (result.needsEmail) { setPin(''); setError(result.error || ''); setShowEmailEntry(true); }
+        else if (result.error) { shake(); setError(result.error); setPin(''); }
         else {
           const ack = await AsyncStorage.getItem('gps_acknowledged');
           if (ack === 'true') { router.replace('/(installer)/jobs'); }
