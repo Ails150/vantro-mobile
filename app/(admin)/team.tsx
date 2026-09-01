@@ -3,6 +3,7 @@ import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native
 import { authFetch } from '@/lib/api';
 import ScreenHeader from '@/components/ScreenHeader';
 import { alpha, colors } from '@/theme';
+import { isFieldRole } from '@/lib/roles';
 
 const C = { bg: colors.base, card: colors.surface1, teal: colors.teal, muted: colors.textMuted, text: colors.textPrimary, border: alpha(colors.textPrimary, 0.05), red: colors.red, amber: colors.amber };
 
@@ -40,7 +41,7 @@ export default function TeamScreen() {
                 <Text style={s.name}>{m.name}</Text>
                 <Text style={s.email}>{m.email || 'No email'}</Text>
                 {m.is_active === false && <Text style={s.suspended}>Suspended</Text>}
-                {!m.pin_hash && m.role === 'installer' && <Text style={s.noPIN}>PIN not set</Text>}
+                {!m.pin_hash && isFieldRole(m.role) && <Text style={s.noPIN}>PIN not set</Text>}
               </View>
               <View style={{ alignItems: 'flex-end', gap: 4 }}>
                 <Text style={[s.roleBadge, { color: roleColor(m.role) }]}>{m.role}</Text>
