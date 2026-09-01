@@ -1,4 +1,4 @@
-﻿import * as SecureStore from 'expo-secure-store';
+import * as SecureStore from 'expo-secure-store';
 import { API_BASE } from '@/constants/api';
 
 export async function getToken(): Promise<string | null> {

@@ -1,4 +1,4 @@
-﻿import * as SecureStore from 'expo-secure-store';
+import * as SecureStore from 'expo-secure-store';
 import { authFetch } from './api';
 
 const STORAGE_KEY = 'vantro_active_shift';

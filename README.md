@@ -1,4 +1,4 @@
-﻿# Vantro Mobile (Expo / React Native)
+# Vantro Mobile (Expo / React Native)
 
 Same Supabase project and APIs as app.getvantro.com.
 

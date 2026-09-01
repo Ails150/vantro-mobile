@@ -1,1 +1,1 @@
-﻿export const API_BASE = 'https://app.getvantro.com';
+export const API_BASE = 'https://app.getvantro.com';
