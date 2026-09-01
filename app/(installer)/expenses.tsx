@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Image, Modal, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ScreenHeader from '@/components/ScreenHeader';
+import EmptyState from '@/components/EmptyState';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { authFetch, authFormFetch } from '@/lib/api';
@@ -267,10 +268,13 @@ export default function ExpensesScreen() {
             <ActivityIndicator color={C.teal} />
           </View>
         ) : expenses.length === 0 ? (
-          <View style={s.empty}>
-            <Text style={s.emptyTitle}>No receipts yet</Text>
-            <Text style={s.emptySub}>Tap + Snap to scan one</Text>
-          </View>
+          <EmptyState
+            icon="receipt-outline"
+            title="No receipts yet"
+            body="Tap Snap to capture one. It reads the amount for you."
+            actionLabel="Snap a receipt"
+            onAction={openAdd}
+          />
         ) : (
           expenses.map(exp => {
             const cat = CATEGORIES.find(c => c.value === exp.category) || CATEGORIES[5];

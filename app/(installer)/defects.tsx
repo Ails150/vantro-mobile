@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authFetch, authFormFetch } from '@/lib/api';
 import ScreenHeader from '@/components/ScreenHeader';
 import PrimaryButton from '@/components/PrimaryButton';
+import EmptyState from '@/components/EmptyState';
 import { colors, space, type } from '@/theme';
 
 const C = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)', red: '#f87171', amber: '#fbbf24' };
@@ -222,6 +223,14 @@ export default function DefectsScreen() {
             onPress={submit}
           />
         </View>
+
+        {defects.length === 0 && (
+          <EmptyState
+            icon="warning-outline"
+            title="No defects logged"
+            body="Log an issue with a photo and it lands in the audit pack."
+          />
+        )}
 
         {defects.length > 0 && (
           <>

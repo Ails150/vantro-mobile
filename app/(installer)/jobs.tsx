@@ -16,6 +16,7 @@ import { isOnline, cacheJobs, getCachedJobs, queueAction, syncQueue } from '@/li
 import { distanceToJob, geofenceRadius } from '@/lib/geo';
 import { colors, formatDistance, radius, space, type } from '@/theme';
 import PrimaryButton from '@/components/PrimaryButton';
+import EmptyState from '@/components/EmptyState';
 import ScreenHeader from '@/components/ScreenHeader';
 
 const C = {
@@ -298,10 +299,11 @@ export default function JobsScreen() {
         <Text style={s.sectionLabel}>Your jobs today</Text>
 
         {!loading && jobs.length === 0 && (
-          <View style={s.empty}>
-            <Text style={s.emptyText}>No jobs assigned</Text>
-            <Text style={s.emptySubText}>Ask your manager to assign you to a job</Text>
-          </View>
+          <EmptyState
+            icon="briefcase-outline"
+            title="Nothing scheduled today"
+            body="Your next job appears here once it is assigned."
+          />
         )}
 
         {jobs.map(job => {

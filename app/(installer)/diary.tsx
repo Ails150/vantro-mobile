@@ -9,6 +9,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { listQueue, type WalkthroughQueueItem } from '@/lib/walktalk-queue';
 import { tickUploader, manualRetry } from '@/lib/walktalk-uploader';
 import ScreenHeader from '@/components/ScreenHeader';
+import EmptyState from '@/components/EmptyState';
 
 const C = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)', red: '#f87171', amber: '#fbbf24' };
 
@@ -23,7 +24,7 @@ export default function DiaryScreen() {
   const [pendingWorkStatus, setPendingWorkStatus] = useState<string|null>(null);
   const [entries, setEntries] = useState<any[]>([]);
   const [offline, setOffline] = useState(false);
-  const [windowDays, setWindowDays] = useState<number|null>(7); // 1=today, 7=week, 30=month, null=all
+  const [windowDays, setWindowDays] = useState<number|null>(1); // 1=today, 7=week, 30=month, null=all
   const [hasMore, setHasMore] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -358,6 +359,20 @@ export default function DiaryScreen() {
           const ordered = [...entries].sort((a: any, b: any) =>
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
           );
+
+          if (ordered.length === 0) {
+            const emptyTitle =
+              windowDays === 1 ? 'No entries today'
+              : windowDays === null ? 'No entries yet'
+              : `No entries in the last ${windowDays} days`;
+            return (
+              <EmptyState
+                icon="document-text-outline"
+                title={emptyTitle}
+                body="Snap a photo or hit Walk and Talk to log what happened on site."
+              />
+            );
+          }
 
           const blocks: any[] = [];
           let lastLabel = '';
