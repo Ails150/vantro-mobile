@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  View, Text, ScrollView, Pressable, StyleSheet, Alert, ActivityIndicator, AppState,
+  View, Text, ScrollView, Pressable, StyleSheet, ActivityIndicator, AppState,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -38,6 +38,14 @@ function elapsedSince(iso: string, nowMs: number): string {
   return `${two(Math.floor(total / 3600))}:${two(Math.floor(total / 60) % 60)}:${two(total % 60)}`;
 }
 
+// An await with no deadline is indistinguishable from a dead button.
+function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(label)), ms)),
+  ]);
+}
+
 function startOfToday(): Date {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
@@ -58,6 +66,7 @@ export default function JobHubScreen() {
   const [qaProgress, setQaProgress] = useState<{ done: number; total: number } | null>(null);
   const [openDefects, setOpenDefects] = useState<number | null>(null);
   const [signingOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
   const appState = useRef(AppState.currentState);
 
   const loadJob = useCallback(async () => {
@@ -159,37 +168,93 @@ export default function JobHubScreen() {
   const fence = geofenceRadius(job);
   // Unknown distance is not treated as out of range: the server re-checks.
   const outOfRange = distance != null && distance > fence;
+  const blocked = outOfRange || signingOut;
+
+  // One line per state change, so a single run says which gate is closed.
+  useEffect(() => {
+    console.log('[HUB-SIGNOUT] gate',
+      'jobId=', id,
+      'jobLoaded=', !!job,
+      'jobLat=', job?.lat, 'jobLng=', job?.lng,
+      'coords=', coords ? `${coords.latitude},${coords.longitude}` : null,
+      'distance=', distance,
+      'fence=', fence,
+      'outOfRange=', outOfRange,
+      'signingOut=', signingOut,
+      'buttonDisabled=', blocked,
+      'signedInAt=', signedInAt);
+  }, [id, job, coords, distance, fence, outOfRange, signingOut, blocked, signedInAt]);
 
   async function signOutOfJob() {
+    console.log('[HUB-SIGNOUT] pressed');
     setSigningOut(true);
+    setSignOutError(null);
     try {
       const perm = await Location.requestForegroundPermissionsAsync();
+      console.log('[HUB-SIGNOUT] permission=', perm.status);
       if (perm.status !== 'granted') {
-        Alert.alert('Location required', 'Enable location access to sign out.');
+        setSignOutError('Location access is off. Enable it to sign out.');
         return;
       }
-      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+
+      // A High accuracy fix can block indefinitely indoors. Without a deadline
+      // the button just sits on "Signing out..." forever, which reads as dead.
+      const loc = await withTimeout(
+        Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+        15000,
+        'location',
+      );
       const { latitude, longitude, accuracy } = loc.coords;
       const dist = distanceToJob({ latitude, longitude }, job);
+      console.log('[HUB-SIGNOUT] fix', latitude, longitude, 'dist=', dist, 'fence=', fence);
+      setCoords({ latitude, longitude });
+
       if (dist != null && dist > fence) {
-        setCoords({ latitude, longitude });
-        Alert.alert('Too far to sign out', `You are ${formatDistance(dist)} away. Sign out opens within ${fence} m of the address.`);
+        setSignOutError(`You are ${formatDistance(dist)} away. Sign out opens within ${fence} m of the address.`);
         return;
       }
-      if (await isOnline()) {
-        await authFetch('/api/signout', {
-          method: 'POST',
-          body: JSON.stringify({ jobId: id, lat: latitude, lng: longitude, accuracy: Math.round(accuracy || 0) }),
-        });
+
+      const payload = { jobId: id, lat: latitude, lng: longitude, accuracy: Math.round(accuracy || 0) };
+      console.log('[HUB-SIGNOUT] payload', JSON.stringify(payload));
+
+      // NetInfo reports isInternetReachable as null for a while after launch,
+      // which isOnline() reads as offline. Try the call and fall back to the
+      // queue on failure, rather than queueing a shift that could have synced.
+      let posted = false;
+      try {
+        const res = await withTimeout(
+          authFetch('/api/signout', { method: 'POST', body: JSON.stringify(payload) }),
+          20000,
+          'signout request',
+        );
+        const body = await res.json().catch(() => ({}));
+        console.log('[HUB-SIGNOUT] response', res.status, JSON.stringify(body));
+        if (!res.ok) {
+          // A refusal is the server's to explain. Never swallow it.
+          setSignOutError(body?.error || `Sign out failed (${res.status}).`);
+          return;
+        }
+        posted = true;
+      } catch (e: any) {
+        console.log('[HUB-SIGNOUT] request failed', e?.message);
+      }
+
+      if (posted) {
         await clearActiveShift();
         stopBackgroundTracking().catch(() => {});
       } else {
         await queueAction({ type: 'signout', payload: { jobId: id } });
         await clearActiveShift();
       }
+      console.log('[HUB-SIGNOUT] done, posted=', posted);
       router.replace('/(installer)/jobs');
-    } catch {
-      Alert.alert('Could not sign out', 'We could not get your location. Try again.');
+    } catch (e: any) {
+      console.log('[HUB-SIGNOUT] threw', e?.message);
+      setSignOutError(
+        e?.message === 'location'
+          ? 'Could not get a location fix. Move outside and try again.'
+          : 'Could not sign out. Try again.',
+      );
     } finally {
       setSigningOut(false);
     }
@@ -270,20 +335,28 @@ export default function JobHubScreen() {
 
       <View style={[s.footer, { paddingBottom: insets.bottom + space.md }]}>
         <Pressable
-          onPress={outOfRange || signingOut ? undefined : signOutOfJob}
-          disabled={outOfRange || signingOut}
+          onPress={blocked ? undefined : signOutOfJob}
+          disabled={blocked}
           accessibilityRole="button"
-          accessibilityState={{ disabled: outOfRange || signingOut }}
-          style={[s.signOut, outOfRange && s.signOutOff]}
+          accessibilityState={{ disabled: blocked }}
+          accessibilityHint={outOfRange && distance != null
+            ? `You are ${formatDistance(distance)} from the address`
+            : undefined}
+          style={[s.signOut, blocked && s.signOutOff]}
         >
-          <Text style={[s.signOutTxt, outOfRange && s.signOutTxtOff]}>
+          <Text style={[s.signOutTxt, blocked && s.signOutTxtOff]}>
             {outOfRange ? 'Move closer to sign out' : signingOut ? 'Signing out...' : 'Sign out of job'}
           </Text>
         </Pressable>
+
+        {/* A disabled sign out always says why, and a refusal always shows the
+            reason the server or the device gave. */}
         {outOfRange && distance != null ? (
           <Text style={s.footerNote}>
             You are {formatDistance(distance)} away. Sign out opens within {fence} m of the address.
           </Text>
+        ) : signOutError ? (
+          <Text style={[s.footerNote, s.footerErr]}>{signOutError}</Text>
         ) : null}
       </View>
     </View>
@@ -321,4 +394,5 @@ const s = StyleSheet.create({
   signOutTxt: { color: colors.red, fontSize: 16, fontWeight: '700' },
   signOutTxtOff: { color: colors.textMuted },
   footerNote: { ...type.caption, textAlign: 'center' },
+  footerErr: { color: colors.red },
 });
