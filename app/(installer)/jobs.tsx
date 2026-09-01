@@ -114,6 +114,12 @@ export default function JobsScreen() {
     return () => sub.remove();
   }, []);
 
+  // The job hub is the installer's home while on site: everything they can do
+  // on this job hangs off it, so sign in lands there rather than back on the list.
+  function openJobHub(job: any) {
+    router.push({ pathname: '/(installer)/job/[id]' as any, params: { id: job.id, name: job.name } });
+  }
+
   async function signIn(job: any) {
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
@@ -142,6 +148,7 @@ export default function JobsScreen() {
           evaluateTrackingState().catch(e => console.error('Failed to evaluate tracking:', e));
           logCurrentLocation('signin', true).catch(() => {});
           loadJobs();
+          openJobHub(job);
         }
       } else {
         // Queue for later

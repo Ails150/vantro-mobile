@@ -70,6 +70,7 @@ export default function InstallerLayout() {
         tabBarIcon: ({ color, size }) => <Ionicons name="time-outline" size={size} color={color} /> }} />
 
       {/* Reachable from the Jobs list and the job hub, never from the tab bar. */}
+      <Tabs.Screen name="job/[id]" options={{ href: null }} />
       <Tabs.Screen name="diary" options={{ href: null }} />
       <Tabs.Screen name="qa" options={{ href: null }} />
       <Tabs.Screen name="defects" options={{ href: null }} />

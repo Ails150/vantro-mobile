@@ -1,0 +1,324 @@
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  View, Text, ScrollView, Pressable, StyleSheet, Alert, ActivityIndicator, AppState,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
+import ScreenHeader from '@/components/ScreenHeader';
+import { authFetch } from '@/lib/api';
+import { getCachedJobs, cacheJobs, isOnline, queueAction } from '@/lib/offline';
+import { getActiveShift, clearActiveShift, hydrateActiveShift } from '@/lib/activeShift';
+import { stopBackgroundTracking } from '@/lib/locationTracker';
+import { distanceToJob, geofenceRadius } from '@/lib/geo';
+import { colors, formatDistance, radius, space, type } from '@/theme';
+
+type Badge = { text: string; tone: 'teal' | 'amber' | 'muted' } | null;
+
+type Action = {
+  key: string;
+  label: string;
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  pathname: string;
+  badge: Badge;
+};
+
+function two(n: number) { return String(n).padStart(2, '0'); }
+
+// "07:42" in the device's local time, matching how the installer reads a clock.
+function clockTime(iso: string): string {
+  const d = new Date(iso);
+  return `${two(d.getHours())}:${two(d.getMinutes())}`;
+}
+
+function elapsedSince(iso: string, nowMs: number): string {
+  const ms = Math.max(0, nowMs - new Date(iso).getTime());
+  const total = Math.floor(ms / 1000);
+  return `${two(Math.floor(total / 3600))}:${two(Math.floor(total / 60) % 60)}:${two(total % 60)}`;
+}
+
+function startOfToday(): Date {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+export default function JobHubScreen() {
+  const { id, name } = useLocalSearchParams<{ id: string; name?: string }>();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+
+  const [job, setJob] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [signedInAt, setSignedInAt] = useState<string | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [diaryToday, setDiaryToday] = useState<number | null>(null);
+  const [qaProgress, setQaProgress] = useState<{ done: number; total: number } | null>(null);
+  const [openDefects, setOpenDefects] = useState<number | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
+  const appState = useRef(AppState.currentState);
+
+  const loadJob = useCallback(async () => {
+    const cached = await getCachedJobs();
+    const fromCache = (cached || []).find((j: any) => j.id === id);
+    if (fromCache) setJob(fromCache);
+    if (await isOnline()) {
+      try {
+        const res = await authFetch('/api/installer/jobs');
+        if (res.ok) {
+          const data = await res.json();
+          const list = data.jobs || [];
+          await cacheJobs(list);
+          const fresh = list.find((j: any) => j.id === id);
+          if (fresh) setJob(fresh);
+        }
+      } catch {}
+      try { await hydrateActiveShift(); } catch {}
+    }
+    const shift = await getActiveShift();
+    setSignedInAt(shift && shift.jobId === id ? shift.signedInAt : null);
+    setLoading(false);
+  }, [id]);
+
+  // Badge counts. Each is independent, so a failing endpoint hides one badge
+  // rather than emptying the whole row.
+  const loadBadges = useCallback(async () => {
+    if (!(await isOnline())) return;
+    const since = startOfToday().toISOString();
+    authFetch(`/api/diary?jobId=${id}&limit=200&since=${encodeURIComponent(since)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setDiaryToday((d.entries || []).length); })
+      .catch(() => {});
+
+    authFetch(`/api/qa?jobId=${id}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (!d) return;
+        let done = 0, total = 0;
+        for (const cl of d.checklists || []) {
+          const subs = cl.submissions || [];
+          for (const item of cl.items || []) {
+            total += 1;
+            const state = subs.find((sm: any) => sm.checklist_item_id === item.id)?.state;
+            if (state && state !== 'pending') done += 1;
+          }
+        }
+        setQaProgress({ done, total });
+      })
+      .catch(() => {});
+
+    authFetch(`/api/defects?jobId=${id}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (!d) return;
+        setOpenDefects((d.defects || []).filter((x: any) => x.status !== 'resolved').length);
+      })
+      .catch(() => {});
+  }, [id]);
+
+  useEffect(() => { loadJob(); loadBadges(); }, [loadJob, loadBadges]);
+
+  // Refresh when the installer comes back from diary, QA or defects.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (next) => {
+      if (appState.current.match(/inactive|background/) && next === 'active') {
+        loadJob();
+        loadBadges();
+      }
+      appState.current = next;
+    });
+    return () => sub.remove();
+  }, [loadJob, loadBadges]);
+
+  // Elapsed timer.
+  useEffect(() => {
+    if (!signedInAt) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [signedInAt]);
+
+  // Distance to site, so the sign out button can refuse before it is pressed.
+  useEffect(() => {
+    let alive = true;
+    async function fix() {
+      try {
+        const perm = await Location.getForegroundPermissionsAsync();
+        if (!perm.granted) return;
+        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        if (alive) setCoords({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
+      } catch {}
+    }
+    fix();
+    const t = setInterval(fix, 30000);
+    return () => { alive = false; clearInterval(t); };
+  }, []);
+
+  const distance = distanceToJob(coords, job);
+  const fence = geofenceRadius(job);
+  // Unknown distance is not treated as out of range: the server re-checks.
+  const outOfRange = distance != null && distance > fence;
+
+  async function signOutOfJob() {
+    setSigningOut(true);
+    try {
+      const perm = await Location.requestForegroundPermissionsAsync();
+      if (perm.status !== 'granted') {
+        Alert.alert('Location required', 'Enable location access to sign out.');
+        return;
+      }
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+      const { latitude, longitude, accuracy } = loc.coords;
+      const dist = distanceToJob({ latitude, longitude }, job);
+      if (dist != null && dist > fence) {
+        setCoords({ latitude, longitude });
+        Alert.alert('Too far to sign out', `You are ${formatDistance(dist)} away. Sign out opens within ${fence} m of the address.`);
+        return;
+      }
+      if (await isOnline()) {
+        await authFetch('/api/signout', {
+          method: 'POST',
+          body: JSON.stringify({ jobId: id, lat: latitude, lng: longitude, accuracy: Math.round(accuracy || 0) }),
+        });
+        await clearActiveShift();
+        stopBackgroundTracking().catch(() => {});
+      } else {
+        await queueAction({ type: 'signout', payload: { jobId: id } });
+        await clearActiveShift();
+      }
+      router.replace('/(installer)/jobs');
+    } catch {
+      Alert.alert('Could not sign out', 'We could not get your location. Try again.');
+    } finally {
+      setSigningOut(false);
+    }
+  }
+
+  const jobName = job?.name || name || 'Job';
+
+  const actions: Action[] = [
+    {
+      key: 'diary', label: 'Site diary', icon: 'document-text-outline', pathname: '/(installer)/diary',
+      badge: diaryToday ? { text: diaryToday === 1 ? '1 entry today' : `${diaryToday} entries today`, tone: 'muted' } : null,
+    },
+    {
+      key: 'qa', label: 'QA checklist', icon: 'checkmark-circle-outline', pathname: '/(installer)/qa',
+      badge: qaProgress && qaProgress.total > 0
+        ? { text: `${qaProgress.done} of ${qaProgress.total} done`, tone: qaProgress.done === qaProgress.total ? 'teal' : 'muted' }
+        : null,
+    },
+    {
+      key: 'defects', label: 'Log a defect', icon: 'warning-outline', pathname: '/(installer)/defects',
+      badge: openDefects ? { text: openDefects === 1 ? '1 open' : `${openDefects} open`, tone: 'amber' } : null,
+    },
+    { key: 'expenses', label: 'Snap expense', icon: 'receipt-outline', pathname: '/(installer)/expenses', badge: null },
+    { key: 'capture', label: 'Walk and Talk', icon: 'mic-outline', pathname: '/(installer)/capture', badge: null },
+  ];
+
+  if (loading) {
+    return (
+      <View style={s.safe}>
+        <ScreenHeader title={jobName} onBack={() => router.back()} />
+        <View style={s.loading}><ActivityIndicator color={colors.teal} /></View>
+      </View>
+    );
+  }
+
+  return (
+    <View style={s.safe}>
+      <ScreenHeader title={jobName} subtitle={job?.address} onBack={() => router.back()} />
+
+      <ScrollView contentContainerStyle={s.scroll}>
+        {signedInAt ? (
+          <View style={s.shiftRow}>
+            <View style={s.chip}>
+              <View style={s.chipDot} />
+              <Text style={s.chipTxt}>Signed in at {clockTime(signedInAt)}</Text>
+            </View>
+            <Text style={s.elapsed}>{elapsedSince(signedInAt, now)}</Text>
+          </View>
+        ) : null}
+
+        <View style={s.list}>
+          {actions.map((a, i) => (
+            <Pressable
+              key={a.key}
+              accessibilityRole="button"
+              accessibilityLabel={a.label}
+              onPress={() => router.push({ pathname: a.pathname as any, params: { id, name: jobName } })}
+              style={({ pressed }) => [s.row, i > 0 && s.rowDivider, pressed && s.rowPressed]}
+            >
+              <Ionicons name={a.icon} size={22} color={colors.teal} style={s.rowIcon} />
+              <Text style={s.rowLabel}>{a.label}</Text>
+              {a.badge ? (
+                <Text
+                  style={[
+                    s.badge,
+                    a.badge.tone === 'teal' && s.badgeTeal,
+                    a.badge.tone === 'amber' && s.badgeAmber,
+                  ]}
+                >
+                  {a.badge.text}
+                </Text>
+              ) : null}
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+            </Pressable>
+          ))}
+        </View>
+      </ScrollView>
+
+      <View style={[s.footer, { paddingBottom: insets.bottom + space.md }]}>
+        <Pressable
+          onPress={outOfRange || signingOut ? undefined : signOutOfJob}
+          disabled={outOfRange || signingOut}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: outOfRange || signingOut }}
+          style={[s.signOut, outOfRange && s.signOutOff]}
+        >
+          <Text style={[s.signOutTxt, outOfRange && s.signOutTxtOff]}>
+            {outOfRange ? 'Move closer to sign out' : signingOut ? 'Signing out...' : 'Sign out of job'}
+          </Text>
+        </Pressable>
+        {outOfRange && distance != null ? (
+          <Text style={s.footerNote}>
+            You are {formatDistance(distance)} away. Sign out opens within {fence} m of the address.
+          </Text>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.base },
+  loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  scroll: { padding: space.lg, paddingBottom: space.xxl },
+  shiftRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: space.lg },
+  chip: {
+    flexDirection: 'row', alignItems: 'center', gap: space.sm,
+    backgroundColor: colors.surface1, borderWidth: 1, borderColor: colors.border,
+    borderRadius: radius.pill, paddingHorizontal: space.md, paddingVertical: space.sm,
+  },
+  chipDot: { width: 8, height: 8, borderRadius: radius.pill, backgroundColor: colors.teal },
+  chipTxt: { ...type.sub, color: colors.teal },
+  elapsed: { ...type.heading, fontVariant: ['tabular-nums'] },
+  list: { backgroundColor: colors.surface1, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.lg, paddingVertical: 18 },
+  rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
+  rowPressed: { backgroundColor: colors.surface2 },
+  rowIcon: { width: 24, textAlign: 'center' },
+  rowLabel: { ...type.body, flex: 1 },
+  badge: { ...type.caption, color: colors.textSecondary },
+  badgeTeal: { color: colors.teal },
+  badgeAmber: { color: colors.amber },
+  footer: {
+    paddingHorizontal: space.lg, paddingTop: space.md, gap: space.sm,
+    backgroundColor: colors.base, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border,
+  },
+  signOut: { borderWidth: 1, borderColor: colors.red, borderRadius: radius.md, paddingVertical: 16, alignItems: 'center' },
+  signOutOff: { borderColor: colors.surface2, backgroundColor: colors.surface2 },
+  signOutTxt: { color: colors.red, fontSize: 16, fontWeight: '700' },
+  signOutTxtOff: { color: colors.textMuted },
+  footerNote: { ...type.caption, textAlign: 'center' },
+});
