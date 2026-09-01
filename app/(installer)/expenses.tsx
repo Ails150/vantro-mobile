@@ -33,6 +33,7 @@ interface ScanResult {
   vendor: string | null;
   date: string | null;
   suggested_category: string;
+  category_source?: 'merchant' | 'model' | 'none';
   currency: string;
   confidence: 'high' | 'medium' | 'low';
 }
@@ -221,6 +222,11 @@ export default function ExpensesScreen() {
     setSubmitting(false);
   }
 
+  // "SUBMITTED" and "APPROVED + PAID" shouted at the installer. Sentence case.
+  function statusLabel(status: string) {
+    return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+  }
+
   function statusColor(status: string) {
     switch (status) {
       case 'approved': return C.green;
@@ -289,7 +295,7 @@ export default function ExpensesScreen() {
                   <View style={s.entryHeader}>
                     <Text style={s.entryAmount}>{'\u00A3' + Number(exp.amount).toFixed(2)}</Text>
                     <View style={[s.statusBadge, { backgroundColor: statusColor(exp.status) + '22' }]}>
-                      <Text style={[s.statusTxt, { color: statusColor(exp.status) }]}>{exp.status.toUpperCase()}</Text>
+                      <Text style={[s.statusTxt, { color: statusColor(exp.status) }]}>{statusLabel(exp.status)}</Text>
                     </View>
                   </View>
                   <Text style={s.entryCategory}>{cat.label}{jobName ? ' \u00B7 ' + jobName : ''}</Text>
@@ -516,7 +522,7 @@ const s = StyleSheet.create({
   entryHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
   entryAmount: { color: C.text, fontSize: 18, fontWeight: '700' },
   statusBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
-  statusTxt: { fontSize: 10, fontWeight: '700', letterSpacing: 0.3 },
+  statusTxt: { fontSize: 11, fontWeight: '600' },
   entryCategory: { color: '#cbd5e1', fontSize: 13, marginBottom: 2 },
   entryNote: { color: '#a8b3bf', fontSize: 13, marginTop: 2, fontStyle: 'italic' },
   entryDate: { color: C.muted, fontSize: 11, marginTop: 4 },
