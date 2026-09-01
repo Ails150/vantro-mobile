@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity,
+  View, Text, ScrollView, TouchableOpacity, Pressable, Animated,
   StyleSheet, SafeAreaView, RefreshControl, Alert, Linking, AppState,
 } from 'react-native';
 import * as Location from 'expo-location';
@@ -10,9 +10,11 @@ import { useAuth } from '@/context/AuthContext';
 import { authFetch } from '@/lib/api';
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { stopBackgroundTracking, logCurrentLocation, evaluateTrackingState } from '@/lib/locationTracker';
-import { setActiveShift, clearActiveShift, hydrateActiveShift } from '@/lib/activeShift';
+import { logCurrentLocation, evaluateTrackingState } from '@/lib/locationTracker';
+import { setActiveShift, hydrateActiveShift } from '@/lib/activeShift';
 import { isOnline, cacheJobs, getCachedJobs, queueAction, syncQueue } from '@/lib/offline';
+import { distanceToJob, geofenceRadius } from '@/lib/geo';
+import { colors, radius, space, type } from '@/theme';
 
 const C = {
   bg: '#0f1923', card: '#1a2635', teal: '#00d4a0',
@@ -20,12 +22,49 @@ const C = {
   red: '#f87171', amber: '#fbbf24',
 };
 
-function haversine(lat1: number, lng1: number, lat2: number, lng2: number) {
-  const R = 6371000;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
-  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+// A card carries exactly one primary action, chosen by the state of the job.
+type CardState = 'complete' | 'signedIn' | 'inRange' | 'outOfRange';
+
+function cardState(job: any, distance: number | null): CardState {
+  if (job.status === 'complete' || job.status === 'completed') return 'complete';
+  if (job.signed_in) return 'signedIn';
+  if (distance != null && distance > geofenceRadius(job)) return 'outOfRange';
+  return 'inRange';
+}
+
+// jobs.start_time / jobs.sign_out_time are SQL time columns ("08:00:00").
+function hhmm(t?: string | null): string | null {
+  return t ? String(t).slice(0, 5) : null;
+}
+
+function scheduledWindow(job: any): string | null {
+  const from = hhmm(job.start_time);
+  const to = hhmm(job.sign_out_time);
+  if (from && to) return `${from} to ${to}`;
+  if (from) return `From ${from}`;
+  if (to) return `Until ${to}`;
+  return null;
+}
+
+// The signed in dot pulses so the card the installer is standing on reads as live.
+function PulsingDot() {
+  const pulse = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const loop = Animated.loop(Animated.sequence([
+      Animated.timing(pulse, { toValue: 1, duration: 900, useNativeDriver: true }),
+      Animated.timing(pulse, { toValue: 0, duration: 900, useNativeDriver: true }),
+    ]));
+    loop.start();
+    return () => loop.stop();
+  }, [pulse]);
+  return (
+    <Animated.View
+      style={[s.dot, s.dotTeal, {
+        opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] }),
+        transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.4] }) }],
+      }]}
+    />
+  );
 }
 
 export default function JobsScreen() {
@@ -39,6 +78,7 @@ export default function JobsScreen() {
   const [offline, setOffline] = useState(false);
   const [bgGpsEnabled, setBgGpsEnabled] = useState(true);
   const [gpsLevel, setGpsLevel] = useState<'always' | 'whenInUse' | 'denied' | null>(null);
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
 
   // Check stored GPS permission level on mount + every focus
   useEffect(() => {
@@ -57,6 +97,23 @@ export default function JobsScreen() {
     });
     return () => { mounted = false; sub.remove(); };
   }, []);
+  // Each card needs to know whether the installer is in range before they press
+  // anything, so poll a coarse fix rather than waiting for a sign in attempt.
+  useEffect(() => {
+    let alive = true;
+    async function fix() {
+      try {
+        const perm = await Location.getForegroundPermissionsAsync();
+        if (!perm.granted) return;
+        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        if (alive) setCoords({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
+      } catch {}
+    }
+    fix();
+    const t = setInterval(fix, 30000);
+    return () => { alive = false; clearInterval(t); };
+  }, []);
+
   const appState = useRef(AppState.currentState);
 
   const loadJobs = useCallback(async () => {
@@ -166,42 +223,6 @@ export default function JobsScreen() {
     setGpsLoading(null);
   }
 
-  async function signOut(job: any) {
-    Alert.alert('Sign out', 'Sign out of ' + job.name + '?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign out', style: 'destructive',
-        onPress: async () => {
-          const { status } = await Location.requestForegroundPermissionsAsync();
-          if (status !== 'granted') { Alert.alert('Location required', 'Enable location to sign out.'); return; }
-          const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-          const { latitude, longitude } = loc.coords;
-          if (job.lat && job.lng) {
-            const dist = haversine(latitude, longitude, job.lat, job.lng);
-            if (dist > 150) {
-              Alert.alert('Too far', 'You are ' + dist + 'm from site. Must be within 150m to sign out.');
-              return;
-            }
-          }
-          const online = await isOnline();
-          if (online) {
-            await authFetch('/api/signout', { method: 'POST', body: JSON.stringify({ jobId: job.id, lat: latitude, lng: longitude, accuracy: Math.round(loc.coords.accuracy || 0) }) });
-            // Stop GPS breadcrumb tracking
-            await clearActiveShift();
-            stopBackgroundTracking().catch(e => console.error('Failed to stop tracking:', e));
-          } else {
-            await queueAction({ type: 'signout', payload: { jobId: job.id } });
-            const updated = jobs.map(j => j.id === job.id ? { ...j, signed_in: false } : j);
-            setJobs(updated);
-            await cacheJobs(updated);
-          }
-          setGpsMsg(null);
-          loadJobs();
-        },
-      },
-    ]);
-  }
-
   function openMaps(job: any) {
     if (job.lat && job.lng) {
       Linking.openURL('https://www.google.com/maps/dir/?api=1&destination=' + job.lat + ',' + job.lng).catch(() => Alert.alert('Could not open Maps'));
@@ -281,19 +302,36 @@ export default function JobsScreen() {
 
         {jobs.map(job => {
           const gps = gpsMsg?.id === job.id ? gpsMsg : null;
+          const distance = distanceToJob(coords, job);
+          const state = cardState(job, distance);
+          const window = scheduledWindow(job);
+          const busyElsewhere = !!signedInJob && !job.signed_in;
+
+          // Directions is the primary only while the installer still has to
+          // travel. In range it demotes to a text link under the primary.
+          const primary =
+            state === 'complete' ? { label: 'View summary', onPress: () => openJobHub(job) }
+            : state === 'signedIn' ? { label: 'Open job', onPress: () => openJobHub(job) }
+            : state === 'outOfRange' ? { label: 'Get directions', onPress: () => openMaps(job) }
+            : {
+                label: gpsLoading === job.id ? 'Getting location...'
+                  : busyElsewhere ? 'Sign out of current job first'
+                  : 'Sign in to job',
+                onPress: () => signIn(job),
+                disabled: !!gpsLoading || busyElsewhere,
+              };
+
           return (
             <View key={job.id} style={[s.card, job.signed_in && s.cardActive]}>
               <View style={s.cardHeader}>
+                {state === 'signedIn'
+                  ? <PulsingDot />
+                  : <View style={[s.dot, state === 'inRange' ? s.dotTeal : state === 'complete' ? s.dotMuted : s.dotGrey]} />}
                 <View style={{ flex: 1 }}>
                   <Text style={s.jobName}>{job.name}</Text>
                   <Text style={s.jobAddress}>{job.address}</Text>
+                  {window ? <Text style={s.jobWindow}>{window}</Text> : null}
                 </View>
-                {job.signed_in && (
-                  <View style={s.onSiteBadge}>
-                    <View style={s.onSiteDot} />
-                    <Text style={s.onSiteText}>On site</Text>
-                  </View>
-                )}
               </View>
 
               {gps && (
@@ -302,40 +340,18 @@ export default function JobsScreen() {
                 </View>
               )}
 
-              <TouchableOpacity style={s.directionsBtn} onPress={() => openMaps(job)}>
-                <Text style={s.directionsBtnText}>Get directions</Text>
+              <TouchableOpacity
+                style={[s.btn, primary.disabled && s.btnDisabled]}
+                onPress={primary.onPress}
+                disabled={primary.disabled}
+              >
+                <Text style={s.btnText}>{primary.label}</Text>
               </TouchableOpacity>
 
-              {!job.signed_in ? (
-                <TouchableOpacity
-                  style={[s.btn, gpsLoading === job.id && s.btnDisabled]}
-                  onPress={() => signIn(job)}
-                  disabled={!!gpsLoading || !!signedInJob}
-                >
-                  <Text style={s.btnText}>
-                    {gpsLoading === job.id ? 'Getting location...' : signedInJob ? 'Sign out of current job first' : 'Sign in to job'}
-                  </Text>
-                </TouchableOpacity>
-              ) : (
-                <View style={s.signedInActions}>
-                  <TouchableOpacity style={s.actionBtn} onPress={() => router.push({ pathname: '/(installer)/diary', params: { id: job.id, name: job.name } })}>
-                    <Text style={s.actionBtnText}>Diary</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={s.actionBtn} onPress={() => router.push({ pathname: '/(installer)/qa', params: { id: job.id, name: job.name } })}>
-                    <Text style={s.actionBtnText}>QA</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={s.actionBtn} onPress={() => router.push({ pathname: '/(installer)/defects', params: { id: job.id, name: job.name } })}>
-                    <Text style={s.actionBtnText}>Defects</Text>
-                  </TouchableOpacity>
-                  {/* Walkthrough hidden for now - resurrect when needed
-                  <TouchableOpacity style={[s.actionBtn, { backgroundColor: '#BC6AFF' }]} onPress={() => router.push({ pathname: '/(installer)/capture', params: { id: job.id, name: job.name } })}>
-                    <Text style={[s.actionBtnText, { color: '#fff' }]}>Walkthrough</Text>
-                  </TouchableOpacity>
-                  */}
-                  <TouchableOpacity style={[s.actionBtn, s.actionBtnRed]} onPress={() => signOut(job)}>
-                    <Text style={[s.actionBtnText, s.actionBtnTextRed]}>Sign out</Text>
-                  </TouchableOpacity>
-                </View>
+              {state !== 'outOfRange' && (
+                <Pressable onPress={() => openMaps(job)} hitSlop={8} style={s.directionsLink}>
+                  <Text style={s.directionsLinkText}>Get directions</Text>
+                </Pressable>
               )}
             </View>
           );
@@ -365,11 +381,13 @@ const s = StyleSheet.create({
   card: { backgroundColor: C.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: C.border },
   cardActive: { borderColor: 'rgba(0,212,160,0.3)' },
   cardHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 14 },
+  dot: { width: 10, height: 10, borderRadius: radius.pill, marginTop: 5 },
+  dotTeal: { backgroundColor: colors.teal },
+  dotGrey: { backgroundColor: colors.textMuted },
+  dotMuted: { backgroundColor: colors.surface3 },
+  jobWindow: { ...type.caption, marginTop: space.xs },
   jobName: { fontSize: 15, fontWeight: '600', color: C.text },
   jobAddress: { fontSize: 13, color: C.muted, marginTop: 2 },
-  onSiteBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(0,212,160,0.1)', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
-  onSiteDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: C.teal },
-  onSiteText: { fontSize: 12, color: C.teal, fontWeight: '500' },
   gpsMsg: { borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 10 },
   gpsMsgOk: { backgroundColor: 'rgba(0,212,160,0.08)', borderWidth: 1, borderColor: 'rgba(0,212,160,0.2)' },
   gpsMsgErr: { backgroundColor: 'rgba(248,113,113,0.08)', borderWidth: 1, borderColor: 'rgba(248,113,113,0.2)' },
@@ -379,12 +397,7 @@ const s = StyleSheet.create({
   btn: { backgroundColor: C.teal, borderRadius: 12, paddingVertical: 13, alignItems: 'center' },
   btnDisabled: { opacity: 0.5 },
   btnText: { color: '#0f1923', fontSize: 15, fontWeight: '700' },
-  signedInActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  actionBtn: { flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 10, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderColor: C.border },
-  actionBtnRed: { borderColor: 'rgba(248,113,113,0.3)', backgroundColor: 'rgba(248,113,113,0.06)' },
-  actionBtnText: { fontSize: 13, color: C.text, fontWeight: '500' },
-  actionBtnTextRed: { color: C.red },
-  directionsBtn: { backgroundColor: 'rgba(96,165,250,0.08)', borderRadius: 10, paddingVertical: 8, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(96,165,250,0.2)', marginBottom: 8 },
-  directionsBtnText: { fontSize: 13, color: '#60a5fa', fontWeight: '500' },
+  directionsLink: { alignSelf: 'center', paddingVertical: space.md },
+  directionsLinkText: { ...type.sub, color: colors.blue },
 });
 
