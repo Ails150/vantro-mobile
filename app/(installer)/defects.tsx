@@ -5,8 +5,16 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authFetch, authFormFetch } from '@/lib/api';
 import ScreenHeader from '@/components/ScreenHeader';
+import PrimaryButton from '@/components/PrimaryButton';
+import { colors, space, type } from '@/theme';
 
 const C = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)', red: '#f87171', amber: '#fbbf24' };
+
+const SEVERITIES = [
+  { label: 'Minor', value: 'minor', fill: colors.surface3 },
+  { label: 'Major', value: 'major', fill: colors.amber },
+  { label: 'Critical', value: 'critical', fill: colors.red },
+] as const;
 
 const DEFECT_CACHE_KEY = 'vantro_defects_cache';
 const DEFECT_QUEUE_KEY = 'vantro_defects_queue';
@@ -172,12 +180,22 @@ export default function DefectsScreen() {
           <Text style={s.sectionTitle}>Log a defect</Text>
           <TextInput value={description} onChangeText={setDescription} placeholder="Describe the defect..." placeholderTextColor={C.muted} multiline numberOfLines={4} style={s.input} textAlignVertical="top" />
           <View style={s.severityRow}>
-            {[{l:'Minor',v:'minor',c:'#4d6478'},{l:'Major',v:'major',c:'#fbbf24'},{l:'Critical',v:'critical',c:'#f87171'}].map(({l,v,c}) => (
-              <TouchableOpacity key={v} onPress={() => setSeverity(v)}
-                style={[s.severityBtn, severity===v && {backgroundColor: c, borderColor: c}]}>
-                <Text style={[s.severityText, {color: severity===v ? (v==='minor'?'#fff':'#0f1923') : c}, severity===v && {fontWeight:'700'}]}>{l}</Text>
-              </TouchableOpacity>
-            ))}
+            {SEVERITIES.map(({ label, value, fill }) => {
+              const on = severity === value;
+              return (
+                <TouchableOpacity
+                  key={value}
+                  onPress={() => setSeverity(value)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: on }}
+                  style={[s.severityBtn, on && { backgroundColor: fill, borderColor: fill }]}
+                >
+                  <Text style={[s.severityText, { color: on ? colors.base : fill }, on && { fontWeight: '700' }]}>
+                    {label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
           {photo ? <Image source={{ uri: photo }} style={s.photoPreview} /> : null}
           {video ? <View style={[s.photoPreview, {backgroundColor: '#0f1923', justifyContent: 'center', alignItems: 'center'}]}><Text style={{color: C.teal, fontSize: 14}}>Video selected</Text><Text style={{color: C.muted, fontSize: 11, marginTop: 4}}>Tap below to change</Text></View> : null}
@@ -197,14 +215,17 @@ export default function DefectsScreen() {
               <Text style={s.photoBtnText}>Add video</Text>
             </TouchableOpacity>
           </View>
-          <TouchableOpacity style={[s.submitBtn, (!description.trim() || loading) && s.submitBtnDisabled]} onPress={submit} disabled={!description.trim() || loading}>
-            <Text style={s.submitBtnText}>{loading ? 'Submitting...' : success ? 'Logged! \u2713' : 'Log defect'}</Text>
-          </TouchableOpacity>
+          <PrimaryButton
+            label={loading ? 'Submitting...' : success ? 'Logged' : 'Log defect'}
+            blockedLabel="Add a description first"
+            disabled={!description.trim() || loading}
+            onPress={submit}
+          />
         </View>
 
         {defects.length > 0 && (
           <>
-            <Text style={s.prevTitle}>Previous defects</Text>
+            <Text style={s.prevTitle}>Logged on this job ({defects.length})</Text>
             {defects.map(d => (
               <View key={d.id} style={s.defectCard}>
                 <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
@@ -238,6 +259,7 @@ const s = StyleSheet.create({
   severityBtn: { flex: 1, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: C.border, alignItems: 'center' },
   severityBtnActive: { backgroundColor: 'rgba(255,255,255,0.06)' },
   severityText: { fontSize: 13, fontWeight: '500' },
+  severityLabel: { ...type.caption, marginBottom: -space.xs },
   severityTextActive: { fontWeight: '700' },
   photoPreview: { width: '100%', height: 160, borderRadius: 10, resizeMode: 'cover' },
   photoBtn: { backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 10, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: C.border },
