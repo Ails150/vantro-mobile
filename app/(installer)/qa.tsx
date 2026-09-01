@@ -3,9 +3,22 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image,
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { authFetch, authFormFetch } from '@/lib/api';
+import { colors, radius, space, type } from '@/theme';
 import ScreenHeader from '@/components/ScreenHeader';
 
 const C = { bg: '#0f1923', card: '#1a2635', teal: '#00d4a0', muted: '#4d6478', text: '#ffffff', border: 'rgba(255,255,255,0.05)', red: '#f87171' };
+
+// checklist_items has no description column: the label carries the reference
+// and the wording together, e.g. "HS 1 - Fire exits kept clear". Split the
+// reference off so the row is titled by the thing being checked. Labels that
+// do not start with a reference code are left whole.
+const ITEM_REF = /^\s*([A-Za-z]{1,4}\s?-?\s?\d{1,3}(?:\.\d{1,2})?)\s*(?:[\u2014\u2013:-]\s*|\s+)(.{3,})$/;
+
+function splitItemLabel(label: string): { title: string; ref: string | null } {
+  const m = ITEM_REF.exec(label || '');
+  if (!m) return { title: label || 'Item', ref: null };
+  return { title: m[2].trim(), ref: m[1].replace(/\s+/g, ' ').trim() };
+}
 
 export default function QAScreen() {
   const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
@@ -37,6 +50,9 @@ export default function QAScreen() {
   function getState(itemId: string) {
     return subs.find((s: any) => s.checklist_item_id === itemId)?.state || 'pending';
   }
+
+  const doneCount = items.filter((i: any) => getState(i.id) !== 'pending').length;
+  const remaining = items.length - doneCount;
 
   async function takePhoto(itemId: string) {
     const perm = await ImagePicker.requestCameraPermissionsAsync();
@@ -194,7 +210,7 @@ export default function QAScreen() {
     const unready = mandatoryItems.filter((i: any) => !isMandatoryReady(i));
 
     if (unready.length > 0) {
-      const labels = unready.map((i: any) => i.label).join(', ');
+      const labels = unready.map((i: any) => splitItemLabel(i.label).title).join(', ');
       Alert.alert('Missing data', `Complete these mandatory items first: ${labels}`);
       return;
     }
@@ -217,7 +233,7 @@ export default function QAScreen() {
       let state = 'submitted';
       if (item.item_type === 'pass_fail') state = 'pass'; // default to pass for auto-submit
 
-      setSubmitProgress(`Submitting ${item.label}...`);
+      setSubmitProgress(`Submitting ${splitItemLabel(item.label).title}...`);
 
       // Skip photo-required items with no photos (non-mandatory only, mandatory already checked above)
       if (needsPhoto && !hasPhotos) continue;
@@ -297,7 +313,12 @@ export default function QAScreen() {
       <ScreenHeader title="QA checklists" subtitle={name} onBack={() => router.back()} />
 
       {!loading && checklists.length > 1 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.tabs} contentContainerStyle={{ paddingLeft: 16, paddingRight: 36, gap: 8 }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={s.tabs}
+          contentContainerStyle={{ paddingLeft: 16, paddingRight: 20, gap: 8 }}
+        >
           {checklists.map((cl: any, i: number) => {
             const done = submitted[cl.id];
             return (
@@ -309,6 +330,15 @@ export default function QAScreen() {
             );
           })}
         </ScrollView>
+      )}
+
+      {!loading && items.length > 0 && (
+        <View style={s.progressWrap}>
+          <View style={s.progressTrack}>
+            <View style={[s.progressFill, { width: `${Math.round((doneCount / items.length) * 100)}%` }]} />
+          </View>
+          <Text style={s.progressTxt}>{doneCount} of {items.length} complete</Text>
+        </View>
       )}
 
       <ScrollView contentContainerStyle={s.scroll}>
@@ -332,21 +362,25 @@ export default function QAScreen() {
               const done = state !== 'pending';
               const needsPhoto = item.requires_photo || item.item_type === 'photo';
               const hasPhotos = (photos[item.id] || []).length > 0;
+              const { title, ref } = splitItemLabel(item.label);
 
               return (
                 <View key={item.id} style={[s.card, done && s.cardDone]}>
                   <View style={s.itemHeader}>
                     <View style={{ flex: 1 }}>
-                      <Text style={s.itemLabel}>{item.label}</Text>
+                      <Text style={s.itemLabel}>{title}</Text>
                       <View style={{ flexDirection: 'row', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
                         {item.is_mandatory && <Text style={s.tagRed}>Mandatory</Text>}
-                        {needsPhoto && <Text style={s.tagBlue}>Photo required</Text>}
+                        {needsPhoto && <Text style={s.tagAmber}>Photo required</Text>}
                       </View>
                     </View>
-                    <View style={[s.stateBadge, state === 'pass' || state === 'submitted' ? s.stateBadgeGreen : state === 'fail' ? s.stateBadgeRed : s.stateBadgeGrey]}>
-                      <Text numberOfLines={1} style={[s.stateText, state === 'pass' || state === 'submitted' ? s.stateTextGreen : state === 'fail' ? s.stateTextRed : s.stateTextGrey]}>
-                        {state === 'submitted' ? 'Done' : state === 'pass' ? 'Pass' : state === 'fail' ? 'Fail' : 'Pending'}
-                      </Text>
+                    <View style={s.itemHeaderRight}>
+                      {ref ? <Text style={s.refChip}>{ref}</Text> : null}
+                      <View style={[s.stateBadge, state === 'pass' || state === 'submitted' ? s.stateBadgeGreen : state === 'fail' ? s.stateBadgeRed : s.stateBadgeGrey]}>
+                        <Text numberOfLines={1} style={[s.stateText, state === 'pass' || state === 'submitted' ? s.stateTextGreen : state === 'fail' ? s.stateTextRed : s.stateTextGrey]}>
+                          {state === 'submitted' ? 'Done' : state === 'pass' ? 'Pass' : state === 'fail' ? 'Fail' : 'Pending'}
+                        </Text>
+                      </View>
                     </View>
                   </View>
 
@@ -437,12 +471,26 @@ export default function QAScreen() {
                   </View>
                 ) : (
                   <TouchableOpacity
-                    style={[s.submitBtn, submitted[checklist.id] && s.submitBtnDone]}
+                    style={[
+                      s.submitBtn,
+                      submitted[checklist.id] && s.submitBtnDone,
+                      remaining > 0 && !submitted[checklist.id] && s.submitBtnBlocked,
+                    ]}
                     onPress={submitForApproval}
-                    disabled={submitting || submitted[checklist.id]}
+                    disabled={submitting || submitted[checklist.id] || remaining > 0}
                   >
-                    <Text style={[s.submitBtnText, submitted[checklist.id] && s.submitBtnTextDone]}>
-                      {submitted[checklist.id] ? 'Submitted' : checklist.requires_approval ? 'Submit for approval' : 'Mark complete'}
+                    <Text
+                      style={[
+                        s.submitBtnText,
+                        submitted[checklist.id] && s.submitBtnTextDone,
+                        remaining > 0 && !submitted[checklist.id] && s.submitBtnTextBlocked,
+                      ]}
+                    >
+                      {submitted[checklist.id]
+                        ? 'Submitted'
+                        : remaining > 0
+                          ? `${remaining} left`
+                          : checklist.requires_approval ? 'Submit for approval' : 'Mark complete'}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -476,6 +524,10 @@ const s = StyleSheet.create({
   tabTextActive: { color: C.teal, fontWeight: '600' },
   tabDone: { color: C.teal, fontSize: 10, fontWeight: '600', marginTop: 3 },
   scroll: { padding: 16, paddingBottom: 40 },
+  progressWrap: { paddingHorizontal: space.lg, paddingTop: space.md, gap: space.sm },
+  progressTrack: { height: 6, borderRadius: radius.pill, backgroundColor: colors.surface2, overflow: 'hidden' },
+  progressFill: { height: 6, borderRadius: radius.pill, backgroundColor: colors.teal },
+  progressTxt: { ...type.caption },
   loading: { color: C.muted, textAlign: 'center', marginTop: 40 },
   empty: { alignItems: 'center', paddingVertical: 48 },
   emptyText: { color: C.muted, fontSize: 15 },
@@ -488,7 +540,13 @@ const s = StyleSheet.create({
   itemHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 12 },
   itemLabel: { fontSize: 14, fontWeight: '500', color: C.text },
   tagRed: { fontSize: 11, color: C.red },
-  tagBlue: { fontSize: 11, color: '#60a5fa' },
+  tagAmber: { fontSize: 11, color: colors.amber },
+  itemHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexShrink: 0 },
+  refChip: {
+    ...type.caption, fontSize: 11, color: colors.textSecondary,
+    backgroundColor: colors.surface2, borderRadius: radius.sm,
+    paddingHorizontal: space.sm, paddingVertical: 2, overflow: 'hidden',
+  },
   stateBadge: { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, flexShrink: 0 },
   stateBadgeGreen: { backgroundColor: 'rgba(0,212,160,0.1)' },
   stateBadgeRed: { backgroundColor: 'rgba(248,113,113,0.1)' },
@@ -499,7 +557,7 @@ const s = StyleSheet.create({
   stateTextGrey: { color: C.muted },
   actionBtn: { backgroundColor: 'rgba(0,212,160,0.1)', borderRadius: 10, paddingVertical: 11, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(0,212,160,0.2)' },
   actionBtnRed: { backgroundColor: 'rgba(248,113,113,0.1)', borderColor: 'rgba(248,113,113,0.2)' },
-  actionBtnDisabled: { opacity: 0.4 },
+  actionBtnDisabled: { backgroundColor: colors.surface2, borderColor: colors.surface2 },
   actionBtnText: { fontSize: 14, color: C.teal, fontWeight: '500' },
   actionBtnTextRed: { color: C.red },
   input: { backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, color: C.text, fontSize: 14, borderWidth: 1, borderColor: C.border },
@@ -511,4 +569,6 @@ const s = StyleSheet.create({
   submitBtnDone: { backgroundColor: 'rgba(0,212,160,0.1)', borderWidth: 1, borderColor: 'rgba(0,212,160,0.3)' },
   submitBtnText: { color: '#0f1923', fontWeight: '700', fontSize: 15 },
   submitBtnTextDone: { color: C.teal },
+  submitBtnBlocked: { backgroundColor: colors.surface2 },
+  submitBtnTextBlocked: { color: colors.textMuted },
 });
