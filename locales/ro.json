@@ -97,5 +97,23 @@
     "body": "Ai încheiat trei ture. O evaluare scurtă ajută alți meseriași să găsească aplicația.",
     "rate": "Evaluează aplicația",
     "later": "Nu acum"
+  },
+  "qr": {
+    "myTitle": "Codul meu",
+    "mySubtitle": "Arată-l șefului de echipă",
+    "identifies": "Codul arată cine ești, ca un ecuson. Nu este o parolă și nu te pontează.",
+    "scanTitle": "Scanează un cod",
+    "scanPrompt": "Îndreaptă camera spre un cod Vantro",
+    "permissionTitle": "Este nevoie de acces la cameră",
+    "permissionBody": "Vantro are nevoie de cameră pentru a citi coduri.",
+    "grant": "Permite camera",
+    "openSettings": "Deschide setările",
+    "notVantro": "Acesta nu este un cod Vantro.",
+    "unsupported": "Codul necesită o versiune mai nouă a aplicației.",
+    "unknownKind": "Aplicația nu știe să deschidă acest cod.",
+    "malformed": "Codul nu a putut fi citit.",
+    "jobNotFound": "Lucrarea nu se află pe lista ta.",
+    "scanAgain": "Scanează din nou",
+    "torch": "Lanternă"
   }
 }

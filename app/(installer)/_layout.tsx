@@ -79,6 +79,8 @@ export default function InstallerLayout() {
       <Tabs.Screen name="checklist-run" options={{ href: null }} />
       <Tabs.Screen name="gps-acknowledgment" options={{ href: null }} />
       <Tabs.Screen name="schedule-request" options={{ href: null }} />
+      <Tabs.Screen name="scan" options={{ href: null }} />
+      <Tabs.Screen name="my-qr" options={{ href: null }} />
     </Tabs>
   );
 }

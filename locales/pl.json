@@ -101,5 +101,23 @@
     "body": "Zakończyłeś już trzy zmiany. Krótka ocena pomoże innym fachowcom znaleźć aplikację.",
     "rate": "Oceń aplikację",
     "later": "Nie teraz"
+  },
+  "qr": {
+    "myTitle": "Mój kod",
+    "mySubtitle": "Pokaż go przełożonemu",
+    "identifies": "Ten kod potwierdza, kim jesteś, jak identyfikator. Nie jest hasłem i nie rozpoczyna pracy.",
+    "scanTitle": "Zeskanuj kod",
+    "scanPrompt": "Skieruj aparat na kod Vantro",
+    "permissionTitle": "Potrzebny dostęp do aparatu",
+    "permissionBody": "Vantro potrzebuje aparatu, aby odczytać kody.",
+    "grant": "Zezwól na aparat",
+    "openSettings": "Otwórz ustawienia",
+    "notVantro": "To nie jest kod Vantro.",
+    "unsupported": "Ten kod wymaga nowszej wersji aplikacji.",
+    "unknownKind": "Aplikacja nie potrafi otworzyć tego kodu.",
+    "malformed": "Nie udało się odczytać kodu.",
+    "jobNotFound": "Tego zlecenia nie ma na Twojej liście.",
+    "scanAgain": "Skanuj ponownie",
+    "torch": "Latarka"
   }
 }

@@ -283,12 +283,30 @@ export default function JobsScreen() {
       <View style={s.header}>
         <View>
           <Text style={s.headerName}>{user?.name}</Text>
-          <Text style={s.headerRole}>Installer</Text>
+          <Text style={s.headerRole}>{t('jobs.role')}</Text>
         </View>
-        <TouchableOpacity onPress={() => router.push('/(installer)/expenses')} style={s.snapBtn}>
-          <Ionicons name="camera" size={16} color={colors.base} />
-          <Text style={s.snapBtnText}>Snap expense</Text>
-        </TouchableOpacity>
+        <View style={s.headerActions}>
+          <TouchableOpacity
+            onPress={() => router.push('/(installer)/scan')}
+            style={s.iconBtn}
+            accessibilityRole="button"
+            accessibilityLabel={t('qr.scanTitle')}
+          >
+            <Ionicons name="scan-outline" size={19} color={colors.teal} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => router.push('/(installer)/my-qr')}
+            style={s.iconBtn}
+            accessibilityRole="button"
+            accessibilityLabel={t('qr.myTitle')}
+          >
+            <Ionicons name="qr-code-outline" size={19} color={colors.teal} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/(installer)/expenses')} style={s.snapBtn}>
+            <Ionicons name="camera" size={16} color={colors.base} />
+            <Text style={s.snapBtnText}>Snap expense</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {gpsLevel && gpsLevel !== 'always' && (
@@ -406,6 +424,13 @@ const s = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: C.border },
   headerName: { fontSize: 15, fontWeight: '600', color: C.text },
   headerRole: { fontSize: 12, color: C.muted },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  iconBtn: {
+    width: 38, height: 38, borderRadius: radius.pill,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: alpha(colors.teal, 0.1),
+    borderWidth: StyleSheet.hairlineWidth, borderColor: alpha(colors.teal, 0.3),
+  },
   snapBtn: {
     backgroundColor: colors.teal, paddingHorizontal: space.lg, paddingVertical: space.md,
     borderRadius: radius.sm, flexDirection: 'row', alignItems: 'center', gap: space.sm,

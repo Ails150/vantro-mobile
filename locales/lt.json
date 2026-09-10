@@ -97,5 +97,23 @@
     "body": "Baigėte tris pamainas. Trumpas įvertinimas padės kitiems meistrams rasti programėlę.",
     "rate": "Įvertinti programėlę",
     "later": "Ne dabar"
+  },
+  "qr": {
+    "myTitle": "Mano kodas",
+    "mySubtitle": "Parodykite jį vadovui",
+    "identifies": "Kodas parodo, kas esate, kaip vardinė kortelė. Tai nėra slaptažodis ir jis nepradeda darbo.",
+    "scanTitle": "Nuskaityti kodą",
+    "scanPrompt": "Nukreipkite kamerą į Vantro kodą",
+    "permissionTitle": "Reikia prieigos prie kameros",
+    "permissionBody": "Vantro reikia kameros kodams nuskaityti.",
+    "grant": "Leisti kamerą",
+    "openSettings": "Atidaryti nustatymus",
+    "notVantro": "Tai ne Vantro kodas.",
+    "unsupported": "Šiam kodui reikia naujesnės programėlės versijos.",
+    "unknownKind": "Programėlė nemoka atidaryti šio kodo.",
+    "malformed": "Nepavyko nuskaityti kodo.",
+    "jobNotFound": "Šio darbo nėra jūsų sąraše.",
+    "scanAgain": "Nuskaityti dar kartą",
+    "torch": "Žibintuvėlis"
   }
 }

@@ -93,5 +93,23 @@
     "body": "You have signed out of three shifts. A quick rating helps other trades find the app.",
     "rate": "Rate the app",
     "later": "Not now"
+  },
+  "qr": {
+    "myTitle": "My code",
+    "mySubtitle": "Show this to your supervisor",
+    "identifies": "This identifies you, like a name badge. It is not a password and it does not sign you in.",
+    "scanTitle": "Scan a code",
+    "scanPrompt": "Point the camera at a Vantro code",
+    "permissionTitle": "Camera access needed",
+    "permissionBody": "Vantro needs the camera to read codes.",
+    "grant": "Allow camera",
+    "openSettings": "Open settings",
+    "notVantro": "That is not a Vantro code.",
+    "unsupported": "This code needs a newer version of the app.",
+    "unknownKind": "The app does not know how to open this code.",
+    "malformed": "That code could not be read.",
+    "jobNotFound": "That job is not on your list.",
+    "scanAgain": "Scan again",
+    "torch": "Torch"
   }
 }
