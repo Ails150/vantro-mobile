@@ -1,0 +1,105 @@
+{
+  "common": {
+    "back": "Wstecz",
+    "cancel": "Anuluj",
+    "continue": "Dalej",
+    "retry": "Spróbuj ponownie",
+    "close": "Zamknij",
+    "loading": "Ładowanie"
+  },
+  "language": {
+    "title": "Wybierz swój język",
+    "subtitle": "Możesz to zmienić później na ekranie logowania.",
+    "name": "Język",
+    "confirm": "Dalej"
+  },
+  "sync": {
+    "syncing": "Synchronizacja",
+    "offline": "Offline",
+    "pending": {
+      "one": "%{count} do wysłania",
+      "few": "%{count} do wysłania",
+      "many": "%{count} do wysłania",
+      "other": "%{count} do wysłania"
+    },
+    "a11ySyncing": "Trwa synchronizacja zapisanych działań",
+    "a11yOffline": "Offline, brak działań w kolejce",
+    "a11yPending": {
+      "one": "%{count} działanie oczekuje na wysłanie",
+      "few": "%{count} działania oczekują na wysłanie",
+      "many": "%{count} działań oczekuje na wysłanie",
+      "other": "%{count} działań oczekuje na wysłanie"
+    },
+    "a11yPendingOffline": {
+      "one": "%{count} działanie oczekuje na wysłanie, obecnie offline",
+      "few": "%{count} działania oczekują na wysłanie, obecnie offline",
+      "many": "%{count} działań oczekuje na wysłanie, obecnie offline",
+      "other": "%{count} działań oczekuje na wysłanie, obecnie offline"
+    }
+  },
+  "login": {
+    "title": "Wprowadź swój PIN",
+    "enterPin": "Wprowadź swój PIN",
+    "forgotPin": "Nie pamiętasz PIN-u?",
+    "emailLabel": "Służbowy e-mail",
+    "emailPrompt": "Podaj adres e-mail, na który kierownik wysłał zaproszenie.",
+    "incorrectPin": "Nieprawidłowy PIN",
+    "connectionError": "Błąd połączenia. Sprawdź internet."
+  },
+  "jobs": {
+    "title": "Zlecenia",
+    "role": "Monter",
+    "logOut": "Wyloguj",
+    "signIn": "Rozpocznij pracę",
+    "signOut": "Zakończ pracę",
+    "empty": "Brak przypisanych zleceń",
+    "offlineBanner": "Offline. Pokazujemy ostatnio zsynchronizowane zlecenia.",
+    "queuedSignIn": "Offline - rozpoczęcie pracy zapisane, wyślemy je po odzyskaniu połączenia",
+    "locationRequired": "Włącz dostęp do lokalizacji, aby rozpocząć pracę.",
+    "locationFailed": "Nie udało się ustalić lokalizacji. Spróbuj ponownie.",
+    "directions": "Nawigacja"
+  },
+  "holidays": {
+    "title": "Urlop",
+    "subtitle": "Złóż wniosek o wolne",
+    "balance": "Pozostało w tym roku",
+    "daysUnit": {
+      "one": "%{count} dzień",
+      "few": "%{count} dni",
+      "many": "%{count} dni",
+      "other": "%{count} dnia"
+    },
+    "allowance": "Wymiar %{total}",
+    "taken": "Wykorzystano %{taken}",
+    "pending": "Oczekuje %{pending}",
+    "pickDates": "Wybierz daty",
+    "from": "Od",
+    "to": "Do",
+    "selectStart": "Dotknij dnia, aby zacząć",
+    "selectEnd": "Dotknij ostatniego dnia",
+    "requesting": "Wnioskujesz o %{count} dni roboczych",
+    "note": "Uwaga dla kierownika (opcjonalnie)",
+    "submit": "Złóż wniosek",
+    "submitting": "Wysyłanie",
+    "submitted": "Wniosek wysłany",
+    "submittedBody": "Kierownik go rozpatrzy, a Ty dostaniesz powiadomienie o decyzji.",
+    "exceeds": "To więcej, niż Ci pozostało. Masz jeszcze %{remaining}.",
+    "overlap": "Masz już wniosek obejmujący te daty.",
+    "offline": "Do złożenia wniosku potrzebne jest połączenie.",
+    "failed": "Nie udało się wysłać wniosku. Spróbuj ponownie.",
+    "yourRequests": "Twoje wnioski",
+    "noRequests": "Brak wniosków",
+    "status": {
+      "pending": "Oczekuje na zatwierdzenie",
+      "approved": "Zatwierdzony",
+      "rejected": "Odrzucony",
+      "cancelled": "Anulowany"
+    }
+  },
+  "rating": {
+    "title": "Podoba Ci się Vantro?",
+    "body": "Zakończyłeś już trzy zmiany. Krótka ocena pomoże innym fachowcom znaleźć aplikację.",
+    "rate": "Oceń aplikację",
+    "later": "Nie teraz"
+  }
+}

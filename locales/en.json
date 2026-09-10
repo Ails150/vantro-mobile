@@ -1,0 +1,97 @@
+{
+  "common": {
+    "back": "Back",
+    "cancel": "Cancel",
+    "continue": "Continue",
+    "retry": "Try again",
+    "close": "Close",
+    "loading": "Loading"
+  },
+  "language": {
+    "title": "Choose your language",
+    "subtitle": "You can change this later from the sign in screen.",
+    "name": "Language",
+    "confirm": "Continue"
+  },
+  "sync": {
+    "syncing": "Syncing",
+    "offline": "Offline",
+    "pending": {
+      "one": "%{count} to sync",
+      "other": "%{count} to sync"
+    },
+    "a11ySyncing": "Syncing queued work",
+    "a11yOffline": "Offline, no queued work",
+    "a11yPending": {
+      "one": "%{count} action waiting to sync",
+      "other": "%{count} actions waiting to sync"
+    },
+    "a11yPendingOffline": {
+      "one": "%{count} action waiting to sync, currently offline",
+      "other": "%{count} actions waiting to sync, currently offline"
+    }
+  },
+  "login": {
+    "title": "Enter your PIN",
+    "enterPin": "Enter your PIN",
+    "forgotPin": "Forgot your PIN?",
+    "emailLabel": "Work email",
+    "emailPrompt": "Enter the email your manager invited you with.",
+    "incorrectPin": "Incorrect PIN",
+    "connectionError": "Connection error. Check your internet."
+  },
+  "jobs": {
+    "title": "Jobs",
+    "role": "Installer",
+    "logOut": "Sign out",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "empty": "No jobs assigned yet",
+    "offlineBanner": "Offline. Showing your last synced jobs.",
+    "queuedSignIn": "Offline - sign-in queued, will sync when online",
+    "locationRequired": "Enable location access to sign in to a job.",
+    "locationFailed": "Could not get location. Try again.",
+    "directions": "Directions"
+  },
+  "holidays": {
+    "title": "Holiday",
+    "subtitle": "Request time off",
+    "balance": "Remaining this year",
+    "daysUnit": {
+      "one": "%{count} day",
+      "other": "%{count} days"
+    },
+    "allowance": "Allowance %{total}",
+    "taken": "Taken %{taken}",
+    "pending": "Pending %{pending}",
+    "pickDates": "Pick your dates",
+    "from": "From",
+    "to": "To",
+    "selectStart": "Tap a day to start",
+    "selectEnd": "Tap the last day",
+    "requesting": "%{count} working days requested",
+    "note": "Note for your manager (optional)",
+    "submit": "Request holiday",
+    "submitting": "Sending",
+    "submitted": "Request sent",
+    "submittedBody": "Your manager will review it and you will get a notification when they decide.",
+    "exceeds": "That is more than you have left. You have %{remaining} remaining.",
+    "overlap": "You already have a request covering those dates.",
+    "offline": "You need a connection to request holiday.",
+    "failed": "Could not send the request. Try again.",
+    "yourRequests": "Your requests",
+    "noRequests": "No requests yet",
+    "status": {
+      "pending": "Awaiting approval",
+      "approved": "Approved",
+      "rejected": "Declined",
+      "cancelled": "Cancelled"
+    }
+  },
+  "rating": {
+    "title": "Enjoying Vantro?",
+    "body": "You have signed out of three shifts. A quick rating helps other trades find the app.",
+    "rate": "Rate the app",
+    "later": "Not now"
+  }
+}

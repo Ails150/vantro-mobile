@@ -1,0 +1,101 @@
+{
+  "common": {
+    "back": "Înapoi",
+    "cancel": "Anulează",
+    "continue": "Continuă",
+    "retry": "Încearcă din nou",
+    "close": "Închide",
+    "loading": "Se încarcă"
+  },
+  "language": {
+    "title": "Alege limba",
+    "subtitle": "Poți schimba mai târziu din ecranul de autentificare.",
+    "name": "Limbă",
+    "confirm": "Continuă"
+  },
+  "sync": {
+    "syncing": "Se sincronizează",
+    "offline": "Offline",
+    "pending": {
+      "one": "%{count} de trimis",
+      "few": "%{count} de trimis",
+      "other": "%{count} de trimis"
+    },
+    "a11ySyncing": "Se sincronizează acțiunile din coadă",
+    "a11yOffline": "Offline, nicio acțiune în așteptare",
+    "a11yPending": {
+      "one": "%{count} acțiune așteaptă sincronizarea",
+      "few": "%{count} acțiuni așteaptă sincronizarea",
+      "other": "%{count} de acțiuni așteaptă sincronizarea"
+    },
+    "a11yPendingOffline": {
+      "one": "%{count} acțiune așteaptă sincronizarea, momentan offline",
+      "few": "%{count} acțiuni așteaptă sincronizarea, momentan offline",
+      "other": "%{count} de acțiuni așteaptă sincronizarea, momentan offline"
+    }
+  },
+  "login": {
+    "title": "Introdu codul PIN",
+    "enterPin": "Introdu codul PIN",
+    "forgotPin": "Ai uitat PIN-ul?",
+    "emailLabel": "E-mail de serviciu",
+    "emailPrompt": "Introdu adresa de e-mail pe care managerul te-a invitat.",
+    "incorrectPin": "PIN incorect",
+    "connectionError": "Eroare de conexiune. Verifică internetul."
+  },
+  "jobs": {
+    "title": "Lucrări",
+    "role": "Instalator",
+    "logOut": "Deconectare",
+    "signIn": "Pontaj intrare",
+    "signOut": "Pontaj ieșire",
+    "empty": "Nicio lucrare alocată încă",
+    "offlineBanner": "Offline. Îți arătăm ultimele lucrări sincronizate.",
+    "queuedSignIn": "Offline - pontajul a fost salvat și se trimite când revine conexiunea",
+    "locationRequired": "Activează accesul la locație pentru a ponta pe o lucrare.",
+    "locationFailed": "Nu am putut obține locația. Încearcă din nou.",
+    "directions": "Indicații"
+  },
+  "holidays": {
+    "title": "Concediu",
+    "subtitle": "Solicită zile libere",
+    "balance": "Rămase anul acesta",
+    "daysUnit": {
+      "one": "%{count} zi",
+      "few": "%{count} zile",
+      "other": "%{count} de zile"
+    },
+    "allowance": "Drept anual %{total}",
+    "taken": "Luate %{taken}",
+    "pending": "În așteptare %{pending}",
+    "pickDates": "Alege datele",
+    "from": "De la",
+    "to": "Până la",
+    "selectStart": "Atinge o zi pentru a începe",
+    "selectEnd": "Atinge ultima zi",
+    "requesting": "Ai cerut %{count} zile lucrătoare",
+    "note": "Mesaj pentru manager (opțional)",
+    "submit": "Trimite cererea",
+    "submitting": "Se trimite",
+    "submitted": "Cerere trimisă",
+    "submittedBody": "Managerul o va analiza și vei primi o notificare cu decizia.",
+    "exceeds": "Este mai mult decât ai rămas. Mai ai %{remaining}.",
+    "overlap": "Ai deja o cerere care acoperă acele date.",
+    "offline": "Ai nevoie de conexiune pentru a cere concediu.",
+    "failed": "Nu am putut trimite cererea. Încearcă din nou.",
+    "yourRequests": "Cererile tale",
+    "noRequests": "Nicio cerere încă",
+    "status": {
+      "pending": "Așteaptă aprobarea",
+      "approved": "Aprobată",
+      "rejected": "Respinsă",
+      "cancelled": "Anulată"
+    }
+  },
+  "rating": {
+    "title": "Îți place Vantro?",
+    "body": "Ai încheiat trei ture. O evaluare scurtă ajută alți meseriași să găsească aplicația.",
+    "rate": "Evaluează aplicația",
+    "later": "Nu acum"
+  }
+}

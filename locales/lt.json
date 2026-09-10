@@ -1,0 +1,101 @@
+{
+  "common": {
+    "back": "Atgal",
+    "cancel": "Atšaukti",
+    "continue": "Tęsti",
+    "retry": "Bandyti dar kartą",
+    "close": "Uždaryti",
+    "loading": "Kraunama"
+  },
+  "language": {
+    "title": "Pasirinkite kalbą",
+    "subtitle": "Vėliau galėsite pakeisti prisijungimo lange.",
+    "name": "Kalba",
+    "confirm": "Tęsti"
+  },
+  "sync": {
+    "syncing": "Sinchronizuojama",
+    "offline": "Neprisijungus",
+    "pending": {
+      "one": "%{count} laukia išsiuntimo",
+      "few": "%{count} laukia išsiuntimo",
+      "other": "%{count} laukia išsiuntimo"
+    },
+    "a11ySyncing": "Sinchronizuojami eilėje esantys veiksmai",
+    "a11yOffline": "Neprisijungus, eilėje nieko nėra",
+    "a11yPending": {
+      "one": "%{count} veiksmas laukia sinchronizavimo",
+      "few": "%{count} veiksmai laukia sinchronizavimo",
+      "other": "%{count} veiksmų laukia sinchronizavimo"
+    },
+    "a11yPendingOffline": {
+      "one": "%{count} veiksmas laukia sinchronizavimo, šiuo metu neprisijungus",
+      "few": "%{count} veiksmai laukia sinchronizavimo, šiuo metu neprisijungus",
+      "other": "%{count} veiksmų laukia sinchronizavimo, šiuo metu neprisijungus"
+    }
+  },
+  "login": {
+    "title": "Įveskite PIN kodą",
+    "enterPin": "Įveskite PIN kodą",
+    "forgotPin": "Pamiršote PIN kodą?",
+    "emailLabel": "Darbo el. paštas",
+    "emailPrompt": "Įveskite el. pašto adresą, kuriuo vadovas atsiuntė kvietimą.",
+    "incorrectPin": "Neteisingas PIN kodas",
+    "connectionError": "Ryšio klaida. Patikrinkite internetą."
+  },
+  "jobs": {
+    "title": "Darbai",
+    "role": "Montuotojas",
+    "logOut": "Atsijungti",
+    "signIn": "Pradėti darbą",
+    "signOut": "Baigti darbą",
+    "empty": "Kol kas nepriskirta darbų",
+    "offlineBanner": "Neprisijungus. Rodomi paskutiniai sinchronizuoti darbai.",
+    "queuedSignIn": "Neprisijungus - darbo pradžia įrašyta, išsiųsime atsiradus ryšiui",
+    "locationRequired": "Įjunkite vietos nustatymą, kad galėtumėte pradėti darbą.",
+    "locationFailed": "Nepavyko nustatyti vietos. Bandykite dar kartą.",
+    "directions": "Maršrutas"
+  },
+  "holidays": {
+    "title": "Atostogos",
+    "subtitle": "Prašyti laisvų dienų",
+    "balance": "Liko šiemet",
+    "daysUnit": {
+      "one": "%{count} diena",
+      "few": "%{count} dienos",
+      "other": "%{count} dienų"
+    },
+    "allowance": "Priklauso %{total}",
+    "taken": "Panaudota %{taken}",
+    "pending": "Laukia %{pending}",
+    "pickDates": "Pasirinkite datas",
+    "from": "Nuo",
+    "to": "Iki",
+    "selectStart": "Palieskite dieną, kad pradėtumėte",
+    "selectEnd": "Palieskite paskutinę dieną",
+    "requesting": "Prašote %{count} darbo dienų",
+    "note": "Žinutė vadovui (nebūtina)",
+    "submit": "Pateikti prašymą",
+    "submitting": "Siunčiama",
+    "submitted": "Prašymas išsiųstas",
+    "submittedBody": "Vadovas jį peržiūrės, o jūs gausite pranešimą apie sprendimą.",
+    "exceeds": "Tai daugiau, nei jums liko. Liko %{remaining}.",
+    "overlap": "Jūs jau turite prašymą toms dienoms.",
+    "offline": "Prašymui pateikti reikia interneto ryšio.",
+    "failed": "Nepavyko išsiųsti prašymo. Bandykite dar kartą.",
+    "yourRequests": "Jūsų prašymai",
+    "noRequests": "Prašymų dar nėra",
+    "status": {
+      "pending": "Laukia patvirtinimo",
+      "approved": "Patvirtintas",
+      "rejected": "Atmestas",
+      "cancelled": "Atšauktas"
+    }
+  },
+  "rating": {
+    "title": "Ar patinka Vantro?",
+    "body": "Baigėte tris pamainas. Trumpas įvertinimas padės kitiems meistrams rasti programėlę.",
+    "rate": "Įvertinti programėlę",
+    "later": "Ne dabar"
+  }
+}

@@ -6,6 +6,9 @@ import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { alpha, colors } from '@/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { useLanguage } from '@/context/LanguageContext';
+import { LANGUAGES } from '@/lib/i18n';
 
 const COLORS = { bg: colors.base, card: colors.surface1, teal: colors.teal, muted: colors.textMuted, text: colors.textPrimary, error: colors.red };
 
@@ -24,6 +27,8 @@ export default function LoginScreen() {
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const { login } = useAuth();
   const router = useRouter();
+  const { language, t } = useLanguage();
+  const currentLanguage = LANGUAGES.find(l => l.code === language);
 
   useEffect(() => {
     async function init() {
@@ -169,6 +174,17 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={s.safe}>
+      {/* The only route back to the picker once the first run choice is made. */}
+      <TouchableOpacity
+        onPress={() => router.push('/language?change=1')}
+        accessibilityRole="button"
+        accessibilityLabel={t('language.name')}
+        hitSlop={12}
+        style={s.langBtn}
+      >
+        <Ionicons name="language-outline" size={16} color={COLORS.muted} />
+        <Text style={s.langTxt}>{currentLanguage?.label ?? t('language.name')}</Text>
+      </TouchableOpacity>
       <View style={s.container}>
         <View style={s.logo}>
           <View style={s.logoIcon}>
@@ -177,7 +193,7 @@ export default function LoginScreen() {
           <Text style={s.logoText}>Van<Text style={{ color: COLORS.teal }}>tro</Text></Text>
           <Text style={s.logoSub}>Field Operations</Text>
         </View>
-        <Text style={s.heading}>{mode === 'setup' ? 'Choose your PIN' : 'Enter your PIN'}</Text>
+        <Text style={s.heading}>{mode === 'setup' ? 'Choose your PIN' : t('login.enterPin')}</Text>
         {mode === 'setup' && <Text style={s.hint}>Setting up for {setupEmail}</Text>}
         <Animated.View style={[s.dots, { transform: [{ translateX: shakeAnim }] }]}>
           {[0,1,2,3].map(i => <View key={i} style={[s.dot, pin.length > i && s.dotFilled]}/>)}
@@ -250,6 +266,12 @@ export default function LoginScreen() {
 }
 
 const s = StyleSheet.create({
+  langBtn: {
+    position: 'absolute', top: 8, right: 16, zIndex: 2,
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingVertical: 8, paddingHorizontal: 12,
+  },
+  langTxt: { color: colors.textMuted, fontSize: 13, fontWeight: '600' },
   safe: { flex: 1, backgroundColor: COLORS.bg },
   container: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
   logo: { alignItems: 'center', marginBottom: 40 },

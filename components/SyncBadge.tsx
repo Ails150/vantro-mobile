@@ -3,6 +3,7 @@ import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { alpha, colors, radius, space } from '@/theme';
 import { subscribeSync, type SyncState } from '@/lib/offline';
+import { useT } from '@/context/LanguageContext';
 
 /**
  * Header indicator for work the device is holding.
@@ -13,6 +14,7 @@ import { subscribeSync, type SyncState } from '@/lib/offline';
  */
 export default function SyncBadge() {
   const [state, setState] = useState<SyncState | null>(null);
+  const t = useT();
 
   useEffect(() => subscribeSync(setState), []);
 
@@ -23,16 +25,16 @@ export default function SyncBadge() {
   const tone = syncing ? colors.teal : pending > 0 ? colors.amber : colors.textMuted;
 
   const label = syncing
-    ? 'Syncing'
+    ? t('sync.syncing')
     : pending > 0
-      ? `${pending} to sync`
-      : 'Offline';
+      ? t('sync.pending', { count: pending })
+      : t('sync.offline');
 
   const a11y = syncing
-    ? 'Syncing queued work'
+    ? t('sync.a11ySyncing')
     : pending > 0
-      ? `${pending} ${pending === 1 ? 'action' : 'actions'} waiting to sync${online ? '' : ', currently offline'}`
-      : 'Offline, no queued work';
+      ? t(online ? 'sync.a11yPending' : 'sync.a11yPendingOffline', { count: pending })
+      : t('sync.a11yOffline');
 
   return (
     <View

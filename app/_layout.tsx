@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { AppState } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from '@/context/AuthContext';
+import { LanguageProvider } from '@/context/LanguageContext';
 import { registerTrackingScheduler } from '@/lib/trackingScheduler';
 import { hydrateActiveShift } from '@/lib/activeShift';
 import { evaluateTrackingState } from '@/lib/locationTracker';
@@ -48,10 +49,12 @@ export default Sentry.wrap(function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <StatusBar style="light" />
-        <Stack screenOptions={{ headerShown: false }} />
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <StatusBar style="light" />
+          <Stack screenOptions={{ headerShown: false }} />
+        </AuthProvider>
+      </LanguageProvider>
     </SafeAreaProvider>
   );
 });
