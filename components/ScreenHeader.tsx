@@ -3,15 +3,18 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, space, type } from '../theme';
+import SyncBadge from './SyncBadge';
 
 type Props = {
   title: string;
   subtitle?: string;
   onBack?: () => void;
   right?: React.ReactNode;
+  /** Hide the queued-work indicator on screens that own the sync story themselves. */
+  showSync?: boolean;
 };
 
-export default function ScreenHeader({ title, subtitle, onBack, right }: Props) {
+export default function ScreenHeader({ title, subtitle, onBack, right, showSync = true }: Props) {
   const insets = useSafeAreaInsets();
   return (
     <View style={[s.wrap, { paddingTop: insets.top + space.md }]}>
@@ -34,7 +37,12 @@ export default function ScreenHeader({ title, subtitle, onBack, right }: Props) 
         ) : null}
       </View>
 
-      {right ? <View style={s.right}>{right}</View> : null}
+      {showSync || right ? (
+        <View style={s.right}>
+          {showSync ? <SyncBadge /> : null}
+          {right}
+        </View>
+      ) : null}
     </View>
   );
 }

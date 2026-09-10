@@ -9,6 +9,8 @@ import { hydrateActiveShift } from '@/lib/activeShift';
 import { evaluateTrackingState } from '@/lib/locationTracker';
 import * as Sentry from '@sentry/react-native';
 import { initSentry } from '@/lib/sentry';
+import { startQueueAutoSync } from '@/lib/offline';
+import { authFetch } from '@/lib/api';
 
 initSentry();
 
@@ -18,6 +20,10 @@ export default Sentry.wrap(function RootLayout() {
   useEffect(() => {
     // Register the background fetch scheduler once at app startup
     registerTrackingScheduler().catch(() => {});
+
+    // Drain queued sign ins and sign outs as soon as the connection returns,
+    // rather than waiting for someone to open the jobs list.
+    const stopAutoSync = startQueueAutoSync(authFetch);
 
     // Initial hydrate + evaluate
     (async () => {
@@ -37,7 +43,7 @@ export default Sentry.wrap(function RootLayout() {
       }
       appState.current = next;
     });
-    return () => sub.remove();
+    return () => { sub.remove(); stopAutoSync(); };
   }, []);
 
   return (
