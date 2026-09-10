@@ -18,6 +18,8 @@ import { alpha, colors, formatDistance, radius, space, type } from '@/theme';
 import PrimaryButton from '@/components/PrimaryButton';
 import EmptyState from '@/components/EmptyState';
 import ScreenHeader from '@/components/ScreenHeader';
+import { shouldPromptForRating, markRatingAsked, requestReview } from '@/lib/rating';
+import { useT } from '@/context/LanguageContext';
 
 const C = {
   bg: colors.base, card: colors.surface1, teal: colors.teal,
@@ -122,6 +124,30 @@ export default function JobsScreen() {
   }, []);
 
   const appState = useRef(AppState.currentState);
+  const t = useT();
+
+  // Sign out navigates straight here, so this is where the third one lands.
+  // Asking on the job screen would have meant a dialog over a screen that is
+  // already unmounting.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!(await shouldPromptForRating()) || cancelled) return;
+      // Written before the prompt, not after: the OS dialog reports nothing
+      // back, so recording on success would ask again on every dismissal.
+      await markRatingAsked();
+      Alert.alert(
+        t('rating.title'),
+        t('rating.body'),
+        [
+          { text: t('rating.later'), style: 'cancel' },
+          { text: t('rating.rate'), onPress: () => { requestReview(); } },
+        ],
+        { cancelable: true },
+      );
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const loadJobs = useCallback(async () => {
     const online = await isOnline();

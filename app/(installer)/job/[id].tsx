@@ -11,6 +11,7 @@ import { authFetch } from '@/lib/api';
 import { getCachedJobs, cacheJobs, isOnline, queueAction } from '@/lib/offline';
 import { getActiveShift, clearActiveShift, hydrateActiveShift } from '@/lib/activeShift';
 import { stopBackgroundTracking } from '@/lib/locationTracker';
+import { recordSuccessfulSignOut } from '@/lib/rating';
 import { distanceToJob, geofenceRadius } from '@/lib/geo';
 import { colors, formatDistance, radius, space, type } from '@/theme';
 
@@ -242,6 +243,8 @@ export default function JobHubScreen() {
       if (posted) {
         await clearActiveShift();
         stopBackgroundTracking().catch(() => {});
+        // Only a sign out the server took counts towards the rating prompt.
+        await recordSuccessfulSignOut();
       } else {
         await queueAction({ type: 'signout', payload: { jobId: id } });
         await clearActiveShift();
