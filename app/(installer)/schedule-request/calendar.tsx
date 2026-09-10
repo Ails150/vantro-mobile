@@ -10,6 +10,7 @@ import { authFetch } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import ScreenHeader from '@/components/ScreenHeader';
 import { alpha, colors } from '@/theme';
+import { useT } from '@/context/LanguageContext';
 
 const C = {
   bg: colors.base, card: colors.surface1, teal: colors.teal,
@@ -27,13 +28,13 @@ const TYPE_LABELS: Record<string, string> = {
 interface CalendarContext {
   user_id: string;
   leave_year: { start: string; end: string };
-  balance: { entitlement: number; used: number; remaining: number };
+  balance: { entitlement: number; used: number; pending?: number; remaining: number };
   my_entries: Array<{
     id: string;
     type: string;
     start_date: string;
     end_date: string;
-    status: 'pending' | 'approved' | 'rejected';
+    status: 'pending' | 'approved' | 'rejected' | 'cancelled';
   }>;
   team_entries: Array<{ date: string; count: number }>;
   public_holidays: Array<{ date: string; name: string }>;
@@ -42,6 +43,7 @@ interface CalendarContext {
 export default function CalendarPickerScreen() {
   const router = useRouter();
   const { logout } = useAuth();
+  const t = useT();
   const { type } = useLocalSearchParams<{ type: string }>();
   const typeLabel = TYPE_LABELS[type || ''] || 'Time off';
   const isAnnualLeave = type === 'annual_leave';
@@ -109,9 +111,12 @@ export default function CalendarPickerScreen() {
       };
     }
 
-    // My approved entries, blocked
+    // Days already spoken for. Pending counts: the dates are with the manager,
+    // and offering them again is how one week off became two rows in the queue.
+    // Approved is teal, still-waiting is amber, so they do not read as the same.
     for (const e of entries) {
-      if (e.status !== 'approved') continue;
+      if (e.status !== 'approved' && e.status !== 'pending') continue;
+      const tone = e.status === 'approved' ? C.teal : C.amber;
       const days = expandDates(e.start_date, e.end_date);
       for (const d of days) {
         marks[d] = {
@@ -119,8 +124,8 @@ export default function CalendarPickerScreen() {
           disabled: true,
           disableTouchEvent: true,
           customStyles: {
-            container: { backgroundColor: alpha(colors.teal, 0.25), borderRadius: 8 },
-            text: { color: C.teal, fontWeight: '600' },
+            container: { backgroundColor: alpha(tone, 0.25), borderRadius: 8 },
+            text: { color: tone, fontWeight: '600' },
           },
         };
       }
@@ -153,7 +158,7 @@ export default function CalendarPickerScreen() {
     // If selected day is in an approved block, ignore
     const blocked = (context?.my_entries || []).some(
       (e) =>
-        e.status === 'approved' &&
+        (e.status === 'approved' || e.status === 'pending') &&
         d >= e.start_date &&
         d <= e.end_date
     );
@@ -245,10 +250,35 @@ export default function CalendarPickerScreen() {
         </TouchableOpacity>
         <View style={{ alignItems: 'center', flex: 1 }}>
           <Text style={styles.headerTitle}>{typeLabel}</Text>
-          <Text style={styles.headerSub}>Select dates</Text>
+          <Text style={styles.headerSub}>{t('holidays.pickDates')}</Text>
         </View>
         <View style={{ width: 40 }} />
       </View>
+
+      {/* The balance stood only in the footer, and only once a range was picked -
+          so the screen opened without answering the first question anyone has,
+          which is how much is left. */}
+      {isAnnualLeave ? (
+        <View style={styles.balanceCard}>
+          <View style={styles.balanceMain}>
+            <Text style={styles.balanceNum}>{formatDays(context.balance.remaining)}</Text>
+            <Text style={styles.balanceLabel}>{t('holidays.balance')}</Text>
+          </View>
+          <View style={styles.balanceBreakdown}>
+            <Text style={styles.balanceMeta}>
+              {t('holidays.allowance', { total: formatDays(context.balance.entitlement) })}
+            </Text>
+            <Text style={styles.balanceMeta}>
+              {t('holidays.taken', { taken: formatDays(context.balance.used) })}
+            </Text>
+            {context.balance.pending ? (
+              <Text style={[styles.balanceMeta, { color: C.amber }]}>
+                {t('holidays.pending', { pending: formatDays(context.balance.pending) })}
+              </Text>
+            ) : null}
+          </View>
+        </View>
+      ) : null}
 
       <View style={styles.calendarWrap}>
         <Calendar
@@ -329,7 +359,7 @@ export default function CalendarPickerScreen() {
             </View>
           </>
         ) : (
-          <Text style={styles.footerHint}>Tap a day to start, then tap another to set the end.</Text>
+          <Text style={styles.footerHint}>{t('holidays.selectStart')}</Text>
         )}
       </View>
     </View>
@@ -346,6 +376,11 @@ function expandDates(start: string, end: string): string[] {
     result.push(d.toISOString().slice(0, 10));
   }
   return result;
+}
+
+// 28 rather than 28.0, but 0.5 stays 0.5 - half days are real here.
+function formatDays(n: number): string {
+  return Number.isInteger(n) ? String(n) : String(Math.round(n * 10) / 10);
 }
 
 function countDays(start: string, end: string): number {
@@ -386,6 +421,20 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 8,
   },
+
+  balanceCard: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    gap: 12,
+    marginHorizontal: 16, marginTop: 12,
+    paddingHorizontal: 16, paddingVertical: 12,
+    backgroundColor: C.card, borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth, borderColor: C.border,
+  },
+  balanceMain: { flexDirection: 'row', alignItems: 'baseline', gap: 8, flexShrink: 1 },
+  balanceNum: { color: C.teal, fontSize: 26, fontWeight: '700' },
+  balanceLabel: { color: C.muted, fontSize: 13, flexShrink: 1 },
+  balanceBreakdown: { alignItems: 'flex-end' },
+  balanceMeta: { color: C.muted, fontSize: 12, marginTop: 1 },
 
   holidayChip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,

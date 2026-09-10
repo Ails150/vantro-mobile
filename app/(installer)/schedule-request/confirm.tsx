@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { authFetch } from '@/lib/api';
 import ScreenHeader from '@/components/ScreenHeader';
 import { alpha, colors } from '@/theme';
+import { useT } from '@/context/LanguageContext';
 
 const C = {
   bg: colors.base, card: colors.surface1, teal: colors.teal,
@@ -32,6 +33,7 @@ const TYPE_EMOJI: Record<string, string> = {
 
 export default function ConfirmScreen() {
   const router = useRouter();
+  const t = useT();
   const params = useLocalSearchParams<{
     type: string;
     start_date: string;
@@ -68,9 +70,20 @@ export default function ConfirmScreen() {
           notes: note.trim() || null,
         }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        Alert.alert('Could not submit', data.error || 'Please try again.');
+        // 409 is the server telling us these dates are already spoken for,
+        // which is the expected answer to a double submission rather than a
+        // failure. Say what happened instead of "please try again", which
+        // invites exactly the retry that cannot work.
+        if (res.status === 409 || data?.code === 'overlap') {
+          Alert.alert(t('holidays.title'), t('holidays.overlap'), [
+            { text: t('common.back'), onPress: () => router.back() },
+          ]);
+          setSubmitting(false);
+          return;
+        }
+        Alert.alert(t('holidays.title'), data?.error || t('holidays.failed'));
         setSubmitting(false);
         return;
       }
@@ -78,7 +91,7 @@ export default function ConfirmScreen() {
       router.dismissAll();
       router.replace('/schedule' as any);
     } catch (err) {
-      Alert.alert('Could not submit', 'Check your connection and try again.');
+      Alert.alert(t('holidays.title'), t('holidays.failed'));
       setSubmitting(false);
     }
   }
