@@ -114,7 +114,7 @@ export default function LoginScreen() {
           if (!res.ok) throw new Error(data.error || 'Failed to set PIN');
           await SecureStore.setItemAsync('installer_email', setupEmail);
           await SecureStore.setItemAsync('installer_pin', newPin);
-          router.replace('/(installer)/jobs');
+          router.replace('/(installer)/home');
         } catch (e: any) {
           shake(); setError(e.message); setPin('');
         }
@@ -124,7 +124,7 @@ export default function LoginScreen() {
         else if (result.error) { shake(); setError(result.error); setPin(''); }
         else {
           const ack = await AsyncStorage.getItem('gps_acknowledged');
-          if (ack === 'true') { router.replace('/(installer)/jobs'); }
+          if (ack === 'true') { router.replace('/(installer)/home'); }
           else { router.replace('/gps-consent'); }
         }
       }

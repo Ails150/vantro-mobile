@@ -14,7 +14,7 @@ export default function AdminLayout() {
     </View>
   );
   if (!user) return <Redirect href="/login" />;
-  if (user.role !== 'admin' && user.role !== 'foreman') return <Redirect href="/(installer)/jobs" />;
+  if (user.role !== 'admin' && user.role !== 'foreman') return <Redirect href="/(installer)/home" />;
 
   return (
     <Tabs screenOptions={{

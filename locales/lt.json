@@ -43,6 +43,18 @@
     "incorrectPin": "Neteisingas PIN kodas",
     "connectionError": "Ryšio klaida. Patikrinkite internetą."
   },
+  "home": {
+    "title": "Pradžia",
+    "onSite": "Objekte",
+    "signedInAt": "Prisiregistruota %{time}",
+    "resume": "Tęsti",
+    "untitledJob": "Jūsų darbas",
+    "notSignedIn": "Neprisiregistruota",
+    "notSignedInBody": "Atidarykite Darbai ir prisiregistruokite atvykę į objektą. Darbas atsiras čia.",
+    "findJob": "Rasti darbą",
+    "schedule": "Grafikas",
+    "hours": "Mano valandos"
+  },
   "jobs": {
     "title": "Darbai",
     "role": "Montuotojas",

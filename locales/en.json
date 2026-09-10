@@ -40,6 +40,18 @@
     "incorrectPin": "Incorrect PIN",
     "connectionError": "Connection error. Check your internet."
   },
+  "home": {
+    "title": "Home",
+    "onSite": "On site",
+    "signedInAt": "Signed in at %{time}",
+    "resume": "Resume",
+    "untitledJob": "Your job",
+    "notSignedIn": "Not signed in",
+    "notSignedInBody": "Open Jobs and sign in when you reach site. Your job will show here.",
+    "findJob": "Find a job",
+    "schedule": "Schedule",
+    "hours": "My hours"
+  },
   "jobs": {
     "title": "Jobs",
     "role": "Installer",

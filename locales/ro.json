@@ -43,6 +43,18 @@
     "incorrectPin": "PIN incorect",
     "connectionError": "Eroare de conexiune. Verifică internetul."
   },
+  "home": {
+    "title": "Acasă",
+    "onSite": "Pe șantier",
+    "signedInAt": "Pontat la %{time}",
+    "resume": "Continuă",
+    "untitledJob": "Lucrarea ta",
+    "notSignedIn": "Nepontat",
+    "notSignedInBody": "Deschide Lucrări și pontează-te când ajungi pe șantier. Lucrarea va apărea aici.",
+    "findJob": "Caută o lucrare",
+    "schedule": "Program",
+    "hours": "Orele mele"
+  },
   "jobs": {
     "title": "Lucrări",
     "role": "Instalator",

@@ -13,6 +13,7 @@ import { getActiveShift, clearActiveShift, hydrateActiveShift } from '@/lib/acti
 import { stopBackgroundTracking } from '@/lib/locationTracker';
 import { recordSuccessfulSignOut } from '@/lib/rating';
 import { distanceToJob, geofenceRadius } from '@/lib/geo';
+import { clockTime } from '@/lib/clock';
 import { colors, formatDistance, radius, space, type } from '@/theme';
 
 type Badge = { text: string; tone: 'teal' | 'amber' | 'muted' } | null;
@@ -24,20 +25,6 @@ type Action = {
   pathname: string;
   badge: Badge;
 };
-
-function two(n: number) { return String(n).padStart(2, '0'); }
-
-// "07:42" in the device's local time, matching how the installer reads a clock.
-function clockTime(iso: string): string {
-  const d = new Date(iso);
-  return `${two(d.getHours())}:${two(d.getMinutes())}`;
-}
-
-function elapsedSince(iso: string, nowMs: number): string {
-  const ms = Math.max(0, nowMs - new Date(iso).getTime());
-  const total = Math.floor(ms / 1000);
-  return `${two(Math.floor(total / 3600))}:${two(Math.floor(total / 60) % 60)}:${two(total % 60)}`;
-}
 
 // An await with no deadline is indistinguishable from a dead button.
 function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
@@ -61,7 +48,6 @@ export default function JobHubScreen() {
   const [job, setJob] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [signedInAt, setSignedInAt] = useState<string | null>(null);
-  const [now, setNow] = useState(() => Date.now());
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [diaryToday, setDiaryToday] = useState<number | null>(null);
   const [qaProgress, setQaProgress] = useState<{ done: number; total: number } | null>(null);
@@ -141,13 +127,6 @@ export default function JobHubScreen() {
     });
     return () => sub.remove();
   }, [loadJob, loadBadges]);
-
-  // Elapsed timer.
-  useEffect(() => {
-    if (!signedInAt) return;
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, [signedInAt]);
 
   // Distance to site, so the sign out button can refuse before it is pressed.
   useEffect(() => {
@@ -250,7 +229,7 @@ export default function JobHubScreen() {
         await clearActiveShift();
       }
       console.log('[HUB-SIGNOUT] done, posted=', posted);
-      router.replace('/(installer)/jobs');
+      router.replace('/(installer)/home');
     } catch (e: any) {
       console.log('[HUB-SIGNOUT] threw', e?.message);
       setSignOutError(
@@ -264,6 +243,13 @@ export default function JobHubScreen() {
   }
 
   const jobName = job?.name || name || 'Job';
+
+  // Back goes Home, not to the jobs list. Whoever leaves this screen is either
+  // still on the shift -- in which case Home carries it with a Resume button --
+  // or has just signed out, and neither wants a list of jobs to search through.
+  function goHome() {
+    router.replace('/(installer)/home');
+  }
 
   const actions: Action[] = [
     {
@@ -287,7 +273,7 @@ export default function JobHubScreen() {
   if (loading) {
     return (
       <View style={s.safe}>
-        <ScreenHeader title={jobName} onBack={() => router.back()} />
+        <ScreenHeader title={jobName} onBack={goHome} />
         <View style={s.loading}><ActivityIndicator color={colors.teal} /></View>
       </View>
     );
@@ -295,16 +281,18 @@ export default function JobHubScreen() {
 
   return (
     <View style={s.safe}>
-      <ScreenHeader title={jobName} subtitle={job?.address} onBack={() => router.back()} />
+      <ScreenHeader title={jobName} subtitle={job?.address} onBack={goHome} />
 
       <ScrollView contentContainerStyle={s.scroll}>
+        {/* The shift shows the time it started and nothing else. A ticking
+            counter turns a shift into a stopwatch the worker feels watched by,
+            and it re-rendered this screen once a second to say so. */}
         {signedInAt ? (
           <View style={s.shiftRow}>
             <View style={s.chip}>
               <View style={s.chipDot} />
               <Text style={s.chipTxt}>Signed in at {clockTime(signedInAt)}</Text>
             </View>
-            <Text style={s.elapsed}>{elapsedSince(signedInAt, now)}</Text>
           </View>
         ) : null}
 
@@ -370,15 +358,14 @@ const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.base },
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   scroll: { padding: space.lg, paddingBottom: space.xxl },
-  shiftRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: space.lg },
+  shiftRow: { flexDirection: 'row', alignItems: 'center', marginBottom: space.lg },
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: space.sm,
     backgroundColor: colors.surface1, borderWidth: 1, borderColor: colors.border,
     borderRadius: radius.pill, paddingHorizontal: space.md, paddingVertical: space.sm,
   },
   chipDot: { width: 8, height: 8, borderRadius: radius.pill, backgroundColor: colors.teal },
-  chipTxt: { ...type.sub, color: colors.teal },
-  elapsed: { ...type.heading, fontVariant: ['tabular-nums'] },
+  chipTxt: { ...type.sub, color: colors.teal, fontVariant: ['tabular-nums'] },
   list: { backgroundColor: colors.surface1, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.lg, paddingVertical: 18 },
   rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
@@ -392,9 +379,15 @@ const s = StyleSheet.create({
     paddingHorizontal: space.lg, paddingTop: space.md, gap: space.sm,
     backgroundColor: colors.base, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border,
   },
-  signOut: { borderWidth: 1, borderColor: colors.red, borderRadius: radius.md, paddingVertical: 16, alignItems: 'center' },
+  // Solid and neutral, not a red outline. Finishing a shift is the normal end
+  // of the day: red is the colour this app uses for a defect or a refusal, and
+  // spending it on the expected action teaches people to ignore it.
+  signOut: {
+    backgroundColor: colors.surface3, borderWidth: 1, borderColor: colors.surface3,
+    borderRadius: radius.md, paddingVertical: 16, alignItems: 'center',
+  },
   signOutOff: { borderColor: colors.surface2, backgroundColor: colors.surface2 },
-  signOutTxt: { color: colors.red, fontSize: 16, fontWeight: '700' },
+  signOutTxt: { color: colors.textPrimary, fontSize: 16, fontWeight: '700' },
   signOutTxtOff: { color: colors.textMuted },
   footerNote: { ...type.caption, textAlign: 'center' },
   footerErr: { color: colors.red },

@@ -46,6 +46,18 @@
     "incorrectPin": "Nieprawidłowy PIN",
     "connectionError": "Błąd połączenia. Sprawdź internet."
   },
+  "home": {
+    "title": "Start",
+    "onSite": "Na budowie",
+    "signedInAt": "Zameldowano o %{time}",
+    "resume": "Wróć do zlecenia",
+    "untitledJob": "Twoje zlecenie",
+    "notSignedIn": "Brak zameldowania",
+    "notSignedInBody": "Otwórz Zlecenia i zamelduj się po dotarciu na budowę. Zlecenie pojawi się tutaj.",
+    "findJob": "Znajdź zlecenie",
+    "schedule": "Grafik",
+    "hours": "Moje godziny"
+  },
   "jobs": {
     "title": "Zlecenia",
     "role": "Monter",

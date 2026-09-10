@@ -22,7 +22,7 @@ export default function GPSAcknowledgmentScreen() {
     authFetch('/api/installer/acknowledge', { method: 'POST', body: JSON.stringify({}) })
       .catch((e) => console.warn('Server acknowledgment failed (non-blocking):', e));
     // Navigate immediately
-    router.replace('/(installer)/jobs');
+    router.replace('/(installer)/home');
   }
 
   return (

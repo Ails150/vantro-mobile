@@ -54,7 +54,7 @@ export default function SetupPin() {
       if (!res.ok) throw new Error(data.error || 'Failed to set PIN')
       await SecureStore.setItemAsync('installer_email', email)
       await SecureStore.setItemAsync('installer_pin', p1)
-      router.replace('/(installer)/jobs')
+      router.replace('/(installer)/home')
     } catch (e: any) {
       Alert.alert('Error', e.message)
       setPin(''); setConfirm(''); setStage('enter')

@@ -60,16 +60,22 @@ export default function InstallerLayout() {
         tabBarLabelStyle: { fontSize: 11 },
       }}
     >
+      {/* Home first. It is where sign out lands and where the open shift is
+          carried, so it is the tab someone opening the app should already be
+          on. Expenses used to sit in this bar and no longer does: it is a
+          thing you do ON a job, so it lives in the job screen's list, one tap
+          from the job it gets charged to. */}
+      <Tabs.Screen name="home" options={{ title: 'Home',
+        tabBarIcon: ({ color, size }) => <Ionicons name="home-outline" size={size} color={color} /> }} />
       <Tabs.Screen name="jobs" options={{ title: 'Jobs',
         tabBarIcon: ({ color, size }) => <Ionicons name="briefcase-outline" size={size} color={color} /> }} />
       <Tabs.Screen name="schedule" options={{ title: 'Schedule',
         tabBarIcon: ({ color, size }) => <Ionicons name="calendar-outline" size={size} color={color} /> }} />
-      <Tabs.Screen name="expenses" options={{ title: 'Expenses',
-        tabBarIcon: ({ color, size }) => <Ionicons name="receipt-outline" size={size} color={color} /> }} />
       <Tabs.Screen name="my-hours" options={{ title: 'Hours',
         tabBarIcon: ({ color, size }) => <Ionicons name="time-outline" size={size} color={color} /> }} />
 
       {/* Reachable from the Jobs list and the job hub, never from the tab bar. */}
+      <Tabs.Screen name="expenses" options={{ href: null }} />
       <Tabs.Screen name="job/[id]" options={{ href: null }} />
       <Tabs.Screen name="diary" options={{ href: null }} />
       <Tabs.Screen name="qa" options={{ href: null }} />

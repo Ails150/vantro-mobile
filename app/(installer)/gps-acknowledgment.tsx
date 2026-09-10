@@ -13,7 +13,7 @@ export default function GPSAcknowledgmentScreen() {
 
   async function handleAccept() {
     await AsyncStorage.setItem('gps_acknowledged', 'true');
-    router.replace('/(installer)/jobs');
+    router.replace('/(installer)/home');
   }
 
   return (

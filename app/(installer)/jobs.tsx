@@ -18,7 +18,6 @@ import { alpha, colors, formatDistance, radius, space, type } from '@/theme';
 import PrimaryButton from '@/components/PrimaryButton';
 import EmptyState from '@/components/EmptyState';
 import ScreenHeader from '@/components/ScreenHeader';
-import { shouldPromptForRating, markRatingAsked, requestReview } from '@/lib/rating';
 import { useT } from '@/context/LanguageContext';
 
 const C = {
@@ -125,29 +124,6 @@ export default function JobsScreen() {
 
   const appState = useRef(AppState.currentState);
   const t = useT();
-
-  // Sign out navigates straight here, so this is where the third one lands.
-  // Asking on the job screen would have meant a dialog over a screen that is
-  // already unmounting.
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      if (!(await shouldPromptForRating()) || cancelled) return;
-      // Written before the prompt, not after: the OS dialog reports nothing
-      // back, so recording on success would ask again on every dismissal.
-      await markRatingAsked();
-      Alert.alert(
-        t('rating.title'),
-        t('rating.body'),
-        [
-          { text: t('rating.later'), style: 'cancel' },
-          { text: t('rating.rate'), onPress: () => { requestReview(); } },
-        ],
-        { cancelable: true },
-      );
-    })();
-    return () => { cancelled = true; };
-  }, []);
 
   const loadJobs = useCallback(async () => {
     const online = await isOnline();
@@ -302,10 +278,6 @@ export default function JobsScreen() {
           >
             <Ionicons name="qr-code-outline" size={19} color={colors.teal} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push('/(installer)/expenses')} style={s.snapBtn}>
-            <Ionicons name="camera" size={16} color={colors.base} />
-            <Text style={s.snapBtnText}>Snap expense</Text>
-          </TouchableOpacity>
         </View>
       </View>
 
@@ -431,11 +403,6 @@ const s = StyleSheet.create({
     backgroundColor: alpha(colors.teal, 0.1),
     borderWidth: StyleSheet.hairlineWidth, borderColor: alpha(colors.teal, 0.3),
   },
-  snapBtn: {
-    backgroundColor: colors.teal, paddingHorizontal: space.lg, paddingVertical: space.md,
-    borderRadius: radius.sm, flexDirection: 'row', alignItems: 'center', gap: space.sm,
-  },
-  snapBtnText: { color: colors.base, fontWeight: '700', fontSize: 14 },
   signOutBtn: { borderWidth: 1, borderColor: C.border, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6 },
   signOutText: { fontSize: 13, color: C.muted },
   offlineBanner: { flexDirection: 'row', alignItems: 'center', margin: 16, marginBottom: 0, backgroundColor: alpha(colors.amber, 0.08), borderWidth: 1, borderColor: alpha(colors.amber, 0.25), borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10 },
