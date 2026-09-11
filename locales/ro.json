@@ -68,6 +68,22 @@
     "locationFailed": "Nu am putut obține locația. Încearcă din nou.",
     "directions": "Indicații"
   },
+  "preflight": {
+    "checking": "Se verifică poziția ta…",
+    "accuracy": "Precizie GPS",
+    "distance": "Distanța până la limita șantierului",
+    "inside": "În interiorul limitei",
+    "outside": "%{distance} în afara limitei",
+    "unknown": "Necunoscută",
+    "poorFix": "Telefonul îți știe poziția doar cu o marjă de %{accuracy}. O valoare mai slabă de %{limit} m te poate plasa de partea greșită a limitei. Ieși în spațiu deschis și încearcă din nou.",
+    "retry": "Încearcă din nou",
+    "retrying": "Se reîncearcă…",
+    "signInAnyway": "Pontează oricum",
+    "signIn": "Pontează-te",
+    "signingIn": "Se pontează…",
+    "notNow": "Nu acum",
+    "fixFailed": "Nu s-a putut obține locația. Ieși în spațiu deschis și încearcă din nou."
+  },
   "holidays": {
     "title": "Concediu",
     "subtitle": "Solicită zile libere",

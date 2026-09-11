@@ -21,13 +21,16 @@ export default function GPSAcknowledgmentScreen() {
       <ScrollView contentContainerStyle={s.scroll}>
         <Text style={s.title}>Before you continue</Text>
         <Text style={s.subtitle}>Your employer uses Vantro to manage site attendance. Please read before continuing.</Text>
+        <View style={s.leadCard}>
+          <Text style={s.lead}>Vantro reads your location at sign in and sign out, not all day.</Text>
+        </View>
         <View style={s.card}>
           <Text style={s.heading}>What is tracked</Text>
-          <Text style={s.body}>Your GPS location is recorded when you sign in and out of a job site to verify attendance and support accurate payroll.</Text>
+          <Text style={s.body}>Your GPS location at sign in and at sign out, to verify attendance and support accurate payroll. While you are signed in, your phone also reports its position about once an hour and tells us if you leave the site.</Text>
         </View>
         <View style={s.card}>
           <Text style={s.heading}>What is NOT tracked</Text>
-          <Text style={s.body}>You are not tracked outside of work hours. Tracking stops the moment you sign out of a job.</Text>
+          <Text style={s.body}>You are not followed continuously, and you are not tracked outside of work hours. It stops the moment you sign out of a job.</Text>
         </View>
         <View style={s.card}>
           <Text style={s.heading}>Your rights</Text>
@@ -52,6 +55,11 @@ const s = StyleSheet.create({
   scroll: { padding: 24, paddingTop: 56 },
   title: { fontSize: 26, fontWeight: '700', color: colors.textPrimary, marginBottom: 8 },
   subtitle: { fontSize: 15, color: colors.textMuted, marginBottom: 32, lineHeight: 22 },
+  leadCard: {
+    backgroundColor: alpha(colors.teal, 0.1), borderRadius: 12, padding: 18, marginBottom: 16,
+    borderWidth: 1, borderColor: alpha(colors.teal, 0.35),
+  },
+  lead: { fontSize: 16, fontWeight: '600', color: colors.textPrimary, lineHeight: 24 },
   card: { backgroundColor: colors.surface1, borderRadius: 12, padding: 18, marginBottom: 16, borderWidth: 1, borderColor: alpha(colors.textPrimary, 0.05) },
   heading: { fontSize: 12, fontWeight: '700', color: colors.teal, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.8 },
   body: { fontSize: 15, color: colors.textPrimary, lineHeight: 22 },

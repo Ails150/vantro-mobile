@@ -128,20 +128,24 @@ export default function JobHubScreen() {
     return () => sub.remove();
   }, [loadJob, loadBadges]);
 
-  // Distance to site, so the sign out button can refuse before it is pressed.
+  // One fix when the screen opens, so the sign out button can say whether it
+  // will work before it is pressed.
+  //
+  // This was a fix every 30 seconds for as long as the job screen was open --
+  // which, for someone on site, is most of the working day. Sign out takes its
+  // own fresh fix at the moment it is pressed, so the poll bought nothing but
+  // a label that was a few seconds newer, at the cost of the battery.
   useEffect(() => {
     let alive = true;
-    async function fix() {
+    (async () => {
       try {
         const perm = await Location.getForegroundPermissionsAsync();
         if (!perm.granted) return;
         const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
         if (alive) setCoords({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
       } catch {}
-    }
-    fix();
-    const t = setInterval(fix, 30000);
-    return () => { alive = false; clearInterval(t); };
+    })();
+    return () => { alive = false; };
   }, []);
 
   const distance = distanceToJob(coords, job);
@@ -194,7 +198,9 @@ export default function JobHubScreen() {
         return;
       }
 
-      const payload = { jobId: id, lat: latitude, lng: longitude, accuracy: Math.round(accuracy || 0) };
+      // Always sent, so the shift row records the quality of the fix that
+      // closed it as well as the one that opened it.
+      const payload = { jobId: id, lat: latitude, lng: longitude, accuracy: accuracy != null ? Math.round(accuracy) : null };
       console.log('[HUB-SIGNOUT] payload', JSON.stringify(payload));
 
       // NetInfo reports isInternetReachable as null for a while after launch,

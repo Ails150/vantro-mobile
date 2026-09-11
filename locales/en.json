@@ -65,6 +65,22 @@
     "locationFailed": "Could not get location. Try again.",
     "directions": "Directions"
   },
+  "preflight": {
+    "checking": "Checking your position…",
+    "accuracy": "GPS accuracy",
+    "distance": "Distance to site edge",
+    "inside": "Inside the boundary",
+    "outside": "%{distance} outside",
+    "unknown": "Unknown",
+    "poorFix": "Your phone is only sure of your position to within %{accuracy}. Anything worse than %{limit} m can put you on the wrong side of the boundary. Step into the open and try again.",
+    "retry": "Retry",
+    "retrying": "Retrying…",
+    "signInAnyway": "Sign in anyway",
+    "signIn": "Sign in to job",
+    "signingIn": "Signing in…",
+    "notNow": "Not now",
+    "fixFailed": "Could not get a location fix. Step into the open and try again."
+  },
   "holidays": {
     "title": "Holiday",
     "subtitle": "Request time off",

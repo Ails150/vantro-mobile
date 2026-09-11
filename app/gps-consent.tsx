@@ -37,14 +37,21 @@ export default function GPSAcknowledgmentScreen() {
         <Text style={s.title}>GPS location tracking</Text>
         <Text style={s.subtitle}>Please read and acknowledge before continuing</Text>
 
-        <View style={s.card}>
-          <Text style={s.sectionTitle}>What we track</Text>
-          <Text style={s.body}>When you sign in to a job site, Vantro records your GPS location to verify you are on site. Your location is recorded at sign-in and sign-out to verify you were on site. No continuous background tracking occurs.</Text>
+        {/* The headline promise, stated plainly and first. Everything below it
+            has to remain true of the code -- see the audit in lib/locationTracker
+            and the one-shot fixes on the Jobs and job screens. */}
+        <View style={s.leadCard}>
+          <Text style={s.lead}>Vantro reads your location at sign in and sign out, not all day.</Text>
         </View>
 
         <View style={s.card}>
-          <Text style={s.sectionTitle}>When we track</Text>
-          <Text style={s.body}>Location is checked when you sign in and when you sign out. This is used solely to confirm you are within the job site boundary at those moments.</Text>
+          <Text style={s.sectionTitle}>When we read your location</Text>
+          <Text style={s.body}>At sign in and at sign out, to confirm you are within the site boundary. While you are signed in, your phone reports its position about once an hour, and tells us if you leave the site. That is all. Once you sign out, nothing is read until your next sign in.</Text>
+        </View>
+
+        <View style={s.card}>
+          <Text style={s.sectionTitle}>What we never do</Text>
+          <Text style={s.body}>We do not follow you continuously, we do not read your location outside a shift, and we do not record where you go when you are not signed in to a job.</Text>
         </View>
 
         <View style={s.card}>
@@ -87,6 +94,15 @@ const s = StyleSheet.create({
   icon: { width: 64, height: 64, borderRadius: 32, backgroundColor: alpha(colors.teal, 0.1), alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: 20, fontWeight: '700', color: C.text, textAlign: 'center', marginBottom: 6 },
   subtitle: { fontSize: 14, color: C.muted, textAlign: 'center', marginBottom: 24 },
+  leadCard: {
+    backgroundColor: alpha(colors.teal, 0.1),
+    borderWidth: 1,
+    borderColor: alpha(colors.teal, 0.35),
+    borderRadius: 12,
+    padding: 18,
+    marginBottom: 16,
+  },
+  lead: { fontSize: 16, fontWeight: '600', color: colors.textPrimary, lineHeight: 24 },
   card: { backgroundColor: C.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: C.border },
   sectionTitle: { fontSize: 15, fontWeight: '600', color: C.teal, marginBottom: 8 },
   body: { fontSize: 13, color: C.text, lineHeight: 20, opacity: 0.85 },

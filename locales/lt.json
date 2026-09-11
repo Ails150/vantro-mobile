@@ -68,6 +68,22 @@
     "locationFailed": "Nepavyko nustatyti vietos. Bandykite dar kartą.",
     "directions": "Maršrutas"
   },
+  "preflight": {
+    "checking": "Tikrinama jūsų padėtis…",
+    "accuracy": "GPS tikslumas",
+    "distance": "Atstumas iki objekto ribos",
+    "inside": "Ribos viduje",
+    "outside": "%{distance} už ribos",
+    "unknown": "Nežinoma",
+    "poorFix": "Telefonas jūsų padėtį nustato tik %{accuracy} tikslumu. Blogesnis nei %{limit} m rezultatas gali parodyti jus ne toje ribos pusėje. Išeikite į atvirą vietą ir bandykite dar kartą.",
+    "retry": "Bandyti dar kartą",
+    "retrying": "Bandoma…",
+    "signInAnyway": "Vis tiek prisiregistruoti",
+    "signIn": "Prisiregistruoti",
+    "signingIn": "Registruojama…",
+    "notNow": "Ne dabar",
+    "fixFailed": "Nepavyko nustatyti vietos. Išeikite į atvirą vietą ir bandykite dar kartą."
+  },
   "holidays": {
     "title": "Atostogos",
     "subtitle": "Prašyti laisvų dienų",

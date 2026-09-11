@@ -13,11 +13,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logCurrentLocation, evaluateTrackingState } from '@/lib/locationTracker';
 import { setActiveShift, hydrateActiveShift } from '@/lib/activeShift';
 import { isOnline, cacheJobs, getCachedJobs, queueAction, syncQueue } from '@/lib/offline';
-import { distanceToJob, geofenceRadius } from '@/lib/geo';
+import { distanceToEdge, distanceToJob, geofenceRadius } from '@/lib/geo';
 import { alpha, colors, formatDistance, radius, space, type } from '@/theme';
 import PrimaryButton from '@/components/PrimaryButton';
 import EmptyState from '@/components/EmptyState';
 import ScreenHeader from '@/components/ScreenHeader';
+import SignInPreflight, { type Fix } from '@/components/SignInPreflight';
 import { useT } from '@/context/LanguageContext';
 
 const C = {
@@ -87,6 +88,12 @@ export default function JobsScreen() {
   const [bgGpsEnabled, setBgGpsEnabled] = useState(true);
   const [gpsLevel, setGpsLevel] = useState<'always' | 'whenInUse' | 'denied' | null>(null);
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  // Sign in pre-flight: the job being signed into, the fix taken for it, and
+  // whether the request is in flight.
+  const [preflightJob, setPreflightJob] = useState<any>(null);
+  const [preflightFix, setPreflightFix] = useState<Fix | null>(null);
+  const [preflightError, setPreflightError] = useState<string | null>(null);
+  const [preflightBusy, setPreflightBusy] = useState(false);
 
   // Check stored GPS permission level on mount + every focus
   useEffect(() => {
@@ -105,22 +112,27 @@ export default function JobsScreen() {
     });
     return () => { mounted = false; sub.remove(); };
   }, []);
-  // Each card needs to know whether the installer is in range before they press
-  // anything, so poll a coarse fix rather than waiting for a sign in attempt.
-  useEffect(() => {
-    let alive = true;
-    async function fix() {
-      try {
-        const perm = await Location.getForegroundPermissionsAsync();
-        if (!perm.granted) return;
-        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-        if (alive) setCoords({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
-      } catch {}
-    }
-    fix();
-    const t = setInterval(fix, 30000);
-    return () => { alive = false; clearInterval(t); };
+  // ONE fix when the screen opens, and that is all.
+  //
+  // This used to re-read the GPS every 30 seconds for as long as the Jobs
+  // screen was on top -- 120 location reads an hour to keep a distance label
+  // fresh that nobody was looking at. On a phone in a pocket on a site with
+  // poor signal that is the single most expensive thing the app did.
+  //
+  // The distance shown on a card is now a snapshot from when the screen
+  // opened, refreshed on pull-to-refresh. The number that actually decides a
+  // sign in is read at the moment of signing in, in the pre-flight below,
+  // where it is fresh because it was just taken.
+  const readFixOnce = useCallback(async () => {
+    try {
+      const perm = await Location.getForegroundPermissionsAsync();
+      if (!perm.granted) return;
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      setCoords({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
+    } catch {}
   }, []);
+
+  useEffect(() => { readFixOnce(); }, [readFixOnce]);
 
   const appState = useRef(AppState.currentState);
   const t = useT();
@@ -186,22 +198,60 @@ export default function JobsScreen() {
     router.push({ pathname: '/(installer)/job/[id]' as any, params: { id: job.id, name: job.name } });
   }
 
+  /** Open the pre-flight and take the fix it reports on. */
   async function signIn(job: any) {
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Location required', 'Enable location access to sign in to a job.');
       return;
     }
-    setGpsLoading(job.id);
-    setGpsMsg(null);
+    setPreflightJob(job);
+    setPreflightFix(null);
+    setPreflightError(null);
+    takePreflightFix();
+  }
+
+  /** Read a fresh High accuracy fix for the pre-flight. Also the Retry action. */
+  async function takePreflightFix() {
+    setPreflightBusy(true);
+    setPreflightError(null);
+    setPreflightFix(null);
     try {
       const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
       const { latitude, longitude, accuracy } = loc.coords;
+      setPreflightFix({ latitude, longitude, accuracy: accuracy ?? null });
+      // The card labels get the benefit of the fresh fix too.
+      setCoords({ latitude, longitude });
+    } catch {
+      setPreflightError(t('preflight.fixFailed'));
+    } finally {
+      setPreflightBusy(false);
+    }
+  }
+
+  function closePreflight() {
+    setPreflightJob(null);
+    setPreflightFix(null);
+    setPreflightError(null);
+  }
+
+  async function confirmSignIn() {
+    const job = preflightJob;
+    const fix = preflightFix;
+    if (!job || !fix) return;
+    setPreflightBusy(true);
+    setGpsLoading(job.id);
+    setGpsMsg(null);
+    try {
+      const { latitude, longitude, accuracy } = fix;
       const online = await isOnline();
       if (online) {
         const res = await authFetch('/api/signin', {
           method: 'POST',
-          body: JSON.stringify({ jobId: job.id, lat: latitude, lng: longitude, accuracy: Math.round(accuracy || 0) }),
+          // accuracy always goes up, so every shift row records how good
+          // the fix behind it was. A row with no accuracy cannot be argued
+          // about later.
+          body: JSON.stringify({ jobId: job.id, lat: latitude, lng: longitude, accuracy: accuracy != null ? Math.round(accuracy) : null }),
         });
         const data = await res.json();
         if (!res.ok) {
@@ -221,7 +271,7 @@ export default function JobsScreen() {
         }
       } else {
         // Queue for later
-        await queueAction({ type: 'signin', payload: { jobId: job.id, lat: latitude, lng: longitude, accuracy: Math.round(accuracy || 0) } });
+        await queueAction({ type: 'signin', payload: { jobId: job.id, lat: latitude, lng: longitude, accuracy: accuracy != null ? Math.round(accuracy) : null } });
         // Optimistically update local cache
         const updated = jobs.map(j => j.id === job.id ? { ...j, signed_in: true } : j);
         setJobs(updated);
@@ -233,6 +283,8 @@ export default function JobsScreen() {
       setGpsMsg({ id: job.id, msg: 'Could not get location. Try again.', ok: false });
     }
     setGpsLoading(null);
+    setPreflightBusy(false);
+    closePreflight();
   }
 
   function openMaps(job: any) {
@@ -309,7 +361,7 @@ export default function JobsScreen() {
       )}
 
       <ScrollView
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadJobs(); }} tintColor={C.teal} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadJobs(); readFixOnce(); }} tintColor={C.teal} />}
         contentContainerStyle={s.scroll}
       >
         <Text style={s.sectionLabel}>Your jobs today</Text>
@@ -387,6 +439,21 @@ export default function JobsScreen() {
           );
         })}
       </ScrollView>
+
+      <SignInPreflight
+        visible={!!preflightJob}
+        jobName={preflightJob?.name || ''}
+        fix={preflightFix}
+        metresOutside={distanceToEdge(
+          preflightFix ? { latitude: preflightFix.latitude, longitude: preflightFix.longitude } : null,
+          preflightJob,
+        )}
+        busy={preflightBusy}
+        error={preflightError}
+        onRetry={takePreflightFix}
+        onConfirm={confirmSignIn}
+        onCancel={closePreflight}
+      />
     </View>
   );
 }

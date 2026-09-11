@@ -133,7 +133,20 @@ export async function isGeofenceActive() {
 }
 
 let lastForegroundLogAt = 0;
-const THROTTLE_MS = 5 * 60 * 1000;
+
+/**
+ * The heartbeat, and the floor under every breadcrumb read.
+ *
+ * One hour. It was five minutes, which meant a signed-in worker's phone took a
+ * GPS fix twelve times an hour all day, on top of the geofence. The breadcrumb
+ * trail exists to show a site was attended, not to draw a route -- an hourly
+ * point does that, and the two readings that actually matter for pay, sign in
+ * and sign out, are taken exactly when they happen and are not throttled.
+ *
+ * Anything that genuinely cannot wait passes force: true -- currently only the
+ * sign-in breadcrumb and an admin's GPS ping.
+ */
+const THROTTLE_MS = 60 * 60 * 1000;
 
 export async function logCurrentLocation(source: string = 'foreground', force: boolean = false) {
   try {

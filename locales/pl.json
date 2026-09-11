@@ -71,6 +71,22 @@
     "locationFailed": "Nie udało się ustalić lokalizacji. Spróbuj ponownie.",
     "directions": "Nawigacja"
   },
+  "preflight": {
+    "checking": "Sprawdzanie Twojej pozycji…",
+    "accuracy": "Dokładność GPS",
+    "distance": "Odległość od granicy budowy",
+    "inside": "Wewnątrz granicy",
+    "outside": "%{distance} poza granicą",
+    "unknown": "Nieznana",
+    "poorFix": "Telefon określa Twoją pozycję z dokładnością tylko do %{accuracy}. Wynik gorszy niż %{limit} m może umieścić Cię po złej stronie granicy. Wyjdź na otwartą przestrzeń i spróbuj ponownie.",
+    "retry": "Spróbuj ponownie",
+    "retrying": "Ponawianie…",
+    "signInAnyway": "Zamelduj się mimo to",
+    "signIn": "Zamelduj się",
+    "signingIn": "Meldowanie…",
+    "notNow": "Nie teraz",
+    "fixFailed": "Nie udało się ustalić lokalizacji. Wyjdź na otwartą przestrzeń i spróbuj ponownie."
+  },
   "holidays": {
     "title": "Urlop",
     "subtitle": "Złóż wniosek o wolne",
