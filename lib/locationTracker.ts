@@ -19,31 +19,54 @@ async function reportPermissionLevel(level: 'always' | 'whenInUse' | 'denied') {
   }).catch((e) => console.warn('[location] permission report failed:', e));
 }
 
-async function postLocation(lat: number, lng: number, accuracy: number, source: string) {
+// `accuracy` is null when we could not read one. It is NOT 0.
+//
+// The server's auto sign-out rule requires every fix in a run to be outside the
+// geofence with a KNOWN accuracy better than 100m, and treats an unknown
+// accuracy as unusable. Sending 0 for "did not measure" makes the least
+// trustworthy fix in the trail look like the most trustworthy one -- and this
+// is the fix that decides whether someone's shift gets closed on them.
+async function postLocation(lat: number, lng: number, accuracy: number | null, source: string) {
   const token = await getToken();
   if (!token) return;
   try {
     const res = await fetch(`${API_BASE}/api/location`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ lat, lng, accuracy: Math.round(accuracy || 0), source }),
+      body: JSON.stringify({
+        lat,
+        lng,
+        accuracy: accuracy == null ? null : Math.round(accuracy),
+        source,
+      }),
     });
-    console.log('[location] post', source, res.status);
+    console.log('[location] post', source, res.status, 'acc', accuracy ?? 'unknown');
   } catch (e) {
     console.log('[location] offline', source);
   }
 }
 
-async function postGeofenceExit(jobId: string, lat: number, lng: number) {
+async function postGeofenceExit(
+  jobId: string,
+  lat: number,
+  lng: number,
+  accuracy: number | null,
+) {
   const token = await getToken();
   if (!token) return;
   try {
     const res = await fetch(`${API_BASE}/api/installer/geofence-exit`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ jobId, lat, lng, exitedAt: new Date().toISOString() }),
+      body: JSON.stringify({
+        jobId,
+        lat,
+        lng,
+        accuracy,
+        exitedAt: new Date().toISOString(),
+      }),
     });
-    console.log('[geofence] exit posted', res.status);
+    console.log('[geofence] exit posted', res.status, 'acc', accuracy ?? 'unknown');
   } catch (e) {
     console.log('[geofence] exit post failed, queued for retry', e);
   }
@@ -64,17 +87,22 @@ TaskManager.defineTask(GEOFENCE_TASK, async ({ data, error }: any) => {
 
   let lat = region?.latitude ?? shift.jobLat ?? 0;
   let lng = region?.longitude ?? shift.jobLng ?? 0;
+  // Stays null if the read below fails: the fallback coordinates are the
+  // region centre, which is the site itself, and we know nothing about how
+  // accurate the phone's own position is.
+  let accuracy: number | null = null;
   try {
     const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
     lat = loc.coords.latitude;
     lng = loc.coords.longitude;
+    accuracy = typeof loc.coords.accuracy === 'number' ? loc.coords.accuracy : null;
   } catch {}
 
   if (eventType === Location.GeofencingEventType.Enter) {
-    await postLocation(lat, lng, 0, 'geofence-enter');
+    await postLocation(lat, lng, accuracy, 'geofence-enter');
   } else if (eventType === Location.GeofencingEventType.Exit) {
-    await postLocation(lat, lng, 0, 'geofence-exit');
-    await postGeofenceExit(shift.jobId, lat, lng);
+    await postLocation(lat, lng, accuracy, 'geofence-exit');
+    await postGeofenceExit(shift.jobId, lat, lng, accuracy);
   }
 });
 
@@ -160,7 +188,15 @@ export async function logCurrentLocation(source: string = 'foreground', force: b
     const fgPerm = await Location.getForegroundPermissionsAsync();
     if (bgPerm.status !== 'granted' && fgPerm.status !== 'granted') return;
     const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-    await postLocation(loc.coords.latitude, loc.coords.longitude, loc.coords.accuracy || 0, source);
+    // `|| 0` here conflated "no reading" with "a perfect reading", same as the
+    // geofence path did. These ticks are the main evidence the server's dwell
+    // rule weighs, so the difference has to survive the wire.
+    await postLocation(
+      loc.coords.latitude,
+      loc.coords.longitude,
+      typeof loc.coords.accuracy === 'number' ? loc.coords.accuracy : null,
+      source,
+    );
     lastForegroundLogAt = Date.now();
   } catch (e) {
     console.log('[location] manual log failed', e);
