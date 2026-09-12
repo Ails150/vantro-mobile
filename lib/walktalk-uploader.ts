@@ -74,6 +74,11 @@ async function uploadOne(item: WalkthroughQueueItem): Promise<void> {
         durationSeconds: item.durationSeconds,
         lat: item.lat,
         lng: item.lng,
+        // When the clip was RECORDED, not when it reached the server. The queue
+        // has always held this and never sent it, so a clip recorded on site
+        // with no signal and uploaded that evening was filed under the evening.
+        // recorded_at is write-once server-side, so that was permanent.
+        recordedAt: item.recordedAt,
       }),
     });
 
