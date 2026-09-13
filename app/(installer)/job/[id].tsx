@@ -52,6 +52,7 @@ export default function JobHubScreen() {
   const [diaryToday, setDiaryToday] = useState<number | null>(null);
   const [qaProgress, setQaProgress] = useState<{ done: number; total: number } | null>(null);
   const [openDefects, setOpenDefects] = useState<number | null>(null);
+  const [unsignedTalks, setUnsignedTalks] = useState(0);
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const appState = useRef(AppState.currentState);
@@ -110,6 +111,17 @@ export default function JobHubScreen() {
       .then(d => {
         if (!d) return;
         setOpenDefects((d.defects || []).filter((x: any) => x.status !== 'resolved').length);
+      })
+      .catch(() => {});
+
+    // Unsigned toolbox talks. The badge is the whole reason a worker opens the
+    // screen -- without it a briefing waiting for a signature is invisible
+    // until someone chases it.
+    authFetch(`/api/installer/toolbox-talks?jobId=${id}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (!d) return;
+        setUnsignedTalks((d.talks || []).filter((t: any) => !t.signedAt).length);
       })
       .catch(() => {});
   }, [id]);
@@ -271,6 +283,10 @@ export default function JobHubScreen() {
     {
       key: 'defects', label: 'Log a defect', icon: 'warning-outline', pathname: '/(installer)/defects',
       badge: openDefects ? { text: openDefects === 1 ? '1 open' : `${openDefects} open`, tone: 'amber' } : null,
+    },
+    {
+      key: 'toolbox', label: 'Toolbox talks', icon: 'shield-checkmark-outline', pathname: '/(installer)/toolbox-talks',
+      badge: unsignedTalks ? { text: unsignedTalks === 1 ? '1 to sign' : `${unsignedTalks} to sign`, tone: 'amber' } : null,
     },
     { key: 'expenses', label: 'Snap expense', icon: 'receipt-outline', pathname: '/(installer)/expenses', badge: null },
     { key: 'capture', label: 'Walk and Talk', icon: 'mic-outline', pathname: '/(installer)/capture', badge: null },
