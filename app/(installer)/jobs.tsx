@@ -255,6 +255,28 @@ export default function JobsScreen() {
         });
         const data = await res.json();
         if (!res.ok) {
+          // An unsigned RAMS is a refusal with somewhere to go, so it gets a
+          // prompt rather than a red line the worker can only stare at. The
+          // server has already written the wording; repeating it here would
+          // let the two drift.
+          if (data.ramsRequired) {
+            setGpsMsg({ id: job.id, msg: data.error || 'You need to sign the RAMS first', ok: false });
+            Alert.alert(
+              'Sign the RAMS first',
+              data.error || 'You need to read and sign the method statement for this job.',
+              [
+                { text: 'Not now', style: 'cancel' },
+                {
+                  text: 'Read and sign',
+                  onPress: () => router.push({
+                    pathname: '/(installer)/rams' as any,
+                    params: { id: job.id, name: job.name },
+                  }),
+                },
+              ],
+            );
+            return;
+          }
           const msg = data.distanceMetres != null
             ? tooFarCopy(data.distanceMetres, data.radiusMetres ?? geofenceRadius(job))
             : (data.error || 'Cannot sign in');

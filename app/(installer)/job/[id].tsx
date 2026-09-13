@@ -53,6 +53,7 @@ export default function JobHubScreen() {
   const [qaProgress, setQaProgress] = useState<{ done: number; total: number } | null>(null);
   const [openDefects, setOpenDefects] = useState<number | null>(null);
   const [unsignedTalks, setUnsignedTalks] = useState(0);
+  const [ramsBlocked, setRamsBlocked] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const appState = useRef(AppState.currentState);
@@ -123,6 +124,14 @@ export default function JobHubScreen() {
         if (!d) return;
         setUnsignedTalks((d.talks || []).filter((t: any) => !t.signedAt).length);
       })
+      .catch(() => {});
+
+    // Whether the RAMS is blocking sign-in. Shown on the action rather than
+    // discovered at the sign-in button, so the worker finds out before they
+    // are standing on site trying to start.
+    authFetch(`/api/installer/rams?jobId=${id}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setRamsBlocked(!!d.blocked); })
       .catch(() => {});
   }, [id]);
 
@@ -283,6 +292,10 @@ export default function JobHubScreen() {
     {
       key: 'defects', label: 'Log a defect', icon: 'warning-outline', pathname: '/(installer)/defects',
       badge: openDefects ? { text: openDefects === 1 ? '1 open' : `${openDefects} open`, tone: 'amber' } : null,
+    },
+    {
+      key: 'rams', label: 'RAMS', icon: 'document-lock-outline', pathname: '/(installer)/rams',
+      badge: ramsBlocked ? { text: 'Sign to start', tone: 'amber' } : null,
     },
     {
       key: 'toolbox', label: 'Toolbox talks', icon: 'shield-checkmark-outline', pathname: '/(installer)/toolbox-talks',
