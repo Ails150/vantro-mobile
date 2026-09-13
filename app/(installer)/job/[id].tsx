@@ -54,6 +54,7 @@ export default function JobHubScreen() {
   const [openDefects, setOpenDefects] = useState<number | null>(null);
   const [unsignedTalks, setUnsignedTalks] = useState(0);
   const [ramsBlocked, setRamsBlocked] = useState(false);
+  const [openIncidents, setOpenIncidents] = useState(0);
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const appState = useRef(AppState.currentState);
@@ -132,6 +133,14 @@ export default function JobHubScreen() {
     authFetch(`/api/installer/rams?jobId=${id}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setRamsBlocked(!!d.blocked); })
+      .catch(() => {});
+
+    authFetch(`/api/installer/incidents?jobId=${id}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (!d) return;
+        setOpenIncidents((d.incidents || []).filter((i: any) => i.status !== 'closed').length);
+      })
       .catch(() => {});
   }, [id]);
 
@@ -300,6 +309,10 @@ export default function JobHubScreen() {
     {
       key: 'toolbox', label: 'Toolbox talks', icon: 'shield-checkmark-outline', pathname: '/(installer)/toolbox-talks',
       badge: unsignedTalks ? { text: unsignedTalks === 1 ? '1 to sign' : `${unsignedTalks} to sign`, tone: 'amber' } : null,
+    },
+    {
+      key: 'incidents', label: 'Report an incident', icon: 'alert-circle-outline', pathname: '/(installer)/incidents',
+      badge: openIncidents ? { text: openIncidents === 1 ? '1 open' : `${openIncidents} open`, tone: 'amber' } : null,
     },
     { key: 'expenses', label: 'Snap expense', icon: 'receipt-outline', pathname: '/(installer)/expenses', badge: null },
     { key: 'capture', label: 'Walk and Talk', icon: 'mic-outline', pathname: '/(installer)/capture', badge: null },
