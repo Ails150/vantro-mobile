@@ -3,6 +3,7 @@ import * as Application from 'expo-application';
 import Constants from 'expo-constants';
 import * as Updates from 'expo-updates';
 import { Platform } from 'react-native';
+import { scrubBreadcrumb, scrubEvent } from './sentryScrub';
 
 // A crash is only actionable if we know which build threw it. Sentry defaults
 // the release to the native package name it can read at runtime, which is the
@@ -56,17 +57,36 @@ export function initSentry() {
     dist: SENTRY_DIST,
     environment: __DEV__ ? 'development' : Updates.channel || 'production',
 
-    // Adds more context data to events (IP address, cookies, user, etc.)
-    // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
-    sendDefaultPii: true,
+    // OFF. It was true, which sends IP addresses, cookies and request headers
+    // -- and every request from this app carries the field token in an
+    // Authorization header. A ninety-day bearer credential for a company's
+    // real site data does not belong in an error tracker.
+    sendDefaultPii: false,
 
     // Enable Logs
     enableLogs: true,
 
-    // Configure Session Replay
+    // Session Replay, with masking stated rather than relied upon as a default.
+    // This app has a PIN pad on its sign-in screen and a map of where people
+    // have been; a replay that captured either would be worse than having no
+    // replay at all.
     replaysSessionSampleRate: 0.1,
     replaysOnErrorSampleRate: 1,
-    integrations: [Sentry.mobileReplayIntegration(), Sentry.feedbackIntegration()],
+    integrations: [
+      Sentry.mobileReplayIntegration({
+        maskAllText: true,
+        maskAllImages: true,
+        maskAllVectors: true,
+      }),
+      Sentry.feedbackIntegration(),
+    ],
+
+    // The belt to the masking's braces. lib/sentryScrub.ts strips bearer
+    // tokens, JWTs, PINs and coordinates out of events and breadcrumbs, and is
+    // unit tested -- a scrubbing rule that lives only inside a config object is
+    // one nobody can prove.
+    beforeSend: scrubEvent,
+    beforeBreadcrumb: scrubBreadcrumb,
   });
 
   // Searchable on their own, so "every crash on the build we shipped Tuesday"

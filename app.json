@@ -85,7 +85,8 @@
         }
       ],
       "react-native-edge-to-edge",
-      "expo-localization"
+      "expo-localization",
+      "./plugins/withCertPinning"
     ],
     "experiments": {
       "typedRoutes": true
