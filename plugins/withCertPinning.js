@@ -27,7 +27,13 @@ function readPins(projectRoot) {
   const src = fs.readFileSync(file, "utf8")
 
   const grab = (name) => {
-    const m = new RegExp(`${name}:\s*['"]([^'"]+)['"]`).exec(src)
+    // String.raw, and that is not pedantry. In an ordinary template literal
+    // `\s` is not a recognised escape, so it collapses to a bare "s" before the
+    // RegExp constructor ever sees it: the pattern becomes `name:s*['"]`, which
+    // needs zero-or-more letter s where the file has a space, and matches
+    // nothing. The plugin then threw its own refusal on the build machine and
+    // took the APK down. Covered by __tests__/certPinningPlugin.test.ts.
+    const m = new RegExp(String.raw`${name}:\s*['"]([^'"]+)['"]`).exec(src)
     if (!m) {
       throw new Error(
         `withCertPinning: could not read "${name}" from lib/certPins.ts. ` +
@@ -113,3 +119,9 @@ const withCertPinning = (config) => {
 }
 
 module.exports = withCertPinning
+
+// Exported so the parsing can be tested without running a prebuild. The bug
+// this guards against was invisible to `expo config`, which does not run
+// dangerous mods -- only a real prebuild or a direct call reaches this code.
+module.exports.readPins = readPins
+module.exports.androidXml = androidXml
