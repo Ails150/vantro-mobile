@@ -70,29 +70,36 @@ export default function LoginScreen() {
     }
     setForgotPinSending(false);
   }
+  /**
+   * Take the email and go straight to choosing a PIN. NO SERVER CALL.
+   *
+   * This screen used to ask the server "does this address have an account, and
+   * does it already have a PIN", then branch on the answer. Good experience,
+   * bad idea: the same question, asked by anybody, told them whether a given
+   * person works for a Vantro customer. One address at a time, a competitor
+   * could confirm a whole crew.
+   *
+   * Everything else about signing in is built not to answer that -- one error
+   * message however it fails, and a deliberate hash comparison on the
+   * unknown-address path so that even the response time gives nothing away.
+   * This screen was undoing all of it in order to pick the right heading.
+   *
+   * So it picks neither. It goes to "choose your PIN", and the set-PIN call is
+   * what finds out: that route now refuses with ONE message whether the address
+   * is unknown or already has a PIN, and the message names both of the things
+   * the person can do next.
+   *
+   * The cost is that somebody who already has a PIN and taps "New installer"
+   * learns it after typing four digits rather than before. That is the whole
+   * price, and it buys not publishing the customer's staff list.
+   */
   async function handleEmailSubmit() {
-    if (!emailInput.trim() || !emailInput.includes('@')) { setError('Enter a valid email address'); return }
-    setLoading(true); setError('');
-    try {
-      const res = await fetch('https://app.getvantro.com/api/installer/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: emailInput.trim().toLowerCase(), pin: '0000', checkOnly: true })
-      });
-      const data = await res.json();
-      if (data.exists === false) { setError('Email not found. Check with your manager.'); setLoading(false); return }
-      if (data.hasPin) {
-        // Remember it so the PIN alone is enough on this device from now on.
-        await SecureStore.setItemAsync('installer_email', emailInput.trim().toLowerCase());
-        setError('Enter your PIN below.'); setShowEmailEntry(false); setLoading(false); return
-      }
-      setSetupEmail(emailInput.trim().toLowerCase());
-      setMode('setup');
-      setShowEmailEntry(false);
-    } catch(e) {
-      setError('Could not connect. Check your internet connection.');
-    }
-    setLoading(false);
+    const email = emailInput.trim().toLowerCase();
+    if (!email || !email.includes('@')) { setError('Enter a valid email address'); return }
+    setError('');
+    setSetupEmail(email);
+    setMode('setup');
+    setShowEmailEntry(false);
   }
 
   async function handleKey(key: string) {
@@ -218,6 +225,24 @@ export default function LoginScreen() {
           </TouchableOpacity>
           <TouchableOpacity onPress={() => { setForgotPinEmail(''); setForgotPinSent(false); setForgotPinModal(true); }} style={{ marginTop: 8 }}>
             <Text style={s.hint}>Forgot PIN? Reset via email</Text>
+          </TouchableOpacity>
+          </>
+        )}
+        {mode === 'setup' && (
+          // Both routes out of this screen, and they are not optional now.
+          //
+          // Setting a PIN no longer checks the address first, so this screen is
+          // where somebody who already HAS a PIN ends up if they tap "new
+          // installer". The server tells them to use Forgot PIN -- which was
+          // rendered only in login mode, so the advice pointed at a link that
+          // was not on the screen. A dead end at the sign-in screen is how an
+          // app gets uninstalled.
+          <>
+          <TouchableOpacity onPress={() => { setForgotPinEmail(setupEmail); setForgotPinSent(false); setForgotPinModal(true); }}>
+            <Text style={s.hint}>Already have a PIN? Reset it via email</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => { setMode('login'); setPin(''); setError(''); }} style={{ marginTop: 8 }}>
+            <Text style={s.hint}>← Back to PIN login</Text>
           </TouchableOpacity>
           </>
         )}

@@ -1,6 +1,10 @@
 node_modules/
 .expo/
-package-lock.json
+# package-lock.json is COMMITTED. It used to be ignored, which meant EAS logged
+# "No lockfile found" and resolved every dependency fresh on every build: builds
+# were not reproducible, expo doctor failed on it, and a transitive update could
+# break a release with no commit to blame. It is exactly how vitest 5 arrived and
+# took an APK down.
 
 # One-off patch scripts
 fix_*.py
