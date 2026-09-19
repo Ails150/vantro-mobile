@@ -55,6 +55,9 @@ export default function JobHubScreen() {
   const [unsignedTalks, setUnsignedTalks] = useState(0);
   const [ramsBlocked, setRamsBlocked] = useState(false);
   const [openIncidents, setOpenIncidents] = useState(0);
+  // null until the server says whether this company has variations at all;
+  // the row stays hidden rather than flashing up and then vanishing.
+  const [variations, setVariations] = useState<{ available: boolean; pending: number } | null>(null);
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const appState = useRef(AppState.currentState);
@@ -133,6 +136,19 @@ export default function JobHubScreen() {
     authFetch(`/api/installer/rams?jobId=${id}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setRamsBlocked(!!d.blocked); })
+      .catch(() => {});
+
+    // Variations are a Suite feature. The row appears only when the server
+    // says this company has them, so nobody taps into a screen that refuses.
+    authFetch(`/api/installer/variations?jobId=${id}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (!d) return;
+        setVariations({
+          available: d.available !== false,
+          pending: (d.variations || []).filter((v: any) => v.status === 'pending').length,
+        });
+      })
       .catch(() => {});
 
     authFetch(`/api/installer/incidents?jobId=${id}`)
@@ -314,6 +330,10 @@ export default function JobHubScreen() {
       key: 'incidents', label: 'Report an incident', icon: 'alert-circle-outline', pathname: '/(installer)/incidents',
       badge: openIncidents ? { text: openIncidents === 1 ? '1 open' : `${openIncidents} open`, tone: 'amber' } : null,
     },
+    ...(variations?.available ? [{
+      key: 'variations', label: 'Raise a variation', icon: 'create-outline' as const, pathname: '/(installer)/variations',
+      badge: variations.pending ? { text: `${variations.pending} with the office`, tone: 'muted' as const } : null,
+    }] : []),
     { key: 'expenses', label: 'Snap expense', icon: 'receipt-outline', pathname: '/(installer)/expenses', badge: null },
     { key: 'capture', label: 'Walk and Talk', icon: 'mic-outline', pathname: '/(installer)/capture', badge: null },
   ];
